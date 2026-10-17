@@ -20,6 +20,8 @@
 | `REACH.md` | Who existing solutions miss (prior-art table), the gaps we own, 9 design rules for reach, reach metrics, honest limits |
 | `REQUIREMENTS_TRACE.md` | Every pasted hackathon requirement → where we handle it, status, and gaps or actions |
 | `TWISTS_TEMPLATE.md` | Template for twist responses (what changed, why, proof) |
+| `BUILD_PLAN.md` | Per-person task lists by time + priority, milestones M0–M4, shared table schema + function contracts, daily rhythm |
+| `DECK.md` | 10-slide outline, required numbers, lines we must say, demo video cut, Devpost write-up sections + responsible-use text |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
