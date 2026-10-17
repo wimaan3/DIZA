@@ -2,7 +2,8 @@
   "_prompt_files": [
     "_shared_rules.md",
     "inbound.md",
-    "language_line.md"
+    "language_line.md",
+    "finding_help.md"
   ],
   "_tools": [
     "flag_urgent",
@@ -26,6 +27,7 @@
     "send_link",
     "record_consent",
     "swap_to_english_spanish",
+    "transfer_to_resource",
     "end_call"
   ],
   "model": "gpt-4.1-mini",
@@ -54,7 +56,9 @@
     "opening_line": "这里是 DIZA 社区热线。请问有什么可以帮您？",
     "lang_name": "Mandarin Chinese",
     "lang_code": "zh",
-    "lang_911": "九一一 (911)"
+    "lang_911": "九一一 (911)",
+    "resource_name": "",
+    "resource_transfer_number": ""
   },
   "_knowledge_bases": [
     "line-policy",

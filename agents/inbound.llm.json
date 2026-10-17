@@ -2,6 +2,7 @@
   "_prompt_files": [
     "_shared_rules.md",
     "inbound.md",
+    "finding_help.md",
     "volunteer.md"
   ],
   "_tools": [
@@ -29,6 +30,7 @@
     "record_consent",
     "swap_to_korean",
     "swap_to_chinese",
+    "transfer_to_resource",
     "end_call"
   ],
   "model": "gpt-4.1-mini",
@@ -57,7 +59,9 @@
     "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?",
     "lang_name": "",
     "lang_code": "",
-    "lang_911": ""
+    "lang_911": "",
+    "resource_name": "",
+    "resource_transfer_number": ""
   },
   "_knowledge_bases": [
     "line-policy",

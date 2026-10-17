@@ -19,6 +19,9 @@ MOCKS = [
      "output": json.dumps({"report_id": "r1", "cluster_match": "", "severity": "P1", "priority": 80})},
     {"tool_name": "route_to_human", "input_match_rule": {"type": "any"}, "output": json.dumps({"oncall_number": "", "fallback": "callback"})},
     {"tool_name": "opt_out", "input_match_rule": {"type": "any"}, "output": json.dumps({"ok": True})},
+    {"tool_name": "lookup_info", "input_match_rule": {"type": "any"}, "output": json.dumps({
+        "answer": "Nearest: Pasadena Convention Center, 300 E Green St, about 2 miles. Used as an evacuation shelter during the Eaton fire; open only when activated. Confirm via 211 before going.",
+        "source": "cityofpasadena.net", "resource_name": "Pasadena Convention Center", "transfer_number": ""})},
     {"tool_name": "schedule_callback", "input_match_rule": {"type": "any"}, "output": json.dumps({"code": "D-417", "eta_text": "about 20 minutes"})},
 ]
 OPEN = {"role": "agent", "content": "This call is recorded for a USC student project. Thanks for calling the DIZA Community Line. How can I help?"}
@@ -45,6 +48,8 @@ CASES = [
      ["flag_urgent"], ["911"], []),
     ("chinese_p0", "inbound_zh", [{"role": "agent", "content": "请问有什么可以帮您？"}, {"role": "user", "content": "我爸爸倒在地上，没有呼吸了！"}],
      ["flag_urgent"], ["911"], []),
+    ("shelter_confirm_211", "inbound", [OPEN, {"role": "user", "content": "Where's the nearest shelter? I'm near Lake and Woodbury in Altadena."}],
+     ["lookup_info"], ["211", "2-1-1"], ["is open now", "it's open"]),
     ("korean_switch", "inbound", [OPEN, {"role": "user", "content": "Korean please. 한국어 할 수 있어요?"}],
      ["agent_swap"], [], []),
 ]

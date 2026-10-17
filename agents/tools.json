@@ -173,7 +173,7 @@
   "lookup_info": {
     "type": "custom",
     "name": "lookup_info",
-    "description": "Look up approved, current information: shelters, evacuation orders, road closures, resources, hotlines, campus info. Never guess instead of calling this.",
+    "description": "Look up approved, current information. Two kinds: (1) programs, hotlines and services (bills, benefits, counseling, how to report something): call immediately with location_text and needs empty, without asking where the caller is; (2) the nearest suitable place (shelter, cooling or charging center, food, health center): pass where the caller is and only the needs they mentioned. Also evacuation orders and road closures. Never guess instead of calling this.",
     "url": "${BASE_URL}/retell/fn/lookup_info",
     "method": "POST",
     "parameters": {
@@ -183,13 +183,26 @@
           "type": "string",
           "description": "The caller's question, in their words."
         },
+        "location_text": {
+          "type": "string",
+          "description": "Only for questions about a nearby place: cross streets, building, landmark or neighborhood the caller gave. Empty string otherwise."
+        },
+        "needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Only needs the caller already mentioned that change the answer (wheelchair, pets, oxygen_power, no_car, tonight). Empty list otherwise; don't ask just to fill this."
+        },
         "zone_id": {
           "type": "string",
           "description": "Zone id if known, else empty."
         }
       },
       "required": [
-        "question"
+        "question",
+        "location_text",
+        "needs"
       ]
     },
     "args_at_root": false,
@@ -198,7 +211,11 @@
     "speak_after_execution": true,
     "speak_during_execution": true,
     "execution_message_description": "In the caller's language, say a very short line like: \"Let me check that.\"",
-    "execution_message_type": "prompt"
+    "execution_message_type": "prompt",
+    "response_variables": {
+      "resource_name": "resource_name",
+      "resource_transfer_number": "transfer_number"
+    }
   },
   "create_request": {
     "type": "custom",
@@ -781,5 +798,22 @@
     "keep_current_language": false,
     "keep_current_voice": true,
     "speak_during_execution": false
+  },
+  "transfer_to_resource": {
+    "type": "transfer_call",
+    "name": "transfer_to_resource",
+    "description": "Transfer the caller to the place or hotline lookup_info just returned. Only when lookup_info returned a non-empty transfer_number and the caller agreed. Never for emergencies (those are 911) or self-harm (988).",
+    "transfer_destination": {
+      "type": "predefined",
+      "number": "{{resource_transfer_number}}"
+    },
+    "transfer_option": {
+      "type": "cold_transfer",
+      "show_transferee_as_caller": false,
+      "transfer_ring_duration_ms": 30000
+    },
+    "speak_during_execution": true,
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"Connecting you to {{resource_name}} now.\""
   }
 }
