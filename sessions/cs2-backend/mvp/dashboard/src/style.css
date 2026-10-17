@@ -8,3 +8,4 @@
 .place-pin{background:#fff;border:2px solid #4d6a5a;border-radius:2px}.leaflet-container{font-family:'DM Sans',sans-serif}
 @media(max-width:800px){.map{height:300px}}
 .osm-tiles{filter:saturate(.35) brightness(1.04)}
+.team{margin-top:20px}

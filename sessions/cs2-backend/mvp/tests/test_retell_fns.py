@@ -74,6 +74,12 @@ class RetellFunctions(unittest.TestCase):
    self.assertEqual((r['lat'],r['lon']),(34.18,-118.13))
   finally:res.geocode=real
   self.assertTrue(all(p['lat'] is not None for p in self.state()['places']))
+ def test_stuck_responder_freed_without_call_ended(self):
+  import backend.app.main as m
+  self.assertEqual(self.fn('route_to_human',{'needs':['evac_logistics'],'language':'es','severity':'P1','summary':'x'},{**CALL,'call_id':'c11'})['oncall_number'],'+15555550001')
+  with m.connect() as c:c.execute('UPDATE routings SET created=created-?',(m.ROUTE_HOLD+1,))
+  m.expire()
+  self.assertEqual(next(r for r in self.state()['responders'] if r['id']=='t1')['status'],'available')
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])
