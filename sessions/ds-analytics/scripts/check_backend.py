@@ -16,7 +16,7 @@ import sys, unittest
 from unittest.mock import patch
 suite = unittest.TestLoader().discover('tests', pattern=sys.argv[1])
 with patch('backend.app.main.sync_calls', return_value=None), \\
-     patch('backend.app.main.geocode_pending', return_value=None, create=True):
+     patch('backend.app.resources.geocode', return_value=None):
     result = unittest.TextTestRunner(verbosity=1).run(suite)
 raise SystemExit(0 if result.wasSuccessful() else 1)
 """

@@ -57,7 +57,7 @@
 - The 40-case classifier evaluation passes, including nine expected P0 labels when counting the severity-floor compliance case.
   This is synthetic classifier evidence and does not establish live agent safety.
 - All 54 analysis tests pass and Ruff lint/format checks pass.
-- All 30 existing backend tests pass when their conflicting module-level environments are isolated with `scripts/check_backend.py`.
+- All 31 existing backend tests pass when their conflicting module-level environments are isolated with `scripts/check_backend.py`.
   The existing dashboard also builds successfully in a disposable copy.
 
 ## Open questions
