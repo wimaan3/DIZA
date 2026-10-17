@@ -48,6 +48,26 @@
    - the MCP can `get-agent`
 7. Hand CS#2 the agent IDs, KB IDs, number, and the webhook-badged key; record the IDs (not keys) in `sessions/cs1-retell/SESSION_CONTEXT.md`.
 
+## How teammates get your Retell wiring (sharing rules)
+
+Retell config lives in two places, so keep them in sync:
+1. **The Retell workspace** (live). **Invite all 3 teammates** to the workspace (Settings → Members): they see the same agents, numbers, KBs, call history and analytics in the dashboard.
+2. **Git `main`** (source of truth). Everything that isn't secret is committed:
+   - `agents/prompts/*.md`: the prompts
+   - `agents/*.agent.json`, `agents/*.llm.json`: full agent + LLM config exported by `agents/pull.py` (voice, language, functions with their URLs, transfer settings, boosted keywords, webhook events, post-call fields)
+   - `agents/retell.ids.json`: **non-secret IDs**: agent IDs, LLM IDs, KB IDs, phone number, version numbers, which tag is `prod`/`staging`
+   - `agents/forms/*.yaml`, `config/*.yaml`
+   - **Workflow:**
+     - **edit in git → PR → merge → `python agents/push.py --env staging|prod`** (creates a version, publishes, moves the tag)
+     - If anyone edits in the Retell dashboard: **run `python agents/pull.py` immediately** and open a PR, so git and Retell never drift.
+     - Only publish `prod` from `main`.
+3. **Secrets never go in git:**
+   - `RETELL_API_KEY`, the webhook-badged key, Twilio, Supabase keys
+   - Share them once, privately (password manager or Signal). Each person puts them in their local `.env` (template: `.env.example`).
+   - The deployed backend gets them as Railway/Fly secrets.
+4. **MCP:** each teammate who needs it connects their *own* Claude Code with the `claude mcp add …` command above, using a key you give them. CS#2 needs API access for `create-phone-call`, `get-concurrency` and `update-live-call` from the backend.
+5. **Changelog:** every `push.py` run appends a line to `agents/CHANGELOG.md` (version, tag, what changed, commit). Twist proof and eval scoreboard versions come from here.
+
 ## Tasks
 
 ### P0: tonight → M0 (Fri 11:30 PM)
