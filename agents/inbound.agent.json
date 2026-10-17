@@ -142,6 +142,11 @@
         "abandoned",
         "voicemail"
       ]
+    },
+    {
+      "type": "boolean",
+      "name": "feature_consent",
+      "description": "Drill calls only: true if the caller agreed we may use a clip of the call publicly. False if they declined or were not asked."
     }
   ]
 }

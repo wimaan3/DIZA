@@ -28,6 +28,8 @@ def main():
     out = AGENTS_DIR / "remote"
     out.mkdir(exist_ok=True)
     for name, ref in ids.items():
+        if name == "knowledge_bases":
+            continue
         agent = call("GET", f"/get-agent/{ref['agent_id']}")
         llm = call("GET", f"/get-retell-llm/{ref['llm_id']}")
         (out / f"{name}.agent.json").write_text(json.dumps(clean(agent), indent=2, ensure_ascii=False) + "\n")

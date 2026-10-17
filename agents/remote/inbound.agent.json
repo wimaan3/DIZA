@@ -132,6 +132,11 @@
       "description": "How the call ended.",
       "name": "outcome",
       "type": "enum"
+    },
+    {
+      "description": "Drill calls only: true if the caller agreed we may use a clip of the call publicly. False if they declined or were not asked.",
+      "name": "feature_consent",
+      "type": "boolean"
     }
   ],
   "post_call_analysis_model": "gpt-4.1-mini",

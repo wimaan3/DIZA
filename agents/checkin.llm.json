@@ -14,6 +14,8 @@
     "set_reminder",
     "notify_contact",
     "lookup_info",
+    "book_appointment",
+    "record_consent",
     "end_call"
   ],
   "model": "gpt-4.1-mini",
@@ -39,7 +41,13 @@
     "needs": "",
     "reason": "",
     "consent_status": "active",
-    "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?"
+    "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?",
+    "lang_name": "",
+    "lang_code": "",
+    "lang_911": ""
   },
-  "knowledge_base_ids": []
+  "_knowledge_bases": [
+    "line-policy",
+    "la-resources"
+  ]
 }

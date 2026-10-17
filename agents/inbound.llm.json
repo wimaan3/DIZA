@@ -20,6 +20,15 @@
     "check_status",
     "opt_out",
     "register_volunteer",
+    "start_form",
+    "fill_form",
+    "submit_form",
+    "request_escort",
+    "book_appointment",
+    "send_link",
+    "record_consent",
+    "swap_to_korean",
+    "swap_to_chinese",
     "end_call"
   ],
   "model": "gpt-4.1-mini",
@@ -45,7 +54,14 @@
     "needs": "",
     "reason": "",
     "consent_status": "active",
-    "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?"
+    "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?",
+    "lang_name": "",
+    "lang_code": "",
+    "lang_911": ""
   },
-  "knowledge_base_ids": []
+  "_knowledge_bases": [
+    "line-policy",
+    "la-resources",
+    "campus-faq"
+  ]
 }

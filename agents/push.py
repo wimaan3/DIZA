@@ -73,6 +73,8 @@ def build_llm(name, ids, env, values):
             tool["agent_version"] = env["swap_version"]
         tools.append(tool)
     body = {k: v for k, v in spec.items() if not k.startswith("_")}
+    kb_ids = ids.get("knowledge_bases", {})
+    body["knowledge_base_ids"] = [kb_ids[k] for k in spec.get("_knowledge_bases", []) if k in kb_ids]
     body["general_prompt"] = prompt
     body["general_tools"] = tools
     return check_placeholders(name, substitute(body, values, set()))
