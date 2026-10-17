@@ -65,13 +65,17 @@ def once(name, call, args, make):
     return out
 
 
+def person_number(call):
+    # On outbound calls (alerts, check-ins, welfare) from_number is our own line; the person is to_number.
+    return (call.get('to_number') if call.get('direction') == 'outbound' else call.get('from_number')) or ''
+
+
 def last4(call):
-    digits = re.sub(r'\D', '', call.get('from_number') or '')
-    return digits[-4:]
+    return re.sub(r'\D', '', person_number(call))[-4:]
 
 
 def caller_hash(call):
-    return hashlib.sha256((call.get('from_number') or call['call_id']).encode()).hexdigest()
+    return hashlib.sha256((person_number(call) or call['call_id']).encode()).hexdigest()
 
 
 def new_case(call, type_, status, payload, pool='general_helper'):
