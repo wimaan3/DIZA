@@ -7,7 +7,9 @@ Nothing here dials, texts or dispatches anyone: requests become cases a person m
 import hashlib, json, os, random, re, time
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
-from .main import ROOT, Report, connect, event, offer, save_report, verified_body
+from pydantic import BaseModel, Field
+from . import resources
+from .main import DEMO, ROOT, Report, app, connect, event, offer, save_report, verified_body
 
 router = APIRouter(prefix='/retell/fn')
 def forms_dir():
@@ -24,6 +26,7 @@ def init_fns():
         CREATE TABLE IF NOT EXISTS routings(call_id TEXT,responder_id TEXT,created REAL);
         CREATE TABLE IF NOT EXISTS consents(caller_hash TEXT PRIMARY KEY,do_not_call INTEGER DEFAULT 0,analytics INTEGER DEFAULT 1,feature INTEGER DEFAULT 0,updated REAL);
         CREATE TABLE IF NOT EXISTS kb_gaps(id INTEGER PRIMARY KEY AUTOINCREMENT,call_id TEXT,question TEXT,created REAL);
+        CREATE TABLE IF NOT EXISTS kb_items(id INTEGER PRIMARY KEY AUTOINCREMENT,question TEXT,answer TEXT,source TEXT,approved_by TEXT,created REAL);
         ''')
         # Real human-in-the-loop phones come from the environment only, never from git:
         # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics,lang:en"}]'
@@ -170,10 +173,13 @@ async def route_to_human(req: Request):
 @router.post('/lookup_info')
 async def lookup_info(req: Request):
     call, args = await parse(req)
+    question = (args.get('question') or '')[:500]
     with connect() as c:
-        c.execute('INSERT INTO kb_gaps(call_id,question,created) VALUES(?,?,?)', (call['call_id'], (args.get('question') or '')[:500], time.time()))
-    # No approved live answers in this MVP yet; logged as a knowledge gap for a person to answer.
-    return {'answer': '', 'gap_logged': True}
+        found = resources.lookup(c, question, args.get('location_text') or '', args.get('needs') or [], drill_mode=DEMO)
+        if not found:
+            c.execute('INSERT INTO kb_gaps(call_id,question,created) VALUES(?,?,?)', (call['call_id'], question, time.time()))
+    # Unanswered questions are logged for a supervisor to answer once (POST /api/kb_items) for every later caller.
+    return found or {'answer': '', 'gap_logged': True, 'resource_name': '', 'transfer_number': ''}
 
 
 @router.post('/check_status')
@@ -304,3 +310,31 @@ async def submit_form(req: Request):
             c.execute("UPDATE cases SET status='new',updated=? WHERE code=?", (time.time(), code))
             event(c, code, f"Form {form['id']} submitted by phone agent · waiting for a person in {row['pool']}")
     return {'code': code, 'pool': row['pool'], 'status': 'new', 'next_step_text': form.get('next_step_text', 'A person on our team will follow up.')}
+
+
+# --- Supervisor: answer a logged question once; lookup_info then serves it to every caller ---
+
+class KbItem(BaseModel):
+    question: str = Field(min_length=3, max_length=500)
+    answer: str = Field(min_length=3, max_length=1000)
+    source: str = Field(default='', max_length=300)
+    approved_by: str = Field(min_length=1, max_length=100)
+    gap_id: int | None = None
+
+
+@app.post('/api/kb_items')
+def approve_kb_item(item: KbItem):
+    # Facts only: never caller-specific information (SYSTEM_SPEC 2.4). /api/* is behind OPS_API_TOKEN when set.
+    with connect() as c:
+        c.execute('INSERT INTO kb_items(question,answer,source,approved_by,created) VALUES(?,?,?,?,?)',
+                  (item.question, item.answer, item.source, item.approved_by, time.time()))
+        if item.gap_id is not None:
+            c.execute('DELETE FROM kb_gaps WHERE id=?', (item.gap_id,))
+    return {'ok': True}
+
+
+@app.get('/api/kb')
+def kb_state():
+    with connect() as c:
+        return {'gaps': [dict(r) for r in c.execute('SELECT id,question,created FROM kb_gaps ORDER BY created DESC LIMIT 100')],
+                'items': [dict(r) for r in c.execute('SELECT * FROM kb_items ORDER BY created DESC')]}
