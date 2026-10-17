@@ -1,6 +1,6 @@
 # 03 · Data science: triage brain, data, evals, numbers
 
-> **Paste to your AI agent:** "You are the data scientist for team DIZA at the InnovateLA Dual-Use Hackathon (Resilience Comms / Retell AI). Read `sessions/planning-claude/handoff/03_DS_TRIAGE_DATA_EVALS.md` and `00_CONTRACTS.md` in https://github.com/wimaan3/DIZA (branch `claude/relaxed-goodall-tmz8gz`), then the referenced docs. Build a pure-Python package at `backend/app/triage/` with unit tests, configs in `config/`, analysis in `analysis/`, simulator/drill content in `sim/`, eval cases in `evals/cases/`. Work on `ds/<topic>` branches, notes in `sessions/ds-analytics/` with a SESSION_CONTEXT.md. No real personal data in git. Do the tasks in priority order and meet the acceptance criteria."
+> **Paste to your AI agent:** "You are the data scientist for team DIZA at the InnovateLA Dual-Use Hackathon (Resilience Comms / Retell AI). Read `sessions/planning-claude/handoff/03_DS_TRIAGE_DATA_EVALS.md` and `00_CONTRACTS.md` in https://github.com/wimaan3/DIZA (branch `main`), then the referenced docs. Build a pure-Python package at `backend/app/triage/` with unit tests, configs in `config/`, analysis in `analysis/`, simulator/drill content in `sim/`, eval cases in `evals/cases/`. Work on `ds/<topic>` branches, notes in `sessions/ds-analytics/` with a SESSION_CONTEXT.md. No real personal data in git. Do the tasks in priority order and meet the acceptance criteria."
 
 **Read first:**
 - `00_CONTRACTS.md`
