@@ -128,3 +128,30 @@ Retell voice agents can use **MCP tools** (Streamable HTTP, public URL, header a
    - Short prompts also avoid Retell's long-prompt token surcharge.
 4. **Our own backend LLM calls** (topic naming, FAQ drafting, case summaries, digest). If we call Claude directly, use **Anthropic prompt caching** (`cache_control` on the static system prompt + KB context). Repeated calls then read the prefix from cache at a fraction of the input price and with lower latency.
 5. **Measure it:** cache hit rate, median function latency and "answered without a human" rate go on the dashboard. That's a nice flood-drill metric.
+
+## 9. Capacity and rate limits (verified: docs.retellai.com/deploy/concurrency)
+
+- **There is no cap on total calls or callers.** Agents handle unlimited calls; the only limit is **calls at the same time**.
+- **Concurrency:** **20 concurrent calls** per workspace by default (pay-as-you-go). Raise it in Settings → Limits, billed monthly (~$8 per slot per month on the pricing page).
+- **Burst mode (turn on before the drills):**
+  - Calls can go above the limit up to **min(3× limit, limit + 300)**. With 20, that's **60 concurrent**.
+  - Calls that start in burst carry **+$0.10/min** for their whole duration. Cheap for a 20-minute drill; no monthly commitment.
+  - Needs the Admin role.
+- **When full (no burst):**
+  - **Inbound:** Retell **queues the caller ~40 s**. If a slot opens, the call connects.
+  - If no slot opens, it **transfers to the number's fallback number**. If there's no fallback, the call ends with `concurrency_limit_reached`.
+  - **→ Set a fallback number:** a Twilio number playing "we're receiving many calls, leave your name, location and what's happening" (voicemail → transcribed → our queue → callback). That's our overflow design, using a built-in feature.
+  - **Outbound:** rejected when full, unless burst is on. Our scheduler must retry on rejection, and `reserved_inbound_concurrency` (e.g. 8 of 20) keeps outbound from starving inbound.
+- **Calls per second:** set per telephony provider (Twilio/Telnyx) under Adjust Limit. No published default; batch calls start only as slots free up.
+- **API rate limits:** none published. Excess gets "Account rate limited". Poll `get-concurrency` every ~2 s at most.
+- **Other limits:**
+  - max call length 1 h by default (2 h max)
+  - prompt max 32,768 tokens; **prompts over 4,000 tokens cost extra**, so keep prompts short
+- **Throughput math:** with ~1.5 min average calls,
+  - 20 concurrent ≈ **13 calls/min ≈ 800/hour**
+  - burst 60 ≈ **40 calls/min ≈ 2,400/hour**
+  - This covers a 100-person room flood.
+- **Account-level brakes:**
+  - **KYC** is required for outbound.
+  - New numbers with many unanswered outbound calls get labelled **spam**. Only call consenting numbers.
+- **Budget:** 100 calls × 1.5 min × ~$0.10 ≈ $15; in burst ≈ $30.

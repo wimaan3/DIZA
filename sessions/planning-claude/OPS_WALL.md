@@ -67,7 +67,7 @@
 **Guaranteeing it works:**
 - **Concurrency:** 20 free slots.
   - Either buy extra slots for the weekend (~$8/slot/month), or let the overflow show off the callback queue on purpose.
-  - Check *what a caller hears* when Retell is at its limit (U) before Sunday.
+  - **Verified:** at the limit, inbound callers are queued ~40 s, then sent to the number's **fallback number**. Turn on **burst** (up to 60 concurrent, +$0.10/min) and set a fallback voicemail line.
   - Fallback: role cards stagger callers ("call at 0 s / 20 s / 40 s").
   - Set `reserved_inbound_concurrency` so outbound welfare calls can't block inbound.
 - **Room noise:** dozens of people talking at once in one hall. Turn on **background-speech removal** denoising (+$0.005/min). Cards say "step to the side and hold the phone close".
