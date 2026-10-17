@@ -1,0 +1,13 @@
+id: benefits_help
+label: Help preparing disaster-aid paperwork
+route_pool: general_helper
+route_skill: general
+fields:
+  - {name: person_name, required: true, ask: "What's your name?"}
+  - {name: program, required: false, ask: "Do you know which program, like FEMA or the county?"}
+  - {name: what_happened, required: true, sensitive: true, ask: "Briefly, what happened to your home or belongings?"}
+  - {name: preferred_times, required: true, ask: "When could a helper call you?"}
+  - {name: callback_phone, required: true, validate: phone, ask: "What number should they call?"}
+readback: "Paperwork help for {person_name}, {program}. A helper will call {callback_phone} around {preferred_times}."
+safety_check: "Never collect Social Security, bank or payment numbers on the phone."
+next_step_text: "A helper will call to walk you through it. We never ask for Social Security or bank numbers by phone."

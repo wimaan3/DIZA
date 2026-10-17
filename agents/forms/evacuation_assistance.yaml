@@ -1,0 +1,16 @@
+id: evacuation_assistance
+label: Help to evacuate
+route_pool: trained_responder
+route_skill: evac_logistics
+fields:
+  - {name: person_name, required: true, ask: "Who needs help leaving?"}
+  - {name: location_text, required: true, ask: "What's the address or nearest cross streets?"}
+  - {name: people_count, required: true, validate: int, ask: "How many people need to leave?"}
+  - {name: mobility, required: true, ask: "Can everyone walk, or does anyone use a wheelchair, walker, or need to be carried?"}
+  - {name: medical_equipment, required: false, sensitive: true, ask: "Does anyone rely on oxygen, dialysis, or other equipment?"}
+  - {name: pets, required: false, ask: "Any pets coming too?"}
+  - {name: has_vehicle, required: true, validate: enum, choices: ["yes", "no"], ask: "Do you have a car you can use?"}
+  - {name: callback_phone, required: true, validate: phone, ask: "What number can we reach you on?"}
+readback: "Evacuation help for {people_count} at {location_text}. Mobility: {mobility}. Car: {has_vehicle}. We'll call {callback_phone}."
+safety_check: "If fire or smoke is at the home now, or anyone is trapped, stop: P0, tell them to call 911."
+next_step_text: "A trained responder will call you back as fast as possible. If danger reaches you, call 911."

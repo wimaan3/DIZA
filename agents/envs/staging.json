@@ -1,0 +1,11 @@
+{
+  "_comment": "Staging: updates each agent's draft version only (nothing is published). Agent swaps point at the draft ('latest'). Values written ${LIKE_THIS} come from your shell or the repo-root .env, never from git.",
+  "publish": false,
+  "swap_version": "latest",
+  "values": {
+    "BASE_URL": "${PUBLIC_BASE_URL}",
+    "LINE_NAME": "DIZA Community Line",
+    "RECORDING_NOTICE": "This call is recorded for a USC student project.",
+    "CRISIS_LINE_NUMBER": "${STAGING_CRISIS_LINE_NUMBER}"
+  }
+}

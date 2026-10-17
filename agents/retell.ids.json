@@ -1,0 +1,40 @@
+{
+  "crisis": {
+    "agent_id": "agent_bdd2bd8327e2f2b8f556d3a8c4",
+    "llm_id": "llm_627c8c204c909a70575525a77d8f"
+  },
+  "inbound": {
+    "agent_id": "agent_3a4eb95c4f1db9410e9b393952",
+    "llm_id": "llm_d580bade2d274e59c85f0057822a"
+  },
+  "checkin": {
+    "agent_id": "agent_38e6a8853b75e3f28ec159496b",
+    "llm_id": "llm_70ffada52da62a93cd01588a2ed3"
+  },
+  "welfare": {
+    "agent_id": "agent_3439382a91c5988203681e5a51",
+    "llm_id": "llm_b8a398791945b78171e435732ef7"
+  },
+  "knowledge_bases": {
+    "campus-faq": "knowledge_base_09c7a6753610f42b",
+    "la-resources": "knowledge_base_c0099a222fa0ac59",
+    "line-policy": "knowledge_base_07399b2add8b1e41",
+    "guides": "knowledge_base_629586b83288a1b2"
+  },
+  "inbound_ko": {
+    "agent_id": "agent_4fd0d84afe65a05e95749a857c",
+    "llm_id": "llm_8602d9e072e5fc4939be5698e009"
+  },
+  "inbound_zh": {
+    "agent_id": "agent_e17c7e01cb451d54f383e0fb4b",
+    "llm_id": "llm_e4c6313c4152518aac784f24db70"
+  },
+  "alert": {
+    "agent_id": "agent_84c4ab107b9f4ad840d790eda8",
+    "llm_id": "llm_0d873218ba5ad13bae6939fefad3"
+  },
+  "services": {
+    "agent_id": "agent_be27435a7b8f47693935b59424",
+    "llm_id": "llm_aedf435263fe235c8b8a9596e9f6"
+  }
+}

@@ -1,0 +1,836 @@
+{
+  "submit_report": {
+    "type": "custom",
+    "name": "submit_report",
+    "description": "Save a hazard or welfare report. Returns report_id, severity and cluster_match.",
+    "url": "${BASE_URL}/retell/fn/submit_report",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "hazard": {
+          "type": "string",
+          "description": "What is happening, a few words."
+        },
+        "location_text": {
+          "type": "string",
+          "description": "Confirmed address, cross streets or landmark."
+        },
+        "people_at_risk": {
+          "type": "integer",
+          "description": "Number of people at risk, 0 if unknown."
+        },
+        "injured_or_trapped": {
+          "type": "boolean",
+          "description": "Anyone injured or trapped."
+        },
+        "vulnerability": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "e.g. wheelchair, oxygen, elderly_alone, baby, no_car, pets."
+        },
+        "language": {
+          "type": "string",
+          "description": "Language code, e.g. en, es."
+        },
+        "drill_code": {
+          "type": "string",
+          "description": "Drill code or empty."
+        }
+      },
+      "required": [
+        "hazard",
+        "location_text",
+        "people_at_risk",
+        "injured_or_trapped",
+        "vulnerability",
+        "language"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": true,
+    "execution_message_description": "In the caller's language, say a very short line like: \"Okay, I'm logging that now.\"",
+    "execution_message_type": "prompt"
+  },
+  "flag_urgent": {
+    "type": "custom",
+    "name": "flag_urgent",
+    "description": "Mark this call life-safety urgent (P0) or self-harm so a supervisor sees it now.",
+    "url": "${BASE_URL}/retell/fn/flag_urgent",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "e.g. trapped, not_breathing, chest_pain, self_harm, keypad_hurt."
+        },
+        "keyword": {
+          "type": "string",
+          "description": "The caller's exact words."
+        }
+      },
+      "required": [
+        "reason",
+        "keyword"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "route_to_human": {
+    "type": "custom",
+    "name": "route_to_human",
+    "description": "Find an available person on our team. Returns oncall_number (empty if nobody), responder_name, brief, match_reason.",
+    "url": "${BASE_URL}/retell/fn/route_to_human",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Skills, e.g. medical, mental_health, evac_logistics, listener, lang:ko."
+        },
+        "language": {
+          "type": "string",
+          "description": "Language code."
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "description": "Severity: P0 life in danger now, P1 active hazard, P2 needs a person soon, P3 routine."
+        },
+        "summary": {
+          "type": "string",
+          "description": "One sentence for the person taking over."
+        }
+      },
+      "required": [
+        "needs",
+        "language",
+        "severity",
+        "summary"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": true,
+    "execution_message_description": "In the caller's language, say a very short line like: \"Let me find someone for you.\"",
+    "execution_message_type": "prompt",
+    "response_variables": {
+      "oncall_number": "oncall_number",
+      "responder_name": "responder_name",
+      "brief": "brief",
+      "match_reason": "match_reason"
+    }
+  },
+  "schedule_callback": {
+    "type": "custom",
+    "name": "schedule_callback",
+    "description": "Queue a callback from a person. Returns a code and ETA.",
+    "url": "${BASE_URL}/retell/fn/schedule_callback",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "e.g. no_responder_available, silent_caller, distress."
+        },
+        "preferred_time": {
+          "type": "string",
+          "description": "When, or empty for ASAP."
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "lookup_info": {
+    "type": "custom",
+    "name": "lookup_info",
+    "description": "Approved current info: programs and hotlines, or the nearest suitable place (shelter, cooling or charging, food, health, pets). Returns answer, resource_name, transfer_number.",
+    "url": "${BASE_URL}/retell/fn/lookup_info",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "The caller's question."
+        },
+        "location_text": {
+          "type": "string",
+          "description": "Only for a nearby place: cross streets, landmark or neighborhood. Otherwise empty."
+        },
+        "needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Only needs the caller mentioned: wheelchair, pets, oxygen_power, no_car, tonight. Otherwise empty."
+        },
+        "zone_id": {
+          "type": "string",
+          "description": "Zone id or empty."
+        }
+      },
+      "required": [
+        "question",
+        "location_text",
+        "needs"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": true,
+    "execution_message_description": "In the caller's language, say a very short line like: \"Let me check that.\"",
+    "execution_message_type": "prompt",
+    "response_variables": {
+      "resource_name": "resource_name",
+      "resource_transfer_number": "transfer_number"
+    }
+  },
+  "create_request": {
+    "type": "custom",
+    "name": "create_request",
+    "description": "Create a help request (errand, ride, check on someone, supplies, other). Returns a code.",
+    "url": "${BASE_URL}/retell/fn/create_request",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "errand, ride, check_on_person, supplies or other."
+        },
+        "details": {
+          "type": "string",
+          "description": "One sentence."
+        },
+        "location_text": {
+          "type": "string",
+          "description": "Where."
+        }
+      },
+      "required": [
+        "type",
+        "details",
+        "location_text"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "set_reminder": {
+    "type": "custom",
+    "name": "set_reminder",
+    "description": "Schedule a reminder call. Returns a code.",
+    "url": "${BASE_URL}/retell/fn/set_reminder",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "when": {
+          "type": "string",
+          "description": "In their words."
+        },
+        "message": {
+          "type": "string",
+          "description": "What to remind them."
+        }
+      },
+      "required": [
+        "when",
+        "message"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "enroll_checkin": {
+    "type": "custom",
+    "name": "enroll_checkin",
+    "description": "Enroll a person in check-in calls; pending until they agree. Returns a code.",
+    "url": "${BASE_URL}/retell/fn/enroll_checkin",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "person_name": {
+          "type": "string",
+          "description": "Name."
+        },
+        "person_phone": {
+          "type": "string",
+          "description": "Digits only."
+        },
+        "language": {
+          "type": "string",
+          "description": "Language code."
+        },
+        "needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "e.g. mobility, medication."
+        },
+        "frequency": {
+          "type": "string",
+          "description": "daily or weekly."
+        },
+        "enrolled_by": {
+          "type": "string",
+          "description": "self, or caller name and relationship."
+        }
+      },
+      "required": [
+        "person_name",
+        "person_phone",
+        "language",
+        "needs",
+        "frequency",
+        "enrolled_by"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "notify_contact": {
+    "type": "custom",
+    "name": "notify_contact",
+    "description": "Queue a message to the caller's contact. Requires consent true.",
+    "url": "${BASE_URL}/retell/fn/notify_contact",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "contact_name": {
+          "type": "string",
+          "description": "Name."
+        },
+        "contact_phone": {
+          "type": "string",
+          "description": "Digits only."
+        },
+        "message": {
+          "type": "string",
+          "description": "Short message."
+        },
+        "consent": {
+          "type": "boolean",
+          "description": "Caller explicitly agreed."
+        }
+      },
+      "required": [
+        "contact_name",
+        "contact_phone",
+        "message",
+        "consent"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "check_status": {
+    "type": "custom",
+    "name": "check_status",
+    "description": "Status of a request by code and the last 4 digits of the caller's phone.",
+    "url": "${BASE_URL}/retell/fn/check_status",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "e.g. D-417."
+        },
+        "phone_last4": {
+          "type": "string",
+          "description": "Last 4 digits."
+        }
+      },
+      "required": [
+        "code",
+        "phone_last4"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "opt_out": {
+    "type": "custom",
+    "name": "opt_out",
+    "description": "Stop calls, analytics, or both and delete data.",
+    "url": "${BASE_URL}/retell/fn/opt_out",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "calls",
+            "analytics",
+            "all"
+          ],
+          "description": "calls, analytics, or all."
+        }
+      },
+      "required": [
+        "scope"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "register_volunteer": {
+    "type": "custom",
+    "name": "register_volunteer",
+    "description": "Register a volunteer as pending verification. Returns a code.",
+    "url": "${BASE_URL}/retell/fn/register_volunteer",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name."
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "e.g. medical, driver, translation."
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Languages spoken."
+        },
+        "availability": {
+          "type": "string",
+          "description": "When."
+        },
+        "area": {
+          "type": "string",
+          "description": "Neighborhood."
+        }
+      },
+      "required": [
+        "name",
+        "skills",
+        "languages",
+        "availability",
+        "area"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "transfer_to_human": {
+    "type": "transfer_call",
+    "name": "transfer_to_human",
+    "description": "Warm-transfer to the person route_to_human found.",
+    "transfer_destination": {
+      "type": "predefined",
+      "number": "{{oncall_number}}"
+    },
+    "transfer_option": {
+      "type": "warm_transfer",
+      "show_transferee_as_caller": false,
+      "transfer_ring_duration_ms": 20000,
+      "on_hold_music": "ringtone",
+      "private_handoff_option": {
+        "type": "prompt",
+        "prompt": "Brief the responder in two short sentences: who is calling and in what language, where they are, what is happening and how urgent, and why this responder was chosen ({{match_reason}}). Then say you're connecting them."
+      },
+      "public_handoff_option": {
+        "type": "static_message",
+        "message": "I've connected you with {{responder_name}}, who can help from here."
+      },
+      "agent_detection_timeout_ms": 30000
+    },
+    "speak_during_execution": true,
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"Connecting you now. Please stay on the line.\""
+  },
+  "transfer_to_crisis_line": {
+    "type": "transfer_call",
+    "name": "transfer_to_crisis_line",
+    "description": "Transfer to the suicide and crisis line.",
+    "transfer_destination": {
+      "type": "predefined",
+      "number": "{{crisis_line_number}}"
+    },
+    "transfer_option": {
+      "type": "cold_transfer",
+      "show_transferee_as_caller": false,
+      "transfer_ring_duration_ms": 30000
+    },
+    "speak_during_execution": true,
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"I'm connecting you now. Please stay on the line.\""
+  },
+  "swap_to_crisis": {
+    "type": "agent_swap",
+    "name": "swap_to_crisis",
+    "description": "Hand the call to crisis intake.",
+    "agent_id": "@agent:crisis",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": true,
+    "keep_current_voice": true,
+    "speak_during_execution": true,
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"Okay, stay with me.\""
+  },
+  "swap_to_inbound": {
+    "type": "agent_swap",
+    "name": "swap_to_inbound",
+    "description": "Hand the call back to the everyday line.",
+    "agent_id": "@agent:inbound",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": true,
+    "keep_current_voice": true
+  },
+  "end_call": {
+    "type": "end_call",
+    "name": "end_call",
+    "description": "End the call."
+  },
+  "start_form": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "name": "start_form",
+    "description": "Start an intake form with what the caller already said. Returns case_code and the fields still needed.",
+    "url": "${BASE_URL}/retell/fn/start_form",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "form_type": {
+          "type": "string",
+          "enum": [
+            "medical_appointment",
+            "evacuation_assistance",
+            "maintenance_request",
+            "escort_request",
+            "lost_item",
+            "shelter_need",
+            "checkin_enrollment",
+            "benefits_help"
+          ],
+          "description": "Form type."
+        },
+        "known_fields": {
+          "type": "object",
+          "description": "Field name to answer for everything already said; {} if nothing."
+        }
+      },
+      "required": [
+        "form_type",
+        "known_fields"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "fill_form": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "name": "fill_form",
+    "description": "Save form answers. Returns missing, invalid, complete and readback.",
+    "url": "${BASE_URL}/retell/fn/fill_form",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "case_code": {
+          "type": "string",
+          "description": "From start_form."
+        },
+        "fields": {
+          "type": "object",
+          "description": "Field name to answer."
+        }
+      },
+      "required": [
+        "case_code",
+        "fields"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "submit_form": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "name": "submit_form",
+    "description": "Submit a completed, confirmed form. Returns code and next_step_text.",
+    "url": "${BASE_URL}/retell/fn/submit_form",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "case_code": {
+          "type": "string",
+          "description": "From start_form."
+        },
+        "confirmed": {
+          "type": "boolean",
+          "description": "Caller confirmed the readback."
+        }
+      },
+      "required": [
+        "case_code",
+        "confirmed"
+      ]
+    },
+    "speak_during_execution": true,
+    "execution_message_description": "In the caller's language, say a very short line like: \"One moment.\"",
+    "execution_message_type": "prompt"
+  },
+  "request_escort": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "name": "request_escort",
+    "description": "Request a safety escort (walk or ride). Returns a code.",
+    "url": "${BASE_URL}/retell/fn/request_escort",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Pickup."
+        },
+        "to": {
+          "type": "string",
+          "description": "Destination."
+        },
+        "time": {
+          "type": "string",
+          "description": "When."
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "time"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "book_appointment": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "name": "book_appointment",
+    "description": "Book time with a person who has a skill (listener, housing, academics). Returns a code and slot.",
+    "url": "${BASE_URL}/retell/fn/book_appointment",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "with_skill": {
+          "type": "string",
+          "description": "e.g. mental_health, housing, academics."
+        },
+        "preferred_times": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "In their words."
+        }
+      },
+      "required": [
+        "with_skill",
+        "preferred_times"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "send_link": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "name": "send_link",
+    "description": "Text the caller a private status or photo-upload link for their code. Returns sent.",
+    "url": "${BASE_URL}/retell/fn/send_link",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Case code."
+        }
+      },
+      "required": [
+        "code"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "record_consent": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 0,
+    "speak_after_execution": true,
+    "name": "record_consent",
+    "description": "Record clip consent (drill calls) and analytics consent.",
+    "url": "${BASE_URL}/retell/fn/record_consent",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "feature_consent": {
+          "type": "boolean",
+          "description": "Agreed to a public clip."
+        },
+        "analytics_consent": {
+          "type": "boolean",
+          "description": "False if they opted out of statistics."
+        }
+      },
+      "required": []
+    },
+    "speak_during_execution": false
+  },
+  "swap_to_korean": {
+    "type": "agent_swap",
+    "name": "swap_to_korean",
+    "description": "Hand the call to the Korean line.",
+    "agent_id": "@agent:inbound_ko",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": true,
+    "speak_during_execution": false
+  },
+  "swap_to_chinese": {
+    "type": "agent_swap",
+    "name": "swap_to_chinese",
+    "description": "Hand the call to the Mandarin Chinese line.",
+    "agent_id": "@agent:inbound_zh",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": true,
+    "speak_during_execution": false
+  },
+  "swap_to_english_spanish": {
+    "type": "agent_swap",
+    "name": "swap_to_english_spanish",
+    "description": "Hand the call to the English/Spanish line.",
+    "agent_id": "@agent:inbound",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": true,
+    "speak_during_execution": false
+  },
+  "transfer_to_resource": {
+    "type": "transfer_call",
+    "name": "transfer_to_resource",
+    "description": "Transfer to the place or hotline lookup_info returned.",
+    "transfer_destination": {
+      "type": "predefined",
+      "number": "{{resource_transfer_number}}"
+    },
+    "transfer_option": {
+      "type": "cold_transfer",
+      "show_transferee_as_caller": false,
+      "transfer_ring_duration_ms": 30000
+    },
+    "speak_during_execution": true,
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"Connecting you to {{resource_name}} now.\""
+  },
+  "swap_to_services": {
+    "type": "agent_swap",
+    "name": "swap_to_services",
+    "description": "Hand the call to the help desk for requests, forms, escorts, appointments, reminders, sign-ups, status and volunteering.",
+    "agent_id": "@agent:services",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": true,
+    "keep_current_voice": true,
+    "speak_during_execution": false
+  }
+}

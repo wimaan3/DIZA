@@ -1,0 +1,15 @@
+# Approved alert. A person on the team fills in approved_by / approved_at; send_alert.py refuses without them.
+# Drill alerts are prefixed "This is a drill" automatically. Never send mode: live during the hackathon.
+id: drill-2026-10-17-altadena-01
+mode: drill            # drill | live
+zone_name: west Altadena
+source: lacounty.gov/emergency
+approved_by: ""        # name of the person approving this exact text
+approved_at: ""        # e.g. 2026-10-17T12:25-07:00
+messages:              # one entry per language; missing languages fall back to en
+  en:
+    message: "The county has issued an evacuation warning for west Altadena because of a brush fire."
+    action: "If you need extra time, use a wheelchair, or have pets, leave now. Everyone else, be ready to go."
+  es:
+    message: "El condado emitió una advertencia de evacuación para el oeste de Altadena por un incendio forestal."
+    action: "Si necesita más tiempo, usa silla de ruedas o tiene mascotas, salga ahora. Todos los demás, estén listos para salir."

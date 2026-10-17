@@ -1,0 +1,13 @@
+id: maintenance_request
+label: Maintenance or facilities issue
+route_pool: general_helper
+route_skill: facilities
+fields:
+  - {name: location, required: true, ask: "Which building and room?"}
+  - {name: issue, required: true, ask: "What's broken or wrong?"}
+  - {name: urgency, required: false, validate: enum, choices: ["today", "this_week", "whenever"], ask: "How soon does it need fixing?"}
+  - {name: best_time, required: false, ask: "When is a good time for someone to come by?"}
+  - {name: callback_phone, required: false, validate: phone, ask: "What's a good number in case they have questions?"}
+readback: "Maintenance request: {issue} at {location}."
+safety_check: "Gas smell, sparking, flooding near outlets, or smoke → hazard: hard rules / crisis intake instead."
+next_step_text: "Facilities will follow up. Your code lets you check the status anytime."

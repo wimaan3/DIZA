@@ -1,0 +1,15 @@
+id: medical_appointment
+label: Doctor or clinic appointment request (sandbox clinic)
+route_pool: general_helper
+route_skill: medical
+fields:
+  - {name: patient_name, required: true, ask: "What's the patient's name?"}
+  - {name: provider, required: true, ask: "Which clinic or doctor?"}
+  - {name: reason, required: true, sensitive: true, ask: "In a few words, what's the visit for?"}
+  - {name: preferred_times, required: true, ask: "What days and times work for you?"}
+  - {name: callback_phone, required: true, validate: phone, ask: "What's the best number to reach you?"}
+  - {name: needs_interpreter, required: false, validate: enum, choices: ["yes", "no"], ask: "Would you like an interpreter at the visit?"}
+  - {name: transport_needed, required: false, validate: enum, choices: ["yes", "no"], ask: "Do you need a ride there?"}
+readback: "Appointment request for {patient_name} at {provider}, for {reason}, preferred {preferred_times}. We'll call {callback_phone}."
+safety_check: "If symptoms sound urgent (chest pain, trouble breathing, stroke signs, severe bleeding), stop and give 911."
+next_step_text: "The clinic will confirm a time, and we'll call you back with it."
