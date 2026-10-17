@@ -37,8 +37,8 @@ def init():
         CREATE TABLE IF NOT EXISTS calls(call_id TEXT PRIMARY KEY,direction TEXT,agent TEXT,caller_last4 TEXT,status TEXT,started REAL,ended REAL,
           duration_s INTEGER,disconnection_reason TEXT,summary TEXT,sentiment TEXT,updated REAL);
         ''')
-        for col in ('lat REAL','lon REAL','geo_tried INTEGER DEFAULT 0'):  # map position, filled by geocode_pending()
-            try: c.execute(f'ALTER TABLE reports ADD COLUMN {col}')
+        for table,col in (('reports','lat REAL'),('reports','lon REAL'),('reports','geo_tried INTEGER DEFAULT 0'),('reports','gps_accuracy REAL'),('calls','transcript TEXT')):
+            try: c.execute(f'ALTER TABLE {table} ADD COLUMN {col}')  # added after launch; existing databases keep their rows
             except sqlite3.OperationalError: pass
         # Placeholder team for local runs only; init_fns() replaces it with DIZA_RESPONDERS when that is set.
         for row in [('alex','Alex Chen','facilities,logistics','available'),('sam','Sam Rivera','facilities,logistics,medical,safety','available'),('maya','Maya Patel','medical,safety','available')]:
@@ -122,9 +122,15 @@ def offer(c,qid):
     c.execute('INSERT INTO attempts VALUES(?,?,?,?,?)',(str(uuid.uuid4()),qid,candidate['id'],'offered',time.time()+TIMEOUT))
     event(c,qid,f"Offer visible in supporter inbox: {candidate['name']} · awaiting acceptance (no phone notification sent)")
 
+ROUTE_HOLD=int(os.getenv('ROUTE_HOLD_SECONDS','900'))
+
 def expire():
     with connect() as c:
         c.execute('BEGIN IMMEDIATE')
+        # A responder reserved for a phone transfer is freed by call_ended; if that webhook never comes, free them after ROUTE_HOLD.
+        for row in c.execute('SELECT call_id,responder_id FROM routings WHERE created<=?',(time.time()-ROUTE_HOLD,)).fetchall():
+            c.execute("UPDATE responders SET status='available' WHERE id=? AND status='busy'",(row['responder_id'],))
+            c.execute('DELETE FROM routings WHERE call_id=? AND responder_id=?',(row['call_id'],row['responder_id']))
         for a in c.execute("SELECT * FROM attempts WHERE status='offered' AND expires<=?",(time.time(),)).fetchall():
             c.execute("UPDATE attempts SET status='timed_out' WHERE id=?",(a['id'],))
             c.execute("UPDATE responders SET status='available' WHERE id=?",(a['responder_id'],))
@@ -137,6 +143,7 @@ async def lifespan(app):
     init()
     init_fns()
     init_alerts()
+    init_locate()
     async def worker():
         while True:
             expire()
@@ -180,7 +187,8 @@ def state():
           'attempts':[dict(r) for r in c.execute('SELECT * FROM attempts ORDER BY expires')],
           'events':[dict(r) for r in c.execute('SELECT * FROM events ORDER BY ts DESC LIMIT 100')],
           'cases':[dict(r) for r in c.execute('SELECT code,type,status,pool,created,updated FROM cases ORDER BY created DESC LIMIT 200')],
-          'calls':[dict(r) for r in c.execute('SELECT * FROM calls ORDER BY started DESC LIMIT 100')],
+          # Transcripts only for live and the 15 most recent calls, to keep the 1.5 s poll small.
+          'calls':[{**dict(r),'transcript':r['transcript'] if i<15 or r['status']=='live' else None} for i,r in enumerate(c.execute('SELECT * FROM calls ORDER BY started DESC LIMIT 100'))],
           'kb_gaps':[dict(r) for r in c.execute('SELECT id,question,created FROM kb_gaps ORDER BY created DESC LIMIT 50')],
           'alerts':list_alerts()['alerts'],'places':places()}
 
@@ -194,6 +202,13 @@ def submit(r:Report):
 def assign(qid:str):
     with connect() as c:
         c.execute('BEGIN IMMEDIATE'); offer(c,qid)
+    return {'ok':True}
+
+@app.post('/api/responders/{rid}/available')
+def responder_available(rid:str):
+    with connect() as c:
+        c.execute("UPDATE responders SET status='available' WHERE id=?",(rid,))
+        c.execute('DELETE FROM routings WHERE responder_id=?',(rid,))
     return {'ok':True}
 
 class Decision(BaseModel):
@@ -248,6 +263,12 @@ async def verified_body(req):
         raise HTTPException(401,'Invalid Retell signature')
     return json.loads(raw)
 
+def session_of(data):
+    # Voice functions send `call`; text-chat agents (SMS or the /text page) send `chat`. Treat a chat like a call.
+    if data.get('call'): return data['call']
+    chat=data.get('chat') or {}
+    return {**chat,'call_id':chat.get('chat_id',''),'direction':'inbound','channel':'text'} if chat.get('chat_id') else {}
+
 async def signed(req:Request):
     return await verified_body(req)
 
@@ -258,7 +279,7 @@ def inbound(data=Depends(signed)):
 @app.post('/retell/fn/submit_report')
 def retell_submit(data=Depends(signed)):
     args=data.get('args',{})
-    call_id=data.get('call',{}).get('call_id','')
+    call_id=session_of(data).get('call_id','')
     if not call_id: raise HTTPException(422,'call.call_id required')
     args['idempotency_key']=call_id+':'+hashlib.sha256(json.dumps(args,sort_keys=True).encode()).hexdigest()
     args['source']='retell'
@@ -292,30 +313,41 @@ def merge_into_p0(call_id,r):
 
 def log_call(data):
     # Every call the agents handle, from Retell's call_started / call_ended / call_analyzed webhooks. Last 4 digits only.
-    call=data.get('call') or {}
+    call=session_of(data)
     cid=call.get('call_id')
     if not cid: return
     from .retell_fns import person_number
-    analysis=call.get('call_analysis') or call.get('scrubbed_call_analysis') or {}  # PII-scrubbed storage sends the scrubbed copy
+    analysis=call.get('call_analysis') or call.get('scrubbed_call_analysis') or call.get('chat_analysis') or {}  # PII-scrubbed storage sends the scrubbed copy
     ended=(call.get('end_timestamp') or 0)/1000 or None
     started=(call.get('start_timestamp') or 0)/1000 or time.time()
-    status={'call_started':'live','call_ended':'ended','call_analyzed':'ended'}.get(data.get('event'),'live')
+    status={'call_started':'live','call_ended':'ended','call_analyzed':'ended','chat_ended':'ended','chat_analyzed':'ended'}.get(data.get('event'),'live')
+    # Live transcript while the call runs; once analysed, keep only Retell's PII-scrubbed copy.
+    transcript=(call.get('scrubbed_transcript') or call.get('transcript')) if data.get('event')=='call_analyzed' else call.get('transcript')
     with connect() as c:
-        c.execute('''INSERT INTO calls VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(call_id) DO UPDATE SET
+        c.execute('''INSERT INTO calls(call_id,direction,agent,caller_last4,status,started,ended,duration_s,disconnection_reason,summary,sentiment,updated,transcript)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(call_id) DO UPDATE SET
             status=CASE WHEN excluded.status='ended' THEN 'ended' ELSE calls.status END,
             ended=COALESCE(excluded.ended,calls.ended),duration_s=COALESCE(excluded.duration_s,calls.duration_s),
             disconnection_reason=COALESCE(excluded.disconnection_reason,calls.disconnection_reason),
-            summary=COALESCE(excluded.summary,calls.summary),sentiment=COALESCE(excluded.sentiment,calls.sentiment),updated=excluded.updated''',
-            (cid,call.get('direction') or '',call.get('agent_name') or call.get('agent_id') or '',re.sub(r'\D','',person_number(call))[-4:],status,started,ended,
-             int(ended-started) if ended else None,call.get('disconnection_reason'),analysis.get('call_summary'),analysis.get('user_sentiment'),time.time()))
+            summary=COALESCE(excluded.summary,calls.summary),sentiment=COALESCE(excluded.sentiment,calls.sentiment),
+            transcript=COALESCE(excluded.transcript,calls.transcript),updated=excluded.updated''',
+            (cid,'text' if call.get('channel')=='text' else call.get('direction') or '',call.get('agent_name') or call.get('agent_id') or '',re.sub(r'\D','',person_number(call))[-4:],status,started,ended,
+             int(ended-started) if ended else None,call.get('disconnection_reason'),analysis.get('call_summary') or analysis.get('chat_summary'),analysis.get('user_sentiment'),time.time(),
+             (transcript or '')[-6000:] or None))
 
 def geocode_pending():
     # Map pins: geocode new report locations off the call path (Census/OSM, cached), a few at a time.
     from . import resources
     with connect() as c:
-        rows=c.execute("SELECT id,location FROM reports WHERE geo_tried=0 ORDER BY created DESC LIMIT 3").fetchall()
+        rows=c.execute("SELECT id,location,dedupe FROM reports WHERE geo_tried=0 ORDER BY created DESC LIMIT 3").fetchall()
     for r in rows:
         loc=r['location'] or ''
+        with connect() as c:
+            gps=gps_for_call(c,r['dedupe'].split(':')[0])  # a location the caller shared beats geocoding what they said
+        if gps:
+            with connect() as c:
+                c.execute('UPDATE reports SET lat=?,lon=?,gps_accuracy=?,geo_tried=1 WHERE id=?',(gps['lat'],gps['lon'],gps['accuracy'],r['id']))
+            continue
         pos=None if loc.startswith('(') else resources.geocode(loc,time.monotonic()+4)
         with connect() as c:
             c.execute('UPDATE reports SET lat=?,lon=?,geo_tried=1 WHERE id=? AND location=?',(pos[0] if pos else None,pos[1] if pos else None,r['id'],loc))
@@ -336,7 +368,10 @@ def sync_calls():
 
 @app.post('/retell/webhook',status_code=204)
 def webhook(data=Depends(signed)):
-    call_id=(data.get('call') or {}).get('call_id','')
+    call_id=session_of(data).get('call_id','')
+    if data.get('event')=='transcript_updated':
+        log_call(data)  # sent many times per call, so it skips the once-per-event dedupe below
+        return
     key=f"{data.get('event','')}:{call_id}" if call_id else hashlib.sha256(json.dumps(data,sort_keys=True).encode()).hexdigest()
     with connect() as c:
         fresh=c.execute('INSERT OR IGNORE INTO webhook_events VALUES(?,?)',(key,time.time())).rowcount
@@ -351,6 +386,10 @@ def webhook(data=Depends(signed)):
 from .retell_fns import router as retell_fn_router, init_fns, release_call
 app.include_router(retell_fn_router)
 from .alerts import init_alerts, on_alert_call_event, list_alerts
+from .locate import router as locate_router, init_locate, gps_for_call
+app.include_router(locate_router)
+from .textline import router as text_router
+app.include_router(text_router)
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():

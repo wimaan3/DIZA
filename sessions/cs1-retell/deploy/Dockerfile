@@ -17,6 +17,7 @@ COPY --from=dashboard /app/sessions/cs2-backend/mvp/dashboard/dist sessions/cs2-
 # Form schemas + verified resources the backend reads (same layout as the repo, so defaults work)
 COPY agents/forms agents/forms
 COPY agents/resources agents/resources
+COPY agents/retell.ids.json agents/retell.ids.json
 # SQLite on a mounted volume (/data) so a restart doesn't wipe reports
 ENV DIZA_DB=/data/diza.sqlite3 PYTHONUNBUFFERED=1
 RUN mkdir -p /data

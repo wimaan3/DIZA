@@ -18,6 +18,7 @@
     "opt_out",
     "swap_to_english_spanish",
     "end_call",
+    "request_location",
     "text_caller"
   ],
   "model": "gpt-4.1-mini",

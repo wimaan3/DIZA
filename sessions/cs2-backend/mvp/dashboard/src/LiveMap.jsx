@@ -20,8 +20,10 @@ export default function LiveMap({reports,places,selected,onSelect}){
   const g=layers.current.places;g.clearLayers();
   places.forEach(p=>L.marker([p.lat,p.lon],{icon:L.divIcon({className:'place-pin',iconSize:[10,10]}),keyboard:false})
    .bindTooltip(`<b>${esc(p.name)}</b><br>${esc(PLACE[p.type]||p.type)}${p.address?' · '+esc(p.address):''}`).addTo(g));
- },[places]);
+ },[places.length]);
  const located=reports.filter(r=>r.lat!=null);
+ // The dashboard polls every 1.5 s; only redraw pins when something on the map actually changed.
+ const sig=located.map(r=>r.id+r.severity+r.lat+r.lon+r.cluster_id+r.gps_accuracy).join('|')+'#'+selected;
  useEffect(()=>{
   const{pins,rings}=layers.current;pins.clearLayers();rings.clearLayers();
   const groups={};located.forEach(r=>(groups[r.cluster_id]??=[]).push(r));
@@ -31,11 +33,11 @@ export default function LiveMap({reports,places,selected,onSelect}){
   });
   located.forEach(r=>{
    const isNew=!seen.current.has(r.id);seen.current.add(r.id);
-   L.marker([r.lat,r.lon],{icon:L.divIcon({className:`report-pin ${r.severity}${r.id===selected?' chosen':''}${isNew?' fresh':''}`,iconSize:[16,16]}),zIndexOffset:r.severity==='P0'?1000:0})
-    .bindTooltip(`<b>${esc(r.severity)} · ${esc(r.category.replaceAll('_',' '))}</b><br>${esc(r.location)}<br>${esc(r.summary).slice(0,120)}`)
+   L.marker([r.lat,r.lon],{icon:L.divIcon({className:`report-pin ${r.severity}${r.gps_accuracy!=null?' gps':''}${r.id===selected?' chosen':''}${isNew?' fresh':''}`,iconSize:[16,16]}),zIndexOffset:r.severity==='P0'?1000:0})
+    .bindTooltip(`<b>${esc(r.severity)} · ${esc(r.category.replaceAll('_',' '))}</b><br>${esc(r.location)}${r.gps_accuracy!=null?`<br>📍 GPS from caller ±${Math.round(r.gps_accuracy)} m`:''}<br>${esc(r.summary).slice(0,120)}`)
     .on('click',()=>onSelect(r.id)).addTo(pins);
   });
- },[reports,selected]);
+ },[sig]);
  // Follow the action: frame all pins whenever a new located report arrives.
  const count=located.length;
  useEffect(()=>{if(count)map.current.fitBounds(L.latLngBounds(located.map(r=>[r.lat,r.lon])).pad(.4),{maxZoom:15})},[count]);
