@@ -14,6 +14,40 @@
 
 **Mission:** an agent that answers every caller instantly, in their language, does real tasks, finds who needs a person right now, and never does what must not be automated.
 
+## Step 0: connect Retell to your tools (CS#1 owns this; do it first)
+
+1. **API keys (Retell dashboard → API Keys):**
+   - Create separate keys if the dashboard allows: one for **you/MCP**, one for **the backend** (CS#2), and mark **one key with the webhook badge**. Only a badged key can verify `X-Retell-Signature`.
+   - Share keys **privately** (Signal or a password manager), never in git or chat logs.
+   - Put them in each person's local `.env` and in Railway/Fly secrets.
+2. **MCP for your coding agent:**
+   ```bash
+   export RETELL_API_KEY=...            # your key
+   claude mcp add --transport http retell https://mcp.retellai.com \
+     --header "Authorization: Bearer $RETELL_API_KEY"
+   ```
+   - Tools: `list_api_endpoints`, `get_api_endpoint_schema`, `invoke_api_endpoint`.
+   - **Approve every `invoke_api_endpoint` by hand.** It can delete or publish.
+   - Local alternative: `npx -y @retell-ai/mcp-server` with `RETELL_API_KEY` in the env.
+   - Only CS#1 (and optionally CS#2, read-mostly) connect the MCP. DS and biomech don't need it.
+3. **CLI** (scripts, quick checks; Node 22+):
+   ```bash
+   npm i -g @retell-ai/retell-cli
+   retell list-agents
+   retell get-concurrency
+   ```
+4. **SDKs:** Python `pip install retell-sdk` (`from retell import Retell`), used by `agents/push.py`, `pull.py`, `kb_add.py` and by CS#2's backend. Node `retell-sdk`; browser `retell-client-js-sdk` (drill page web-call button, needs the **public key** and allowed domains).
+5. **Wire Retell → our backend** (dashboard or via `push.py`):
+   - agent-level **webhook URL** = `https://<backend>/retell/webhook`; events: `call_started`, `call_ended`, `call_analyzed`, `transcript_updated`, `transfer_*`
+   - phone number **inbound webhook** = `https://<backend>/retell/inbound`
+   - each custom function URL = `https://<backend>/retell/fn/<name>` (timeout ~5 s, `max_retry` 1)
+   - Use the ngrok static domain until CS#2 deploys, then switch via `push.py` (staging/prod tags hold the URLs).
+6. **Check it all works:**
+   - `retell get-concurrency` returns your limit
+   - a web call to the draft agent hits `/retell/webhook` with a valid signature
+   - the MCP can `get-agent`
+7. Hand CS#2 the agent IDs, KB IDs, number, and the webhook-badged key; record the IDs (not keys) in `sessions/cs1-retell/SESSION_CONTEXT.md`.
+
 ## Tasks
 
 ### P0: tonight → M0 (Fri 11:30 PM)
