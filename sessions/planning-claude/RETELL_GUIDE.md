@@ -111,3 +111,20 @@ Separate KBs: `campus-faq`, `la-resources`, `line-policy`. The crisis agent gets
 Retell voice agents can use **MCP tools** (Streamable HTTP, public URL, header auth, dynamic variables allowed, tool whitelist).
 - Option: expose our FastAPI actions as one MCP server instead of many custom functions.
 - **For the weekend, stick with custom functions:** simpler, mockable in tests, retry setting.
+
+## 8. Caching repeated questions and answers
+
+**Who controls what:** Retell's built-in LLM makes the model calls itself, so we **can't set provider prompt-caching flags** on the agent's turns. Whether Retell caches internally isn't documented (U). Here's what we can do:
+
+1. **Answer cache (the big win, and works under flood):**
+   - Repeated questions ("is the fire near me?", "where's the shelter?", "dining hours") are answered from **pre-approved answers**, not fresh reasoning.
+   - Stable answers → **knowledge base** (retrieval adds under 100 ms).
+   - Live answers → `lookup_info` function backed by a **semantic cache** in our backend: embed the question; if similarity to an approved Q&A is ≥ threshold, return the stored answer instantly; otherwise compute, and queue it for human approval.
+   - Cache entries are tagged by zone and expire when the zone level or the incident changes. **Never serve a stale evacuation answer.**
+   - The "we already know about the fire near X" greeting is itself a cached, per-zone announcement. Duplicate callers never reach the LLM for that part.
+2. **Function-response caching:** shelter list, zone level and known incidents are cached in memory with short TTLs (30–60 s). Functions return in milliseconds, which keeps the agent's latency low during floods.
+3. **Prompt structure that's cache-friendly and cheap:**
+   - Keep each agent's system prompt **static**: rules, tone, tools. Per-call facts come only through `{{dynamic_variables}}` and function results.
+   - Short prompts also avoid Retell's long-prompt token surcharge.
+4. **Our own backend LLM calls** (topic naming, FAQ drafting, case summaries, digest). If we call Claude directly, use **Anthropic prompt caching** (`cache_control` on the static system prompt + KB context). Repeated calls then read the prefix from cache at a fraction of the input price and with lower latency.
+5. **Measure it:** cache hit rate, median function latency and "answered without a human" rate go on the dashboard. That's a nice flood-drill metric.
