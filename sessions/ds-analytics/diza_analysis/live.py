@@ -1,4 +1,4 @@
-"""ASGI entry point that composes analytics with the existing DIZA application."""
+"""RelayLA entry point with additive storage and the existing backend API."""
 
 import hmac
 import json
@@ -16,6 +16,7 @@ from starlette.background import BackgroundTask, BackgroundTasks
 from starlette.concurrency import run_in_threadpool
 
 from .live_store import LiveStore
+from .relay.api import install as install_relay
 
 LOG = logging.getLogger(__name__)
 ASSETS = Path(__file__).parent / "web"
@@ -27,12 +28,31 @@ def create_app():
     store = LiveStore(backend.connect, salt=os.environ.get("DIZA_ANALYTICS_SALT", ""))
 
     @asynccontextmanager
-    async def lifespan(app):
-        async with backend.app.router.lifespan_context(backend.app):
-            await run_in_threadpool(store.initialize)
+    async def relay_lifespan():
+        if os.getenv("RELAY_LEGACY_WORKERS", "false").lower() == "true":
+            async with backend.app.router.lifespan_context(backend.app):
+                yield
+        else:
+            # RelayLA has no dispatch expiry, location geocoding, or provider-wide
+            # call backfill. Initialize compatible tables without those workers.
+            for initialize in (
+                backend.init,
+                backend.init_fns,
+                backend.init_alerts,
+                backend.init_locate,
+            ):
+                await run_in_threadpool(initialize)
             yield
 
-    app = FastAPI(title="DIZA with analytics", lifespan=lifespan)
+    @asynccontextmanager
+    async def lifespan(app):
+        async with relay_lifespan():
+            await run_in_threadpool(store.initialize)
+            await run_in_threadpool(relay_store.initialize)
+            yield
+
+    app = FastAPI(title="RelayLA", lifespan=lifespan)
+    relay_store = install_relay(app, backend)
 
     def operator(request: Request):
         token = os.environ.get("OPS_API_TOKEN", "")

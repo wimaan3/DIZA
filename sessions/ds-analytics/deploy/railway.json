@@ -5,7 +5,7 @@
     "dockerfilePath": "sessions/ds-analytics/deploy/Dockerfile"
   },
   "deploy": {
-    "healthcheckPath": "/health/analysis",
+    "healthcheckPath": "/health/relay",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE"
   }
