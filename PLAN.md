@@ -308,6 +308,48 @@ Goal: **no busy signals, short calls, and humans only see the top slice.**
    - The dashboard shows "200 calls → 3 clusters → 11 needing a human → 4 matched to specialists".
    - Show median call length and time-to-human for the top 10.
 
+### Live campus stress test ("Surge Drill"): real calls, real routing
+
+**Idea:** get people at USC and at the hackathon to call the agent with real concerns. Volunteer "supporters" have skill profiles, and calls are routed to them.
+
+**Why it's strong:**
+- It gives real evidence for technical execution and feasibility, and it's flood handling done for real, not simulated.
+- It builds People's Choice votes.
+- **USC becomes a named second customer:**
+  - ordinary day: a campus concerns line (housing, facilities, safety escorts, where-do-I-go)
+  - crisis: earthquake, shelter-in-place, power outage
+  - Judges include USC's VP of Strategic Partnerships.
+
+**How to run it:**
+1. **Two modes on the same line:**
+   - **Open line, all weekend:** "Call with any campus concern." These become the Tuesday-use data.
+   - **Surge Drill, Sat ~3–4 PM:** a 20-minute window, announced with the organizers' OK on the WhatsApp channel or at the help desk.
+2. **Scenario cards for the drill** (a QR code → a random role card):
+   - Example: "You smell smoke near Figueroa & 23rd, you speak Spanish, your roommate uses a wheelchair."
+   - The cards give DS **ground truth**, so we can report *triage accuracy*, not just call counts.
+   - Mix in ~10% hoax and duplicate cards to show corroboration working.
+3. **Supporters:** teammates plus 4–8 recruited friends.
+   - Each has a profile: languages; skills such as `housing`, `academics`, `safety/escort`, `medical-first-aid`, `mental-health-listener`, `tech`, `general`.
+   - They text `IN` or `OUT` to change status. Transfers ring their real phones.
+4. **What we put on the pitch slide:**
+   - calls handled
+   - peak concurrent calls
+   - % resolved by the AI alone
+   - median time-to-human for urgent calls
+   - routing match rate
+   - triage accuracy vs. the scenario cards
+
+**Non-negotiable safeguards (real students means real duty of care):**
+- **Recording consent.** California is an all-party-consent state for recording (Penal Code 632). On *this test line*, the greeting must include one short line: "This call is recorded for a USC student project." That's a legal requirement here, separate from our no-AI-disclaimer choice for the production crisis greeting.
+- **Real emergencies never go to a student volunteer.**
+  - Self-harm, assault, medical emergency or danger right now → the agent immediately gives **911**, **988** (Suicide & Crisis Lifeline) and **USC Counseling (24/7 line, verify the number before the drill)**, and offers a warm transfer to 988.
+  - The prompt enforces this, and so does a backend keyword rule.
+- **Concurrency cap: 20 free slots on Retell.** Overflow callers get the callback offer ("your place is saved") instead of failing. That's our flood design working live, so show it.
+- **Budget:** ~$0.10/min. 300 calls × 2 min ≈ $60. Set a spending cap and keep calls short.
+- **Privacy:** collect no student IDs, delete recordings after the event, use opt-in consent for callbacks ("Can we call you back at this number?").
+- **Outbound callbacks only to people who said yes**, which also keeps our number off spam lists.
+- Ask the organizers before mass-announcing. It also earns *Most Fun Team* points ("help other squads").
+
 ## 6. Architecture (keep it boring)
 
 ```
