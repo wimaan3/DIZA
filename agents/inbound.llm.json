@@ -2,8 +2,7 @@
   "_prompt_files": [
     "_shared_rules.md",
     "inbound.md",
-    "finding_help.md",
-    "volunteer.md"
+    "finding_help.md"
   ],
   "_tools": [
     "flag_urgent",
@@ -11,26 +10,15 @@
     "transfer_to_human",
     "transfer_to_crisis_line",
     "swap_to_crisis",
+    "swap_to_services",
+    "swap_to_korean",
+    "swap_to_chinese",
     "submit_report",
     "schedule_callback",
     "lookup_info",
-    "create_request",
-    "set_reminder",
-    "enroll_checkin",
-    "notify_contact",
-    "check_status",
-    "opt_out",
-    "register_volunteer",
-    "start_form",
-    "fill_form",
-    "submit_form",
-    "request_escort",
-    "book_appointment",
-    "send_link",
-    "record_consent",
-    "swap_to_korean",
-    "swap_to_chinese",
     "transfer_to_resource",
+    "record_consent",
+    "opt_out",
     "end_call"
   ],
   "model": "gpt-4.1-mini",
@@ -66,7 +54,9 @@
     "alert_message": "",
     "alert_action": "",
     "alert_source": "",
-    "alert_id": ""
+    "alert_id": "",
+    "drill_prefix": "",
+    "alert_intro": ""
   },
   "_knowledge_bases": [
     "line-policy",

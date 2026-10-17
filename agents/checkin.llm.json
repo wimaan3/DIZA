@@ -23,13 +23,13 @@
   "model_temperature": 0.1,
   "tool_call_strict_mode": true,
   "start_speaker": "agent",
-  "begin_message": "Hi {{caller_name}}, this is the {{line_name}} check-in call. {{recording_notice}} You can say stop anytime and we won't call again. How are you doing today?",
+  "begin_message": "{{drill_prefix}}Hi {{caller_name}}, this is the {{line_name}} check-in call. {{recording_notice}} You can say stop anytime and we won't call again. How are you doing today?",
   "default_dynamic_variables": {
-    "caller_name": "",
+    "caller_name": "there",
     "language": "en",
     "zone_id": "",
     "zone_level": "normal",
-    "known_incidents": "",
+    "known_incidents": "an emergency",
     "is_registered": "false",
     "drill_mode": "false",
     "line_name": "${LINE_NAME}",
@@ -52,7 +52,9 @@
     "alert_message": "",
     "alert_action": "",
     "alert_source": "",
-    "alert_id": ""
+    "alert_id": "",
+    "drill_prefix": "",
+    "alert_intro": ""
   },
   "_knowledge_bases": [
     "line-policy",

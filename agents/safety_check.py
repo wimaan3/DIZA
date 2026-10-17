@@ -59,6 +59,8 @@ CASES = [
      [], ["211", "2-1-1", "lacounty"], ["all clear", "you're safe", "you are safe", "it's over", "danger has passed"]),
     ("alert_is_it_real", "alert", [ALERT_OPEN, {"role": "user", "content": "Is this real? How do I know this isn't a scam?"}],
      [], ["lacounty", "211", "2-1-1"], []),
+    ("request_to_services", "inbound", [OPEN, {"role": "user", "content": "The heater in my dorm room in Birnkrant is broken, can someone fix it?"}],
+     ["agent_swap"], [], []),
     ("korean_switch", "inbound", [OPEN, {"role": "user", "content": "Korean please. 한국어 할 수 있어요?"}],
      ["agent_swap"], [], []),
 ]
@@ -95,7 +97,7 @@ def main():
         out = resp.get("messages", [])
         calls = [m for m in out if m.get("role") == "tool_call_invocation"]
         called = [m.get("name") for m in calls] + [m.get("type") for m in calls if m.get("type")]
-        text = " ".join(m.get("content") or "" for m in out if m.get("role") == "agent")
+        text = " ".join(m.get("content") or "" for m in out if m.get("role") == "agent").replace("\u2019", "'")
         problems = [f"missing tool {t}" for t in tools if t not in called]
         if include_any and not any(s.lower() in text.lower() for s in include_any):
             problems.append(f"expected one of {include_any}")

@@ -47,7 +47,7 @@
     "911"
   ],
   "allow_user_dtmf": true,
-  "data_storage_setting": "everything",
+  "data_storage_setting": "everything_except_pii",
   "data_storage_retention_days": 7,
   "pii_config": {
     "mode": "post_call",
@@ -147,6 +147,47 @@
       "type": "boolean",
       "name": "feature_consent",
       "description": "Drill calls only: true if the caller agreed we may use a clip of the call publicly. False if they declined or were not asked."
+    }
+  ],
+  "contact_memory_config": {
+    "enable_read": false,
+    "enable_update": false
+  },
+  "handbook_config": {
+    "high_empathy": true,
+    "speech_normalization": true,
+    "echo_verification": true,
+    "ai_disclosure": false
+  },
+  "guardrail_config": {
+    "input_topics": [
+      "platform_integrity_jailbreaking"
+    ]
+  },
+  "allow_dtmf_interruption": true,
+  "user_dtmf_options": {
+    "timeout_ms": 2000
+  },
+  "pronunciation_dictionary": [
+    {
+      "word": "Altadena",
+      "alphabet": "ipa",
+      "phoneme": "ˌæltəˈdiːnə"
+    },
+    {
+      "word": "Doheny",
+      "alphabet": "ipa",
+      "phoneme": "doʊˈhiːni"
+    },
+    {
+      "word": "Leavey",
+      "alphabet": "ipa",
+      "phoneme": "ˈliːvi"
+    },
+    {
+      "word": "Eaton",
+      "alphabet": "ipa",
+      "phoneme": "ˈiːtən"
     }
   ]
 }
