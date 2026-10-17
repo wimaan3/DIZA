@@ -10,7 +10,7 @@ If something changed in the dashboard, copy the change into the source files
 import json
 import sys
 
-from retell_api import AGENTS_DIR, RetellError, call, load_dotenv, load_ids
+from retell_api import AGENT_NAMES, AGENTS_DIR, RetellError, call, load_dotenv, load_ids
 
 # Fields that change on every save and would only add noise to diffs.
 VOLATILE = {"last_modification_timestamp", "version", "is_published", "version_title", "llm_websocket_url"}
@@ -28,7 +28,7 @@ def main():
     out = AGENTS_DIR / "remote"
     out.mkdir(exist_ok=True)
     for name, ref in ids.items():
-        if name == "knowledge_bases":
+        if name not in AGENT_NAMES:
             continue
         agent = call("GET", f"/get-agent/{ref['agent_id']}")
         llm = call("GET", f"/get-retell-llm/{ref['llm_id']}")
