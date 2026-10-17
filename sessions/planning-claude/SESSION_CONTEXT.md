@@ -17,6 +17,7 @@
 | `EVALS.md` | Light eval flywheel: golden set from role cards, code checks first + calibrated LLM-as-judge, team as humans in the loop, one wheel spin per flood, scoreboard + publish gate |
 | `DEMO.md` | 5-min pitch beat sheet, 3-min demo-floor version, setup, backups, rehearsal, Q&A prep |
 | `OPS_WALL.md` | Real-time big-screen visualization (panels, data sources, Supabase realtime, replay mode, privacy masking) + live audience-call demo script and safeguards (concurrency, room noise, cell signal, planted calls, simulator top-up) |
+| `REACH.md` | Who existing solutions miss (prior-art table), the gaps we own, 9 design rules for reach, reach metrics, honest limits |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
