@@ -13,6 +13,7 @@ Implemented:
 - Forty golden cases, deterministic evaluation, agent-observation safety gates, failure mining, reach metrics, and judge agreement.
 - Consent-aware pseudonymization, internal metric snapshots, and delayed public aggregates with at least five distinct contributors per cell.
 - Read-only access to the deployed SQLite schema, a MyLA311 baseline loader, and a Census ACS language/age profile loader.
+- An optional deployment wrapper, protected live analytics API/page, and additive consent linkage for accepted Retell events.
 
 ## Run from the repository root
 
@@ -67,7 +68,9 @@ Calling these functions does not change a database or declare a crisis.
 
 The functions add keyword-only record inputs to the handoff signatures so they remain pure and independently testable.
 Config is versioned JSON rather than YAML to keep installation dependency-free.
-The host application is not modified or automatically wired to these functions by this PR.
+The optional `diza_analysis.live:create_app` entry point composes the existing host application with analytics routes and an observer for accepted signed requests.
+Operational routing and severity remain with the host; analysis predictions support review.
+See [deploy/DEPLOY.md](deploy/DEPLOY.md) for the concrete container, Railway settings, validation, and rollback procedure.
 
 ## Analyze operational records
 
@@ -163,5 +166,8 @@ For backend compatibility, copy `sessions/cs2-backend/mvp` into this session's i
 Then run `python sessions/ds-analytics/scripts/check_backend.py sessions/ds-analytics/artifacts/backend-compat` using that virtual environment.
 The runner isolates test modules because their import-time environment changes otherwise mix live and simulation settings, and mocks Retell backfill and external geocoding by default to avoid provider calls.
 Individual tests can supply their own geocoding mock.
+Pass `--with-analysis` to run the existing backend test modules through the composed analytics entry point.
+The additional `tests_live/` suite verifies the real host lifecycle, original signature checks, API authentication, consent revocation, privacy, and caller-only transcript evidence.
 
-Live backend wiring, official feed polling, reviewed production polygons, real caller collection, Supabase analytics migrations, embedding-based topic discovery/answer caching, acoustic models, and real agent/judge runs remain separate integration work.
+Production activation requires a reviewed integration PR and access to the existing Railway service.
+Official feed polling, reviewed production polygons, Supabase analytics migrations, embedding-based topic discovery/answer caching, acoustic models, automatic routing using the DS ranker, and real agent/judge runs remain separate integration work.
