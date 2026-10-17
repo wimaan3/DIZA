@@ -11,6 +11,8 @@
 | `SETUP.md` | Accounts and infra: Retell (KYC, number, agent type, functions, transfer, outbound, webhooks), SMS limits, Twilio/Supabase/hosting, build-vs-reuse |
 | `TRIAGE.md` | Keyword tiers (P0–P3 + vulnerability boosters), context guards, per-call label schema, cross-call crisis detection thresholds, routing map |
 | `WORKFLOW.md` | End-to-end flows (inbound, outbound, escalation, supporter, learning loop) + team process (branches, stand-ups, twist protocol) |
+| `RETELL_GUIDE.md` | Retell MCP server, CLI/SDK, agents-in-git push script, agent swap between agents, knowledge base split, high-leverage settings, simulation testing |
+| `COMPLIANCE.md` | Laws and rules (recording consent, TCPA/AI voice, 988, no false dispatch, privacy, accessibility) and where each is enforced: prompt / backend / KB |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
@@ -35,6 +37,8 @@
 10. **Live campus test:** Open Line (Sat 11 AM–9 PM, Sun 9 AM–3:30 PM) + flood drills (Sat 12:30, **3:30**, 8:00 PM; Sunday demo floor) with role cards for ground truth. Safety path: P0 → 911/988, never to volunteers.
 11. **Agent actions:** create_request, request_escort, reminders/callbacks, book_appointment, enroll_checkin, notify_contact, check_status, lookup_info, send_summary. Confirm before acting; never claim agency dispatch; no writes into real USC/city systems.
 12. **Call analytics loop:** baselines → Watch trigger; topic mining → knowledge base; triage calibration; routing stats; failure mining → prompt fixes; weekly "Community Pulse" digest.
+14. **Branches:** one per person or agent; `main` = real app only (via PR).
+15. **Retell structure:** per-language everyday agents + a crisis agent connected by Agent Transfer; 3 knowledge bases (campus-faq, la-resources, line-policy); live data via functions, not the KB; agents versioned in git and pushed by script; coding agents use the Retell MCP with manual approval.
 13. **Keyword triage:** 3 layers (live lexicon + LLM context + cross-call counts by distinct callers per zone).
 
 ## Key facts verified

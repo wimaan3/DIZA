@@ -9,7 +9,7 @@ Keyword spotting alone is brittle. "Fire" could be a fire, a fire alarm test, "y
 2. **In the backend, independently.**
    - Retell's `transcript_updated` webhook streams each turn, and every function call carries the transcript so far.
    - The backend runs the lexicon on it and **flags the call on the dashboard even if the agent misses it**, so a supporter can jump in or call back.
-   - Unverified: whether the backend can *force* a mid-call transfer through Retell's API. Treat it as no, and rely on the prompt + dashboard.
+   - **Update (verified):** the backend *can* push into a live call with `PATCH /v2/update-live-call/{call_id}` (`additional_context` + `trigger_response`). On a P0 hit the agent missed, push "Caller said X. Follow the P0 safety path now." Test that it reliably triggers the transfer.
 
 **Lexicon tiers** (`triage/lexicon.yaml`, versioned, so a twist can add terms in one commit):
 
