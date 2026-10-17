@@ -43,6 +43,21 @@ Set `RETELL_API_KEY` to the webhook-enabled key and expose only the Retell paths
 
 Unconfigured Retell endpoints fail closed with 503. Real phone operation requires an account, agent, telephone setup, reachable HTTPS endpoint, and a real integration test. Do not claim these are connected based on the local simulator.
 
+## Retell functions (backend/app/retell_fns.py)
+
+All 00_CONTRACTS functions answer at `/retell/fn/<name>` with the contract's response shapes, signature-checked, idempotent per call + arguments (Retell retries once). Nothing dials, texts or dispatches; each request becomes a case (`D-1234`) a person must act on, visible in `/api/state` → `cases` and the event log.
+
+- `flag_urgent` creates a P0 report that is escalated to the supervisor and never offered to helpers.
+- `route_to_human` picks the available responder with the most matching skills/language (`lang:es`) from `DIZA_RESPONDERS` (env only), never a `volunteer` for P0/P1, marks them busy, and frees them on the call's `call_ended` webhook. Nobody available → `oncall_number: ""` + `fallback: callback`.
+- `submit_report`: free-text hazards map to the category enum (so grouping works), vulnerability or people at risk raise severity to P1, and `cluster_match` is only set when other reports share the cluster.
+- Forms use `agents/forms/*.yaml` (`FORMS_DIR`). `send_link` returns `sent: false` (no SMS provider yet).
+- `lookup_info` (`backend/app/resources.py`): supervisor-approved answers first, then the nearest suitable **real, verified** place or hotline from `agents/resources/resources.yaml` (`RESOURCES_FILE`): shelters, cooling/charging libraries, food, health, pets, large animals, recovery centers, hotlines. Geocodes the caller's words with the Census geocoder (addresses) or OpenStreetMap Nominatim (landmarks/neighborhoods), within a 3 s budget, cached. Never says a shelter is open: activated-only sites always say "confirm via 211". `transfer_number` only for allowlisted resources and never in drill mode. Unanswered questions go to `GET /api/kb`; `POST /api/kb_items` approves an answer once for every later caller.
+- Check against the agents with `python agents/contract_check.py --base-url http://127.0.0.1:8000 --key <key>` (in wimaan3/DIZA#2).
+
+## Approved alerts → automated calls (backend/app/alerts.py)
+
+`POST /api/alerts` drafts an alert (zone, exact text per language, official source). `POST /api/alerts/{id}/approve {approved_by}` is the human approval: it starts one Retell batch call to the opted-in contacts in `ALERT_CONTACTS_FILE` using the `alert` agent (reads the text word for word, answers questions, routes people who need help). Drills are prefixed "This is a drill" and limited to 8 AM-9 PM; `mode: live` needs `ALLOW_LIVE_ALERTS=true`. Inbound capacity is reserved during the batch. Call webhooks update each person (reached / voicemail / no answer / needs help / safe / opted out); `GET /api/alerts` returns the tally and `POST /api/alerts/{id}/retry` redials no-answers (max 3 attempts). The AI never decides to alert or what to say.
+
 ## Deliberate scope differences
 
 SQLite replaces Supabase for runnable local storage. `backend/db/schema.sql` is a draft Postgres migration, not an active adapter. No magic-link authentication, role isolation, photos, calendars, check-ins, public status page, automatic external notifications, or official public alert publishing. Supporter selection is a demo control, not authentication.
