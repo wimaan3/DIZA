@@ -15,7 +15,11 @@ Several AI agent sessions push here. Keep their outputs separate so they don't o
    - Use `sessions/planning-claude/SESSION_CONTEXT.md` as the template.
 3. **`sources/` is official hackathon material only.** Add new files; don't edit existing ones.
 4. **Shared root files (`README.md`, `AGENTS.md`):** only append small changes. Don't restructure them.
-5. **Before pushing:** `git pull --rebase` (or fetch and merge). Never force-push a branch you didn't create. Each agent pushes to its own branch unless the team says otherwise.
+5. **Branches (team decision):**
+   - **Each person or agent works on their own branch.**
+   - **`main` is the real app only.** It gets code via small PRs, reviewed by a teammate, and must always demo.
+   - Session docs and context stay on your own branch (in `sessions/<name>/`). The synthesized plan can go to `main` under `docs/` via PR.
+   - Before pushing: `git pull --rebase` on your own branch. Never force-push a branch you didn't create, and never push directly to `main`.
 6. **No secrets.** Never commit API keys, `.env` files, or personal phone numbers.
 7. **Code** goes in top-level app folders (`backend/`, `dashboard/`, `agents/`, `analysis/`, `sim/`) once the team agrees on the structure. Until then, put it in your session folder.
 8. **Synthesis:** one designated session reads every `sessions/*/SESSION_CONTEXT.md` and writes the merged plan to `docs/` (e.g. `docs/MASTER_PLAN.md`), citing which session each decision came from.

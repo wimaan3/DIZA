@@ -6,6 +6,10 @@ A multilingual Retell voice line with two lives:
 - **Ordinary day:** a campus and community concerns line, plus wellness check-ins.
 - **Crisis night:** surge triage, corroboration, skills-based handoff to humans, and callback ladders.
 
+## Branches
+- `main`: the real app (code only, via PR)
+- one branch per person or agent: session docs and work in progress
+
 ## Repo map
 - `AGENTS.md`: rules for the AI agent sessions pushing here (read first)
 - `sources/`: official hackathon material and summaries
