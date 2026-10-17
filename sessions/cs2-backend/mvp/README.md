@@ -50,7 +50,8 @@ All 00_CONTRACTS functions answer at `/retell/fn/<name>` with the contract's res
 - `flag_urgent` creates a P0 report that is escalated to the supervisor and never offered to helpers.
 - `route_to_human` picks the available responder with the most matching skills/language (`lang:es`) from `DIZA_RESPONDERS` (env only), never a `volunteer` for P0/P1, marks them busy, and frees them on the call's `call_ended` webhook. Nobody available → `oncall_number: ""` + `fallback: callback`.
 - `submit_report`: free-text hazards map to the category enum (so grouping works), vulnerability or people at risk raise severity to P1, and `cluster_match` is only set when other reports share the cluster.
-- Forms use `agents/forms/*.yaml` (`FORMS_DIR`). `lookup_info` logs knowledge gaps; `send_link` returns `sent: false` (no SMS provider yet).
+- Forms use `agents/forms/*.yaml` (`FORMS_DIR`). `send_link` returns `sent: false` (no SMS provider yet).
+- `lookup_info` (`backend/app/resources.py`): supervisor-approved answers first, then the nearest suitable **real, verified** place or hotline from `agents/resources/resources.yaml` (`RESOURCES_FILE`): shelters, cooling/charging libraries, food, health, pets, large animals, recovery centers, hotlines. Geocodes the caller's words with the Census geocoder (addresses) or OpenStreetMap Nominatim (landmarks/neighborhoods), within a 3 s budget, cached. Never says a shelter is open: activated-only sites always say "confirm via 211". `transfer_number` only for allowlisted resources and never in drill mode. Unanswered questions go to `GET /api/kb`; `POST /api/kb_items` approves an answer once for every later caller.
 - Check against the agents with `python agents/contract_check.py --base-url http://127.0.0.1:8000 --key <key>` (in wimaan3/DIZA#2).
 
 ## Deliberate scope differences
