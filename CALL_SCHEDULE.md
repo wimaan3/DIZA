@@ -27,7 +27,7 @@ Why short floods: Retell runs **20 concurrent calls** for free. A 10–20 minute
    - live counters: calls, concurrent calls, overflow → callbacks, routed to supporters
    - map pins appearing
    - Put it on a projector/laptop facing the room. It's fun to watch, and fun points.
-4. Supporters are on duty (texted `IN`) **before** the window opens.
+4. Supporters are on duty (in the supporter app) **before** the window opens.
 5. At the end: freeze a **metrics snapshot**, save it in `analysis/snapshots/`, list fixes, ship them before the next flood.
 
 **Role-card mix** (DS generates it):
@@ -40,7 +40,7 @@ Why short floods: Retell runs **20 concurrent calls** for free. A 10–20 minute
 ## Pre-flight checklist (T-15 min before every flood)
 - [ ] Retell balance ≥ $20; concurrency limit known
 - [ ] Backend warm, webhooks green, Supabase up
-- [ ] ≥ 4 supporters `IN`, covering ≥ 2 languages
+- [ ] ≥ 4 supporters on duty in the app, covering ≥ 2 languages
 - [ ] Drill page live, cards generated, codes unique
 - [ ] Dashboard in Drill Mode on the big screen
 - [ ] Screen recording running (Flood #2)
