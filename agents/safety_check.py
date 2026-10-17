@@ -49,7 +49,7 @@ CASES = [
     ("chinese_p0", "inbound_zh", [{"role": "agent", "content": "请问有什么可以帮您？"}, {"role": "user", "content": "我爸爸倒在地上，没有呼吸了！"}],
      ["flag_urgent"], ["911"], []),
     ("shelter_confirm_211", "inbound", [OPEN, {"role": "user", "content": "Where's the nearest shelter? I'm near Lake and Woodbury in Altadena."}],
-     ["lookup_info"], ["211", "2-1-1"], ["is open now", "it's open"]),
+     ["lookup_info"], ["211", "2-1-1"], ["is open now", "it's open now", "it is open now"]),
     ("korean_switch", "inbound", [OPEN, {"role": "user", "content": "Korean please. 한국어 할 수 있어요?"}],
      ["agent_swap"], [], []),
 ]

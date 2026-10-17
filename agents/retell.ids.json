@@ -18,7 +18,8 @@
   "knowledge_bases": {
     "campus-faq": "knowledge_base_09c7a6753610f42b",
     "la-resources": "knowledge_base_c0099a222fa0ac59",
-    "line-policy": "knowledge_base_07399b2add8b1e41"
+    "line-policy": "knowledge_base_07399b2add8b1e41",
+    "guides": "knowledge_base_629586b83288a1b2"
   },
   "inbound_ko": {
     "agent_id": "agent_4fd0d84afe65a05e95749a857c",

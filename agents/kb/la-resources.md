@@ -27,3 +27,9 @@ A go-bag should hold water, a few days of medication and copies of prescriptions
 
 ## When to leave
 If officials order an evacuation, leave right away. If you see fire or heavy smoke nearby, or feel unsafe, don't wait for an order. Tell a neighbor, and check on people who may need help leaving.
+
+## Nearest public emergency department to USC
+Los Angeles General Medical Center (formerly called LAC+USC Medical Center) has a 24/7 emergency department at 1983 Marengo St, Los Angeles 90033, about 5 miles northeast of the USC University Park Campus. For a life-threatening emergency, call 911 instead of driving. Source: dhs.lacounty.gov.
+
+## Help after the Eaton fire
+The LA County Department of Mental Health fire support line is 1-833-659-0600. The Altadena Community Center at 730 E Altadena Dr has county staff helping fire survivors with housing, tenant, consumer and worker protections, weekdays 8 AM to 5 PM. Source: lacounty.gov, dcba.lacounty.gov.
