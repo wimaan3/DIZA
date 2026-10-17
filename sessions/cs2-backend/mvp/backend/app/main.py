@@ -48,13 +48,31 @@ class Report(BaseModel):
     language: str = 'en'
     immediate_danger: bool = False
     needs_assistance: bool = False
+    people_at_risk: int = Field(default=0,ge=0,le=10000)
+    vulnerability: list[str] = Field(default_factory=list,max_length=20)
     source: str = 'simulated'
+
+ACTIVE_HAZARDS={'fire','smoke','gas','flood'}
+CATEGORY_WORDS=[('fire',('fire','flame','burn','fuego','incendio','불','火')),('smoke',('smoke','humo','연기','烟')),
+    ('gas',('gas',)),('flood',('flood','water rising','inundaci','침수','水灾')),('power',('power','outage','lights out','electric','luz')),
+    ('medical',('medical','injur','breath','chest','bleed','unconscious','faint')),('safety_crime',('crime','weapon','gun','attack','follow','threat')),
+    ('infrastructure',('collapse','road','tree down','lines down','sinkhole','building')),('welfare_check',('welfare',))]
+
+def category(hazard):
+    # Map the agent's free-text hazard onto the shared category enum so grouping works.
+    h=(hazard or '').lower()
+    if h in {c for c,_ in CATEGORY_WORDS} or h=='info': return h
+    return next((c for c,words in CATEGORY_WORDS if any(w in h for w in words)),'other')
 
 def classify(r):
     if r.immediate_danger:
         return 'P0', 'Reported immediate danger · urgent supervisor review; direct emergency-services path'
     if r.needs_assistance:
         return 'P1', 'Individual assistance requested · a person must accept responsibility'
+    if r.hazard in ACTIVE_HAZARDS:
+        return 'P1', 'Active hazard reported · counts toward zone detection'
+    if r.hazard != 'info' and (r.vulnerability or r.people_at_risk):
+        return 'P1', 'People at risk or vulnerability reported · escalate-only'
     if r.hazard != 'info':
         return 'P2', 'Unverified incident report · review needed'
     return 'P3', 'Information request · verified event information available'
@@ -111,6 +129,8 @@ def expire():
 @asynccontextmanager
 async def lifespan(app):
     init()
+    init_fns()
+    init_alerts()
     async def worker():
         while True:
             expire()
@@ -137,7 +157,8 @@ def state():
           'requests':[dict(r) for r in c.execute('SELECT * FROM requests ORDER BY created')],
           'responders':[dict(r) for r in c.execute('SELECT * FROM responders')],
           'attempts':[dict(r) for r in c.execute('SELECT * FROM attempts ORDER BY expires')],
-          'events':[dict(r) for r in c.execute('SELECT * FROM events ORDER BY ts DESC LIMIT 100')]}
+          'events':[dict(r) for r in c.execute('SELECT * FROM events ORDER BY ts DESC LIMIT 100')],
+          'cases':[dict(r) for r in c.execute('SELECT code,type,status,pool,created,updated FROM cases ORDER BY created DESC LIMIT 200')]}
 
 @app.post('/api/reports')
 def submit(r:Report):
@@ -190,7 +211,7 @@ def surge():
 def reset():
     if not DEMO: raise HTTPException(403)
     with connect() as c:
-        for table in ('attempts','requests','reports','events','webhook_events'): c.execute(f'DELETE FROM {table}')
+        for table in ('attempts','requests','reports','events','webhook_events','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents'): c.execute(f'DELETE FROM {table}')
         c.execute("UPDATE responders SET status='available'")
     return {'ok':True}
 
@@ -217,17 +238,34 @@ async def retell_submit(req:Request):
     args['idempotency_key']=call_id+':'+hashlib.sha256(json.dumps(args,sort_keys=True).encode()).hexdigest()
     args['source']='retell'
     args.setdefault('summary',args.get('hazard','Report'))
+    args['hazard']=category(args.get('hazard'))
     args['immediate_danger']=bool(args.get('immediate_danger') or args.get('injured_or_trapped'))
+    if args.get('vulnerability') and not args.get('evidence'):
+        args['evidence']='Vulnerability: '+', '.join(args['vulnerability'])
     r=save_report(Report(**args))
-    return {'report_id':r['id'],'severity':r['severity'],'reason':r['reason'],'cluster_match':'Associated reports remain unverified'}
+    with connect() as c:
+        others=c.execute('SELECT COUNT(*) FROM reports WHERE cluster_id=? AND id!=?',(r['cluster_id'],r['id'])).fetchone()[0]
+    # Read aloud by the agent, so only say something when other callers reported the same thing.
+    match=f"We already have {others+1} reports of {r['category'].replace('_',' ')} near {r['location']}, and we're tracking it." if others else ''
+    return {'report_id':r['id'],'severity':r['severity'],'priority':{'P0':100,'P1':80,'P2':50,'P3':10}[r['severity']],'reason':r['reason'],'cluster_match':match}
 
 @app.post('/retell/webhook',status_code=204)
 async def webhook(req:Request):
     data=await verified_body(req)
-    digest=hashlib.sha256(json.dumps(data,sort_keys=True).encode()).hexdigest()
+    call_id=(data.get('call') or {}).get('call_id','')
+    key=f"{data.get('event','')}:{call_id}" if call_id else hashlib.sha256(json.dumps(data,sort_keys=True).encode()).hexdigest()
     with connect() as c:
-        c.execute('INSERT OR IGNORE INTO webhook_events VALUES(?,?)',(digest,time.time()))
-    # Lifecycle receipt only; report submission happens during the call.
+        fresh=c.execute('INSERT OR IGNORE INTO webhook_events VALUES(?,?)',(key,time.time())).rowcount
+    if not fresh:
+        return  # retry or duplicate (Retell retries; agent swaps with both_agents send twice)
+    # Report submission happens during the call; call_ended frees whoever we routed it to.
+    if data.get('event')=='call_ended':
+        release_call(call_id)
+    on_alert_call_event(data)
+
+from .retell_fns import router as retell_fn_router, init_fns, release_call
+app.include_router(retell_fn_router)
+from .alerts import init_alerts, on_alert_call_event
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():
