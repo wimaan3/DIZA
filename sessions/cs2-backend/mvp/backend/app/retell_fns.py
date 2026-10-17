@@ -6,7 +6,7 @@ Nothing here dials, texts or dispatches anyone: requests become cases a person m
 """
 import hashlib, json, os, random, re, time
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from . import resources
 from .main import DEMO, ROOT, Report, app, connect, event, offer, save_report, verified_body
@@ -44,7 +44,9 @@ def release_call(call_id):
         c.execute('DELETE FROM routings WHERE call_id=?', (call_id,))
 
 
-async def parse(req):
+async def parse(req: Request):
+    """Async dependency: read + verify the raw body. Handlers are plain functions, so FastAPI runs them in its
+    thread pool and a slow geocode or SQLite lock never blocks the event loop for other live calls."""
     data = await verified_body(req)
     call = data.get('call') or {}
     if not call.get('call_id'):
@@ -91,8 +93,8 @@ def new_case(call, type_, status, payload, pool='general_helper'):
 
 
 def simple(name, type_, status, pool, reply):
-    async def handler(req: Request):
-        call, args = await parse(req)
+    def handler(p=Depends(parse)):
+        call, args = p
         return once(name, call, args, lambda: reply(new_case(call, type_, status, args, pool), args))
     router.add_api_route(f'/{name}', handler, methods=['POST'], name=f'retell_{name}')
 
@@ -114,8 +116,8 @@ simple('register_volunteer', 'volunteer', 'pending_verification', 'general_helpe
 
 
 @router.post('/notify_contact')
-async def notify_contact(req: Request):
-    call, args = await parse(req)
+def notify_contact(p=Depends(parse)):
+    call, args = p
     if args.get('consent') is not True:
         return {'code': '', 'status': 'consent_required'}
     # Queued for a person to send; this MVP has no outbound SMS.
@@ -123,8 +125,8 @@ async def notify_contact(req: Request):
 
 
 @router.post('/flag_urgent')
-async def flag_urgent(req: Request):
-    call, args = await parse(req)
+def flag_urgent(p=Depends(parse)):
+    call, args = p
     reason, keyword = args.get('reason', 'urgent'), args.get('keyword', '')
 
     def make():
@@ -142,8 +144,8 @@ async def flag_urgent(req: Request):
 
 
 @router.post('/route_to_human')
-async def route_to_human(req: Request):
-    call, args = await parse(req)
+def route_to_human(p=Depends(parse)):
+    call, args = p
     needs = [n.lower() for n in args.get('needs') or []]
     lang = (args.get('language') or '').lower()
     wanted = set(needs) | ({f'lang:{lang}'} if lang else set())
@@ -175,8 +177,8 @@ async def route_to_human(req: Request):
 
 
 @router.post('/lookup_info')
-async def lookup_info(req: Request):
-    call, args = await parse(req)
+def lookup_info(p=Depends(parse)):
+    call, args = p
     question = (args.get('question') or '')[:500]
     with connect() as c:
         found = resources.lookup(c, question, args.get('location_text') or '', args.get('needs') or [], drill_mode=DEMO)
@@ -187,8 +189,8 @@ async def lookup_info(req: Request):
 
 
 @router.post('/check_status')
-async def check_status(req: Request):
-    call, args = await parse(req)
+def check_status(p=Depends(parse)):
+    call, args = p
     code = (args.get('code') or '').upper().replace(' ', '')
     if code and not code.startswith('D-'):
         code = 'D-' + code.lstrip('D')
@@ -203,8 +205,8 @@ async def check_status(req: Request):
 
 
 @router.post('/opt_out')
-async def opt_out(req: Request):
-    call, args = await parse(req)
+def opt_out(p=Depends(parse)):
+    call, args = p
     scope = args.get('scope', 'calls')
     with connect() as c:
         c.execute('INSERT OR IGNORE INTO consents(caller_hash,updated) VALUES(?,?)', (caller_hash(call), time.time()))
@@ -217,8 +219,8 @@ async def opt_out(req: Request):
 
 
 @router.post('/record_consent')
-async def record_consent(req: Request):
-    call, args = await parse(req)
+def record_consent(p=Depends(parse)):
+    call, args = p
     with connect() as c:
         c.execute('INSERT OR IGNORE INTO consents(caller_hash,updated) VALUES(?,?)', (caller_hash(call), time.time()))
         if 'feature_consent' in args:
@@ -229,8 +231,7 @@ async def record_consent(req: Request):
 
 
 @router.post('/send_link')
-async def send_link(req: Request):
-    await parse(req)
+def send_link(p=Depends(parse)):
     # No SMS provider in this MVP; the agent tells the caller to use their code instead.
     return {'sent': False, 'spoken_short_url': ''}
 
@@ -269,8 +270,8 @@ def readback(form, values):
 
 
 @router.post('/start_form')
-async def start_form(req: Request):
-    call, args = await parse(req)
+def start_form(p=Depends(parse)):
+    call, args = p
 
     def make():
         form = load_form(args.get('form_type', 'request'))
@@ -282,8 +283,8 @@ async def start_form(req: Request):
 
 
 @router.post('/fill_form')
-async def fill_form(req: Request):
-    call, args = await parse(req)
+def fill_form(p=Depends(parse)):
+    call, args = p
     code = args.get('case_code', '')
     with connect() as c:
         row = c.execute('SELECT * FROM cases WHERE code=?', (code,)).fetchone()
@@ -299,8 +300,8 @@ async def fill_form(req: Request):
 
 
 @router.post('/submit_form')
-async def submit_form(req: Request):
-    call, args = await parse(req)
+def submit_form(p=Depends(parse)):
+    call, args = p
     code = args.get('case_code', '')
     with connect() as c:
         row = c.execute('SELECT * FROM cases WHERE code=?', (code,)).fetchone()
