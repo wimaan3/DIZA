@@ -11,6 +11,8 @@
 | `sessions/cs1-retell/SESSION_CONTEXT.md` | This file |
 
 ## Retell IDs (not secret)
+- Workspace: **DIZA** (`org_5TLEhBL0MyE7zjWi`), confirmed with `GET /get-api-key-info` (key name "DIZA"). Teammates are invited.
+
 | Agent | agent_id | llm_id |
 |---|---|---|
 | inbound (EN+ES) | `agent_3a4eb95c4f1db9410e9b393952` | `llm_d580bade2d274e59c85f0057822a` |
@@ -46,7 +48,7 @@
 - The `agentPlaygroundCompletion` endpoint exists: stateless text completion. It's a cheap way to script safety tests (costs per message).
 
 ## Open questions
-- Is KYC done on this account? Who owns it? Have teammates been invited?
+- Is KYC done on the DIZA workspace, and who owns it? (Teammates are invited.)
 - Approve buying the **626 number** (~$2/mo)? Twilio-backed or Retell-managed?
 - Which teammate phone is the staging on-call / crisis-line stand-in?
 - CS#2's ngrok static domain and Twilio fallback number.
