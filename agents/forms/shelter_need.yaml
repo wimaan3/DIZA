@@ -1,0 +1,14 @@
+id: shelter_need
+label: Needs a place to stay
+route_pool: trained_responder
+route_skill: housing
+fields:
+  - {name: people_count, required: true, validate: int, ask: "How many people need a place to stay?"}
+  - {name: current_location, required: true, ask: "Where are you now?"}
+  - {name: needs, required: false, sensitive: true, ask: "Any needs we should plan for, like a wheelchair, medication, a baby, or pets?"}
+  - {name: has_transport, required: true, validate: enum, choices: ["yes", "no"], ask: "Can you get to a shelter on your own?"}
+  - {name: tonight, required: true, validate: enum, choices: ["yes", "no"], ask: "Do you need somewhere tonight?"}
+  - {name: callback_phone, required: true, validate: phone, ask: "What number can we reach you on?"}
+readback: "Shelter for {people_count}, now at {current_location}, tonight: {tonight}, transport: {has_transport}. We'll call {callback_phone}."
+safety_check: "If they're outside in danger (fire, smoke, extreme heat or cold) or someone is hurt, follow the hard rules first."
+next_step_text: "We'll call you back with the nearest open shelter. Open shelters change hourly, so we'll confirm before you go."

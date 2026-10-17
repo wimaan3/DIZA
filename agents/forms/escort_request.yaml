@@ -1,0 +1,12 @@
+id: escort_request
+label: Safety escort (walk or ride)
+route_pool: general_helper
+route_skill: safety_escort
+fields:
+  - {name: from, required: true, ask: "Where should we meet you?"}
+  - {name: to, required: true, ask: "Where are you going?"}
+  - {name: time, required: true, validate: time, ask: "When do you need it?"}
+  - {name: callback_phone, required: true, validate: phone, ask: "What number should the escort call when they arrive?"}
+readback: "Escort from {from} to {to} at {time}. They'll call {callback_phone}."
+safety_check: "If they're being followed or threatened right now, that's P0: tell them to call 911 or campus public safety."
+next_step_text: "An escort will call when they're on the way."

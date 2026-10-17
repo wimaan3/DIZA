@@ -1,0 +1,344 @@
+_about: 'Real, verified places and hotlines for lookup_info (DIZA backend). Verified 2026-10-17 against the source_urls; re-verify before the
+  event. Shelter/cooling sites are open only when activated: the backend always tells callers to confirm via 211. transfer_ok marks the allowlist
+  for transfer_to_resource (never used in drill mode). Never guess an address or phone: leave fields out instead.'
+resources:
+- id: usc_engemann_student_health
+  name: USC Engemann Student Health Center
+  type: health_center
+  address: 1031 W 34th St
+  city: Los Angeles
+  zip: '90089'
+  lat: 34.024463
+  lon: -118.287788
+  coords_source: census_geocoder
+  phone: 213-740-9355
+  hours: 'Clinic: Mon-Thu close 7 PM (fall/spring), Fri and summer close 5 PM, Sat close 1 PM (fall/spring); hours may change. Phone line 213-740-9355
+    staffed 24/7 (advice nurse, mental health counselor, confidential advocate).'
+  languages: Interpreter service available upon request
+  notes: USC students only; 24/7 line covers urgent medical, mental health and sexual assault matters; life-threatening emergencies go to 911.
+  source_urls:
+  - https://studenthealth.usc.edu/
+  - https://studenthealth.usc.edu/hours/
+  - https://studenthealth.usc.edu/emergencies/
+  verified_on: 2026-10-17
+  eligibility: USC students
+  transfer_ok: true
+  transfer_number: '+12137409355'
+- id: usc_dps_university_park
+  name: USC Department of Public Safety (University Park Campus)
+  type: public_safety
+  address: 3667 McClintock Ave
+  city: Los Angeles
+  zip: 90089-1912
+  lat: 34.020938
+  lon: -118.289789
+  coords_source: census_geocoder
+  phone: Emergency 213-740-4321; non-emergency 213-740-6000
+  hours: 24/7
+  notes: 'Campus police for UPC, 24/7. Non-emergency and safety escorts: 213-740-6000. Emergencies: 213-740-4321 or 911.'
+  source_urls:
+  - https://dps.usc.edu/contact/
+  - https://studenthealth.usc.edu/emergencies/
+  verified_on: 2026-10-17
+  transfer_ok: true
+  transfer_number: '+12137406000'
+- id: usc_trojan_food_pantry
+  name: USC Trojan Food Pantry (Student Basic Needs)
+  type: food
+  address: 1025 W 34th St, King Hall (KOH) Suite 103
+  city: Los Angeles
+  zip: '90089'
+  lat: 34.02444
+  lon: -118.287738
+  coords_source: census_geocoder
+  phone: null
+  hours: 'Fall and spring: Tue, Wed, Thu 10:00 AM-2:00 PM, first week of classes through Classes End week. Summer: Wed 11:00 AM-2:00 PM (June-July).
+    Fall 2026 dates not separately published; email basicneeds@usc.edu to confirm.'
+  notes: Enrolled USC students without an active dining meal plan who are experiencing food insecurity; intake form each semester and physical
+    USCard required; contact basicneeds@usc.edu.
+  source_urls:
+  - https://studentbasicneeds.usc.edu/resources/food-insecurity/trojan-food-pantry/
+  verified_on: 2026-10-17
+  eligibility: Enrolled USC students
+  transfer_ok: false
+- id: la_general_medical_center_er
+  name: Los Angeles General Medical Center (formerly LAC+USC Medical Center) Emergency Department
+  type: hospital_er
+  address: 1983 Marengo St
+  city: Los Angeles
+  zip: '90033'
+  lat: 34.057271
+  lon: -118.208739
+  coords_source: census_geocoder
+  phone: 323-409-1000 (general information)
+  hours: Emergency department open 24/7
+  notes: LA County public hospital, renamed from LAC+USC Medical Center; about 5 miles northeast of USC UPC. For life-threatening emergencies
+    call 911.
+  source_urls:
+  - https://dhs.lacounty.gov/lageneral/our-services/emergency-services/
+  - https://dhs.lacounty.gov/lageneral/patient-and-visitor-information/
+  verified_on: 2026-10-17
+  transfer_ok: false
+- id: lapl_exposition_park_bethune
+  name: LAPL Exposition Park - Dr. Mary McLeod Bethune Regional Branch Library
+  type: library_cooling_charging
+  address: 3900 S Western Ave
+  city: Los Angeles
+  zip: '90062'
+  lat: 34.014566
+  lon: -118.308835
+  coords_source: census_geocoder
+  phone: 323-290-3113
+  hours: Mon-Thu 10:00 AM-8:00 PM; Fri-Sat 9:30 AM-5:30 PM; Sun 1:00 PM-5:00 PM
+  languages: Spanish-language collection
+  notes: City of LA libraries serve as cooling centers during normal open hours; the branch page itself does not mention device charging (it lists
+    an EV charging station).
+  status_note: Used as a City cooling site during extreme-heat events (LA City libraries have been part of the cooling network, per Mayor's office
+    heat releases 2023-2026); cooling use applies only during open hours. Confirm via 211 or 311 before sending anyone.
+  source_urls:
+  - https://www.lapl.org/branches/exposition-park
+  - https://mayor.lacity.gov/news/extreme-heat-warning-goes-effect-mayor-bass-highlights-city-resources-available-keep-angelenos
+  verified_on: 2026-10-17
+  transfer_ok: false
+- id: lapl_central_library
+  name: LAPL Central Library
+  type: library_cooling_charging
+  address: 630 W 5th St
+  city: Los Angeles
+  zip: '90071'
+  lat: 34.051748
+  lon: -118.256474
+  coords_source: census_geocoder
+  phone: 213-228-7000
+  hours: Mon-Thu 10:00 AM-8:00 PM; Fri-Sat 9:30 AM-5:30 PM; Sun 1:00 PM-5:00 PM
+  notes: Branch page lists 'Mobile Device Charging' among services; Census geocoder matched ZIP 90012 but LAPL publishes 90071.
+  status_note: Used as a City cooling site during extreme-heat events (LA City libraries are part of the cooling network); cooling use applies
+    only during open hours. Confirm via 211 or 311 before sending anyone.
+  source_urls:
+  - https://www.lapl.org/branches/central-library
+  - https://mayor.lacity.gov/news/extreme-heat-warning-goes-effect-mayor-bass-highlights-city-resources-available-keep-angelenos
+  verified_on: 2026-10-17
+  transfer_ok: false
+- id: pasadena_convention_center
+  name: Pasadena Convention Center (Pasadena Civic Center complex)
+  type: shelter_site
+  address: 300 E Green St
+  city: Pasadena
+  zip: '91101'
+  lat: null
+  lon: null
+  coords_source: not verified (Census geocoder returned no match for 300 E Green St)
+  phone: 626-793-2122 (venue)
+  notes: Opened as an Eaton Fire evacuation shelter the night of Jan 7, 2025 (about 1,000 evacuees overnight); Red Cross and CDSS took over on
+    Jan 11; residents later moved to Pamela Park, Duarte (Feb 2025).
+  status_note: Used as an evacuation shelter during the Eaton Fire, Jan 7 - Feb 2025; open only when activated. Confirm via 211 before sending
+    anyone.
+  source_urls:
+  - https://www.cityofpasadena.net/city-manager/cm-weekly-newsletters/weekly-newsletter-jan-23-2025/
+  - https://www.cityofpasadena.net/city-manager/cm-weekly-newsletters/weekly-newsletter-jan-16-2025/
+  - https://file.lacounty.gov/SDSInter/dhr/1175659_fires-evacuation-sites-2025.pdf
+  - https://recovery.lacounty.gov/2025/02/14/l-a-county-and-red-cross-partner-to-help-l-a-county-and-red-cross-partner-to-help-residents-transition-from-pasadena-fire-shelter-to-new-location-in-duarte/
+  - https://www.visitpasadena.com/convention-center/
+  verified_on: 2026-10-17
+  transfer_ok: false
+- id: altadena_community_center
+  name: Altadena Community Center (LA County DCBA)
+  type: recovery_center
+  address: 730 E Altadena Dr
+  city: Altadena
+  zip: '91001'
+  lat: 34.190287
+  lon: -118.134182
+  coords_source: census_geocoder
+  phone: 626-398-6174
+  hours: Mon-Fri 8:00 AM-5:00 PM; closed weekends; walk-ins welcome (per DCBA page)
+  notes: DCBA staff help fire survivors with housing/tenant, consumer and worker protections; SBA, FEMA, Assessor, crisis counseling and disaster
+    case management are no longer on site.
+  source_urls:
+  - https://dcba.lacounty.gov/altadena-center/
+  verified_on: 2026-10-17
+  transfer_ok: false
+- id: pasadena_humane
+  name: Pasadena Humane
+  type: animal_shelter
+  address: 361 S Raymond Ave
+  city: Pasadena
+  zip: '91105'
+  lat: 34.139559
+  lon: -118.148895
+  coords_source: census_geocoder
+  phone: '626-792-7151 (24-hour emergency service: ext. 102)'
+  hours: 'Animal Resource Center (admissions, lost and found): 9:30 AM-5:30 PM daily'
+  pets_allowed: true
+  notes: Admitted more than 600 evacuated pets during the January 2025 fires, per LA County Animal Care and Control.
+  source_urls:
+  - https://pasadenahumane.org/contact/
+  - https://animalcare.lacounty.gov/news/the-los-angeles-county-firestorms/
+  verified_on: 2026-10-17
+  transfer_ok: true
+  transfer_number: '+16267927151'
+- id: pomona_fairplex_large_animal
+  name: Pomona Fairplex (large-animal evacuation site)
+  type: shelter_site
+  address: 1101 W McKinley Ave
+  city: Pomona
+  zip: '91768'
+  lat: 34.080412
+  lon: -117.765916
+  coords_source: census_geocoder
+  phone: null
+  pets_allowed: large animals only (horses/livestock); small pets not stated
+  notes: Listed by LA County as a large-animal (horse/livestock) evacuation site for the Palisades, Eaton and Hurst fires; small pets not stated.
+  status_note: Used as a large-animal evacuation site during the Palisades/Eaton/Hurst fires, Jan 2025; open only when activated. Confirm via
+    211 before sending anyone.
+  source_urls:
+  - https://file.lacounty.gov/SDSInter/dhr/1175659_fires-evacuation-sites-2025.pdf
+  - https://animalcare.lacounty.gov/news/the-los-angeles-county-firestorms/
+  verified_on: 2026-10-17
+  only_for:
+  - large_animals
+  transfer_ok: false
+- id: altadena_disaster_recovery_center
+  name: Altadena Disaster Recovery Center / Eaton Fire Collaborative site
+  type: recovery_center
+  address: 540 W Woodbury Rd
+  city: Altadena
+  zip: '91001'
+  lat: 34.183044
+  lon: -118.161729
+  coords_source: census_geocoder
+  phone: LACDMH fire support line 833-659-0600 (no site phone published)
+  hours: 'As FEMA/County DRC (opened Jan 27, 2025): 9 AM-8 PM daily, later Mon-Sat. As LACDMH drop-in (Eaton Fire Collaborative): Mon-Fri 9 AM-5
+    PM, announced through June 2026.'
+  notes: Former multi-agency Eaton Fire DRC (FEMA, SBA, County, State); in Mar 2026 the County listed it as a mental-health drop-in through June
+    2026, so current status is unknown.
+  status_note: Used as a Disaster Recovery Center after the Eaton Fire, Jan 2025, and as a mental-health drop-in through June 2026; open only
+    when activated. Confirm via 211 before sending anyone.
+  source_urls:
+  - https://recovery.lacounty.gov/2025/01/24/new-altadena-disaster-recovery-center-opens-monday/
+  - https://recovery.lacounty.gov/2025/02/24/disaster-recovery-centers-will-be-closed-sundays/
+  - https://lacounty.gov/2026/03/31/lacdmh-continues-to-operate-two-drop-in-centers-for-fire-impacted-residents-in-altadena-pacific-palisades-through-state-partnership/
+  verified_on: 2026-10-17
+  transfer_ok: false
+- id: red_cross_la_region_hq
+  name: American Red Cross Los Angeles Region Headquarters (S. Mark Taper Foundation HQ)
+  type: relief_org
+  address: 1450 S Central Ave
+  city: Los Angeles
+  zip: '90021'
+  lat: 34.027677
+  lon: -118.247494
+  coords_source: census_geocoder
+  phone: General 310-445-9908; disaster relief assistance (dispatch) 800-675-5799
+  notes: Regional office; for disaster help, call the disaster relief line rather than walking in.
+  source_urls:
+  - https://www.redcross.org/local/california/los-angeles/about-us/locations.html
+  - https://www.redcross.org/local/california/los-angeles/about-us/contact-us.html
+  verified_on: 2026-10-17
+  transfer_ok: true
+  transfer_number: '+18006755799'
+- id: red_cross_san_gabriel_pomona_valley
+  name: American Red Cross San Gabriel Pomona Valley Chapter
+  type: relief_org
+  address: 376 W Huntington Dr
+  city: Arcadia
+  zip: '91007'
+  lat: 34.134334
+  lon: -118.042859
+  coords_source: census_geocoder
+  phone: 626-447-2193
+  notes: Closest Red Cross chapter office to Pasadena/Altadena; for disaster help use 800-675-5799.
+  source_urls:
+  - https://www.redcross.org/local/california/los-angeles/about-us/locations/san-gabriel-pomona-valley.html
+  - https://www.redcross.org/local/california/los-angeles/about-us/contact-us.html
+  verified_on: 2026-10-17
+  transfer_ok: false
+- id: la_211
+  name: 211 LA County
+  type: hotline
+  topics:
+  - shelter
+  - food
+  - utility bills
+  - benefits
+  - cooling centers
+  - disaster aid
+  - housing
+  phone: 2-1-1 or 1-800-339-6993
+  hours: 24/7
+  transfer_ok: true
+  transfer_number: '+18003396993'
+  source_urls:
+  - https://211la.org
+  verified_on: '2026-10-17'
+- id: la_county_elder_abuse
+  name: LA County Elder and Dependent Adult Abuse Hotline
+  type: hotline
+  topics:
+  - elder abuse
+  - dependent adult abuse
+  - neglect of an older adult
+  phone: 1-877-477-3646
+  hours: 24/7
+  transfer_ok: true
+  transfer_number: '+18774773646'
+  source_urls:
+  - https://ad.lacounty.gov/services/adult-protective-services/
+  verified_on: '2026-10-17'
+- id: la_dcfs_child_protection
+  name: LA County DCFS Child Protection Hotline
+  type: hotline
+  topics:
+  - child abuse
+  - child neglect
+  - child in danger
+  phone: 1-800-540-4000
+  hours: 24/7
+  transfer_ok: true
+  transfer_number: '+18005404000'
+  source_urls:
+  - https://dcfs.lacounty.gov/contact/
+  verified_on: '2026-10-17'
+- id: red_cross_disaster_line
+  name: American Red Cross Los Angeles disaster relief line
+  type: hotline
+  topics:
+  - disaster help
+  - house fire help
+  - red cross
+  phone: 1-800-675-5799
+  transfer_ok: true
+  transfer_number: '+18006755799'
+  source_urls:
+  - https://www.redcross.org/local/california/los-angeles/about-us/contact-us.html
+  verified_on: '2026-10-17'
+- id: lacdmh_fire_support
+  name: LA County Department of Mental Health fire support line
+  type: hotline
+  topics:
+  - fire survivor support
+  - counseling after the fire
+  - stress after the fire
+  phone: 1-833-659-0600
+  transfer_ok: true
+  transfer_number: '+18336590600'
+  source_urls:
+  - https://lacounty.gov/2026/03/31/lacdmh-continues-to-operate-two-drop-in-centers-for-fire-impacted-residents-in-altadena-pacific-palisades-through-state-partnership/
+  verified_on: '2026-10-17'
+- id: usc_student_health_24_7
+  name: USC Student Health 24/7 line (medical, counseling, advocates)
+  type: hotline
+  topics:
+  - counseling
+  - mental health
+  - talk to someone
+  - sexual assault support
+  - student health
+  phone: 213-740-9355
+  hours: 24/7
+  eligibility: USC students
+  transfer_ok: true
+  transfer_number: '+12137409355'
+  source_urls:
+  - https://studenthealth.usc.edu/
+  verified_on: '2026-10-17'

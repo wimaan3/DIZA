@@ -1,0 +1,11 @@
+{
+  "_comment": "Prod: rewrites each draft with these values, then publishes it. Agent swaps and the phone number point at 'latest_published'. During the hackathon PROD_CRISIS_LINE_NUMBER must be a teammate's phone, because drill callers role-play self-harm; the real 988 Lifeline (+18002738255) is only for a real deployment.",
+  "publish": true,
+  "swap_version": "latest_published",
+  "values": {
+    "BASE_URL": "${PUBLIC_BASE_URL}",
+    "LINE_NAME": "DIZA Community Line",
+    "RECORDING_NOTICE": "This call is recorded for a USC student project.",
+    "CRISIS_LINE_NUMBER": "${PROD_CRISIS_LINE_NUMBER}"
+  }
+}
