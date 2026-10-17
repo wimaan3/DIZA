@@ -53,7 +53,7 @@
 
 ### G. What we must build (priority order)
 **P0: must be working by Sat 2 PM**
-1. A real Retell phone number with an inbound agent: English + Spanish + one more LA language, plus AI disclosure
+1. A real Retell phone number with an inbound agent: English + Spanish + one more LA language
 2. Structured intake via function call → backend → shows up on the live dashboard (priority queue + map)
 3. Priority score and **warm transfer to a human with a whisper brief**; the never-automate rules enforced
 4. SMS path: text-in reports and an SMS fallback
@@ -164,7 +164,7 @@
 | **CheckWellCall / SeaVoice / Joy Calls** | Scheduled AI wellness calls (our Tuesday use) | Not connected to emergencies or evacuation zones |
 | **Everbridge / Genasys / NotifyLA** | Evacuation-zone IDs; "reply YES" confirmations | One-way or fixed replies; no callback ladder; English and Spanish only |
 | **LA County SNAP registry** | Opt-in list of vulnerable residents | Static list that nobody calls |
-| **New Orleans 311 bot** | What *not* to do: it hides that it's an AI | We always disclose |
+| **New Orleans 311 bot** | What *not* to do: callers can't tell it's an AI and get no ticket | Never claims to be human; truthful when asked |
 
 **Repos to fork:**
 - [retell-custom-llm-python-demo](https://github.com/RetellAI/retell-custom-llm-python-demo)
@@ -280,6 +280,34 @@ score = skill_match + language_match − current_load − fatigue  (only availab
 
 **Check with Retell early:** whether the transfer number can be set dynamically from our backend at transfer time (via a function result or dynamic variable). If not, use one transfer number per skill group.
 
+### Handling the flood of calls
+
+Goal: **no busy signals, short calls, and humans only see the top slice.**
+
+1. **The AI takes the parallel load.**
+   - Every call is answered instantly by the agent, many at once, up to Retell's concurrency limit. Check our account's limit and raise it before the demo.
+   - Humans only get calls above the priority threshold.
+2. **The greeting changes with the zone's level.**
+   - When a zone is at Watch or Ask, the first sentence is the news: "If you're calling about the fire near Lake Ave: we know, crews are responding, and evacuation info is being texted to you now. Stay on the line if anyone is hurt, trapped, or can't leave."
+   - Most duplicate callers are done in under 45 seconds.
+3. **Collapse duplicates.** A caller whose report matches an existing cluster is acknowledged and adds +1 to the corroboration count. They are not a new case. Repeat calls from the same number are merged.
+4. **Callbacks instead of hold.**
+   - Below the threshold: "Your place is saved; we'll call you back within ~20 min, or text UPDATE anytime."
+   - The callback goes on the outbound queue and is worked by the AI first. It escalates if the situation has changed.
+5. **Get ahead of the calls.**
+   - Proactive check-in calls to the zone's registry, plus SMS to everyone who already called.
+   - This removes the "is grandma OK?" and "what do I do?" calls before they're made.
+6. **Overflow below the AI.** If Retell is saturated or down, the phone number fails over to:
+   - a short recorded message
+   - record-a-message, which is transcribed and fed into the same queue
+   - an SMS link
+   - Never a busy signal or dead air.
+7. **Stop abuse.** Rate-limit by number and require independent sources before a cluster counts. Hoax floods inflate volume, not priority.
+8. **Show it in the demo.**
+   - The simulator fires 200 calls.
+   - The dashboard shows "200 calls → 3 clusters → 11 needing a human → 4 matched to specialists".
+   - Show median call length and time-to-human for the top 10.
+
 ## 6. Architecture (keep it boring)
 
 ```
@@ -306,7 +334,12 @@ Audio worker ──► pulls recording URL → librosa features + YAMNet → esc
 - The AI never sends a public alert or declares an area safe. A human approves every alert.
 - The AI never closes, deprioritizes or voicemails-out a call that mentions trapped people, a medical emergency, a child alone, or self-harm. Those go to a human immediately, or the caller is told to dial 911.
 - Voice and physiology signals can only **raise** priority.
-- The AI always discloses that it is an AI. Nobody is ever stuck in a loop: "press 0 / say 'person'" works at any time.
+- **Disclosure (team decision: no upfront disclaimer in crisis mode).**
+  - The crisis greeting goes straight to the question.
+  - The agent **never claims to be human** and answers truthfully if asked.
+  - It **never implies help has been dispatched** unless it has. This is the real safety risk: a caller who thinks a dispatcher heard them may stop calling 911.
+  - Outbound check-in calls identify who is calling, e.g. "This is the Altadena Senior Services check-in line." Opted-in residents know the service. Under the FCC's 2024 ruling, AI voices count as "artificial" under the TCPA, so opt-in consent is required.
+- Nobody is ever stuck in a loop: "press 0 / say 'person'" works at any time.
 - Registry is **opt-in** and minimal: name, language, address, needs, contact. Retention limits, no selling, and the resident can delete their data.
 - **Misuse and mitigation (2 lines for Devpost):**
   - Risk: hoax or swatting floods could fake a cluster. Mitigation: corroboration requires independent sources plus human approval.
