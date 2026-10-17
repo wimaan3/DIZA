@@ -211,7 +211,7 @@ def surge():
 def reset():
     if not DEMO: raise HTTPException(403)
     with connect() as c:
-        for table in ('attempts','requests','reports','events','webhook_events','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients'): c.execute(f'DELETE FROM {table}')
+        for table in ('attempts','requests','reports','events','webhook_events','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents'): c.execute(f'DELETE FROM {table}')
         c.execute("UPDATE responders SET status='available'")
     return {'ok':True}
 
@@ -252,12 +252,15 @@ async def retell_submit(req:Request):
 @app.post('/retell/webhook',status_code=204)
 async def webhook(req:Request):
     data=await verified_body(req)
-    digest=hashlib.sha256(json.dumps(data,sort_keys=True).encode()).hexdigest()
+    call_id=(data.get('call') or {}).get('call_id','')
+    key=f"{data.get('event','')}:{call_id}" if call_id else hashlib.sha256(json.dumps(data,sort_keys=True).encode()).hexdigest()
     with connect() as c:
-        c.execute('INSERT OR IGNORE INTO webhook_events VALUES(?,?)',(digest,time.time()))
+        fresh=c.execute('INSERT OR IGNORE INTO webhook_events VALUES(?,?)',(key,time.time())).rowcount
+    if not fresh:
+        return  # retry or duplicate (Retell retries; agent swaps with both_agents send twice)
     # Report submission happens during the call; call_ended frees whoever we routed it to.
     if data.get('event')=='call_ended':
-        release_call(data.get('call',{}).get('call_id',''))
+        release_call(call_id)
     on_alert_call_event(data)
 
 from .retell_fns import router as retell_fn_router, init_fns, release_call

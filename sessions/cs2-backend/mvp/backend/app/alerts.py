@@ -8,14 +8,16 @@ The AI never decides to alert or what to say (never-automate rule); nothing here
 Env: RETELL_API_KEY, RETELL_FROM_NUMBER, RETELL_ALERT_AGENT_ID, ALERT_CONTACTS_FILE (opted-in CSV:
 name,phone,language[,opted_out], never committed), ALLOW_LIVE_ALERTS=true to permit mode=live.
 """
-import csv, json, os, re, secrets, time, urllib.request
+import csv, hashlib, json, os, re, secrets, time, urllib.request
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from .main import app, connect, event
 
 DRILL_PREFIX = {'en': 'This is a drill for a USC student project.', 'es': 'Esto es un simulacro de un proyecto estudiantil de USC.'}
 LOCALES = {'ko': 'ko-KR', 'zh': 'zh-CN', 'hy': 'hy-AM', 'tl': 'fil-PH'}
-NO_ANSWER = {'dial_no_answer', 'dial_busy', 'dial_failed', 'invalid_destination', 'concurrency_limit_reached', 'error_no_audio_received'}
+# Don't redial these: retrying wastes calls and makes the number look like spam.
+DO_NOT_RETRY = {'invalid_destination', 'marked_as_spam', 'network_blocked', 'user_declined', 'telephony_provider_permission_denied'}
+FINAL = ('needs_help', 'safe', 'opted_out', 'failed')
 
 
 def init_alerts():
@@ -39,9 +41,13 @@ def contacts():
     path = os.getenv('ALERT_CONTACTS_FILE', '')
     if not path or not os.path.exists(path):
         raise HTTPException(503, 'ALERT_CONTACTS_FILE (opted-in contacts CSV) is not configured')
+    with connect() as c:  # anyone who said "stop calling" on any call is never called again
+        blocked = {r['caller_hash'] for r in c.execute('SELECT caller_hash FROM consents WHERE do_not_call=1')}
     out = []
     for row in csv.DictReader(open(path, newline='')):
         phone = re.sub(r'[^\d+]', '', row.get('phone', ''))
+        if hashlib.sha256(phone.encode()).hexdigest() in blocked:
+            continue
         if re.fullmatch(r'\+1\d{10}', phone) and (row.get('opted_out') or '').strip().lower() not in ('1', 'true', 'yes'):
             out.append({'name': (row.get('name') or '').strip(), 'phone': phone, 'language': (row.get('language') or 'en').strip().lower()})
     return out
@@ -80,7 +86,7 @@ def build_tasks(alert, recipients):
         if alert['mode'] == 'drill':
             msg = f"{DRILL_PREFIX.get(lang, DRILL_PREFIX['en'])} {msg}"
         task = {'to_number': r['phone'], 'override_agent_id': os.environ['RETELL_ALERT_AGENT_ID'],
-                'override_agent_version': os.getenv('RETELL_ALERT_AGENT_VERSION', 'latest'),
+                'override_agent_version': os.getenv('RETELL_ALERT_AGENT_VERSION', 'latest_published'),  # 'latest' includes drafts
                 'retell_llm_dynamic_variables': {'caller_name': (r['name'].split(' ')[0] if r['name'] else 'there'), 'language': lang,
                     'zone_name': alert['zone_name'], 'alert_message': msg, 'alert_action': text.get('action', '').strip(),
                     'alert_source': alert['source'], 'alert_id': alert['id'], 'drill_mode': str(alert['mode'] == 'drill').lower()},
@@ -119,7 +125,14 @@ def approve_and_send(alert_id: str, a: Approval):
             c.execute('INSERT INTO alert_recipients VALUES(?,?,?,?,?,?,?,?)', (alert_id, p['recipient'], p['name'], p['phone'],
                                                                                p['language'], 'calling', 1, time.time()))
         alert = dict(c.execute('SELECT * FROM alerts WHERE id=?', (alert_id,)).fetchone())
-    batch = send_batch(alert, people, 'initial')
+    try:
+        batch = send_batch(alert, people, 'initial')
+    except Exception as e:
+        with connect() as c:  # nothing is calling: put the alert back to draft so it can be fixed and re-approved
+            c.execute("UPDATE alerts SET status='draft',approved_by=NULL,approved_at=NULL WHERE id=?", (alert_id,))
+            c.execute('DELETE FROM alert_recipients WHERE alert_id=?', (alert_id,))
+            event(c, alert_id, f'Alert send failed, back to draft: {str(e)[:120]}')
+        raise HTTPException(502, f'Retell batch call failed; alert is back to draft: {str(e)[:200]}')
     with connect() as c:
         c.execute("UPDATE alerts SET status='sent',batch_ids=? WHERE id=?", (json.dumps([batch]), alert_id))
         event(c, alert_id, f"Alert approved by {a.approved_by} · calling {len(people)} opted-in people (batch {batch})")
@@ -162,18 +175,25 @@ def on_alert_call_event(data):
     if not meta.get('alert_id') or not meta.get('recipient'):
         return
     ev, status = data.get('event'), None
-    if ev == 'call_started':
-        status = 'calling'
-    elif ev == 'call_ended':
+    if ev == 'call_ended':
         reason = call.get('disconnection_reason') or ''
-        status = 'voicemail' if reason == 'voicemail_reached' else 'no_answer' if reason in NO_ANSWER else 'reached'
+        if reason == 'voicemail_reached':
+            status = 'voicemail'
+        elif reason in DO_NOT_RETRY:
+            status = 'failed'
+        elif call.get('call_status') in ('not_connected', 'error') or reason.startswith('dial_') or reason.startswith('error_'):
+            status = 'no_answer'
+        else:
+            status = 'reached'
     elif ev == 'call_analyzed':
-        a = (call.get('call_analysis') or {}).get('custom_analysis_data') or {}
-        status = 'opted_out' if a.get('opted_out') else {'needs_help': 'needs_help', 'safe_and_able': 'safe'}.get(a.get('safe_status'))
+        analysis = call.get('call_analysis') or {}
+        a = analysis.get('custom_analysis_data') or {}
+        status = ('voicemail' if analysis.get('in_voicemail') else 'opted_out' if a.get('opted_out')
+                  else {'needs_help': 'needs_help', 'safe_and_able': 'safe'}.get(a.get('safe_status')))
     if status:
         with connect() as c:
-            # Never downgrade: needs_help / safe / opted_out are final; a late call_ended can't overwrite them.
-            c.execute("UPDATE alert_recipients SET status=?,updated=? WHERE recipient=? AND status NOT IN ('needs_help','safe','opted_out')",
-                      (status, time.time(), meta['recipient']))
+            # Final outcomes are never overwritten, and a late or retried event can't move someone back.
+            c.execute(f"UPDATE alert_recipients SET status=?,updated=? WHERE recipient=? AND status NOT IN ({','.join('?' * len(FINAL))})",
+                      (status, time.time(), meta['recipient'], *FINAL))
             if status == 'needs_help':
                 event(c, meta['alert_id'], 'Alert recipient needs help · follow up now')
