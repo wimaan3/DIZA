@@ -22,6 +22,7 @@
 | `TWISTS_TEMPLATE.md` | Template for twist responses (what changed, why, proof) |
 | `BUILD_PLAN.md` | Per-person task lists by time + priority, milestones M0–M4, shared table schema + function contracts, daily rhythm |
 | `DECK.md` | 10-slide outline, required numbers, lines we must say, demo video cut, Devpost write-up sections + responsible-use text |
+| `SYSTEM_SPEC.md` | 4-layer spec: agent may/must-not + intents, helper pools + volunteer verification, case system, KB learning loop (what can/can't enter), photo uploads, SMS links, public data + anonymization, 3 dashboards by privacy level, new owners |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
@@ -52,6 +53,9 @@
 17. **Caching:** answer cache (KB + semantic cache in `lookup_info`, zone-tagged expiry) + function TTL caches + static prompts; Anthropic prompt caching only for our own backend LLM calls.
 18. **Evals:** light flywheel, not full AI-eng stack. Code checks first, LLM-as-judge for fuzzy criteria (calibrated vs. 40 human labels), P0 recall + safety = 100% hard gates, one wheel spin per flood (v1→v3).
 19. **Live audience calls in the pitch** + an **Ops Wall** real-time dashboard; planted P0 call; simulator top-up stated honestly; replay mode as backup.
+20. **Volunteers & pools:** callers can register as volunteers (pending until a human verifies them); requests route to pools (trained responders / listeners / general / bilingual); P0 never to volunteers.
+21. **Three dashboards:** supervisor console (full), supporter app (need-to-know), public status page (zone aggregates k≥5, verified info only, case lookup by code). Photo uploads via private link/MMS with EXIF strip + face blur, never public.
+22. **Data:** public sources (MyLA311, Census ACS, NWS, CAL FIRE, USGS) + our calls pseudonymized/scrubbed/aggregated with consent tiers.
 13. **Keyword triage:** 3 layers (live lexicon + LLM context + cross-call counts by distinct callers per zone).
 
 ## Key facts verified
