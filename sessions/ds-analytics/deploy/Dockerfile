@@ -1,4 +1,12 @@
-# Build context: repository root. Existing application and analysis share one volume.
+# Build context: repository root. RelayLA uses the existing persistent SQLite volume.
+FROM node:22-slim AS relay
+WORKDIR /relay
+COPY sessions/ds-analytics/client/package*.json ./
+RUN npm ci
+COPY sessions/ds-analytics/client/build.mjs ./
+COPY sessions/ds-analytics/client/src ./src
+RUN npm run build
+
 FROM node:22-slim AS dashboard
 WORKDIR /app/sessions/cs2-backend/mvp/dashboard
 COPY sessions/cs2-backend/mvp/dashboard/package*.json ./
@@ -12,6 +20,7 @@ COPY sessions/cs2-backend/mvp/backend/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY sessions/ds-analytics/pyproject.toml /tmp/diza-analysis/pyproject.toml
 COPY sessions/ds-analytics/diza_analysis /tmp/diza-analysis/diza_analysis
+COPY --from=relay /relay/dist/voice-sdk.js /tmp/diza-analysis/diza_analysis/relay_web/voice-sdk.js
 RUN pip install --no-cache-dir /tmp/diza-analysis && rm -rf /tmp/diza-analysis
 COPY sessions/cs2-backend/mvp/backend sessions/cs2-backend/mvp/backend
 COPY --from=dashboard /app/sessions/cs2-backend/mvp/dashboard/dist sessions/cs2-backend/mvp/dashboard/dist
