@@ -24,7 +24,8 @@
     "opt_out",
     "swap_to_crisis",
     "swap_to_inbound",
-    "end_call"
+    "end_call",
+    "text_caller"
   ],
   "model": "gpt-4.1-mini",
   "model_temperature": 0.1,

@@ -19,7 +19,8 @@
     "transfer_to_resource",
     "record_consent",
     "opt_out",
-    "end_call"
+    "end_call",
+    "text_caller"
   ],
   "model": "gpt-4.1-mini",
   "model_temperature": 0.1,
