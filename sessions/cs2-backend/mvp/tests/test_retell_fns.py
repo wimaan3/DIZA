@@ -64,6 +64,16 @@ class RetellFunctions(unittest.TestCase):
  def test_only_real_responders_and_live_flag(self):
   s=self.state();self.assertEqual({r['id'] for r in s['responders']},{'t1','t2'});self.assertTrue(s['live'])
   self.assertEqual(self.c.post('/api/demo/surge').status_code,403)
+ def test_reports_get_map_positions_and_places_listed(self):
+  import backend.app.main as m, backend.app.resources as res
+  real=res.geocode;res.geocode=lambda text,deadline:(34.18,-118.13) if 'Lake' in text else None
+  try:
+   self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},{**CALL,'call_id':'c10'});m.geocode_pending()
+   r=self.state()['reports'][0];self.assertIsNone(r['lat'])  # placeholder location is never geocoded
+   self.report('c10');m.geocode_pending();r=self.state()['reports'][0]
+   self.assertEqual((r['lat'],r['lon']),(34.18,-118.13))
+  finally:res.geocode=real
+  self.assertTrue(all(p['lat'] is not None for p in self.state()['places']))
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])
