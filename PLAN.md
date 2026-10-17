@@ -350,6 +350,43 @@ Goal: **no busy signals, short calls, and humans only see the top slice.**
 - **Outbound callbacks only to people who said yes**, which also keeps our number off spam lists.
 - Ask the organizers before mass-announcing. It also earns *Most Fun Team* points ("help other squads").
 
+### Call analytics: the learning loop (DS lead; biomech owns acoustic; CS#2 owns the Insights tab)
+
+**Capture everything per call** in a Supabase `calls` + `call_events` table:
+- from Retell: transcript, word timings, post-call fields, disconnection reason, duration, language, recording URL
+- from our side: zone level, priority score, routing decision, responder, transfer outcome, callback ladder steps
+- **one-tap label from the supporter after each transfer:** was it urgent (y/n), right skill (y/n), resolved (y/n)
+- the drill's scenario cards give extra ground truth
+
+**Analyses, and how each feeds back into the app:**
+
+| Analysis | Method | Feeds back as |
+|---|---|---|
+| **Baselines** of call volume by zone, hour and topic, built from ordinary-day calls | rolling mean/std per zone-hour | **The automatic "Watch" trigger**: a z-score spike vs. the Tuesday baseline. *The everyday data is what makes crisis detection work. That's the dual-use loop.* |
+| **Topic discovery**: what are people actually calling about? | sentence-transformer embeddings + HDBSCAN/BERTopic; LLM names each cluster | New topic → AI drafts an FAQ answer → human approves → added to the **Retell knowledge base**. The agent answers it next time, so fewer calls need a human. |
+| **Triage calibration** | confusion matrix: AI priority vs. supporter labels and scenario cards; logistic regression on features | Re-weight the priority score and tune thresholds. **Optimise recall on urgent calls**, because under-triage is the costly error. |
+| **Routing quality** | match rate, transfer acceptance, handle time and resolution by skill and language | Adjust matching weights; **staffing gaps**, e.g. "no Korean-speaking supporter 1–5 AM", turn into recruitment and on-call suggestions |
+| **Agent failure mining** | flag calls where callers repeat themselves, say "person/agent," hang up early, or have long silences; LLM summarises why | A prompt-fix list. Prompts are versioned in `agents/` so we can compare before and after (doubles as twist proof). |
+| **Hotspots** | geo clustering over time | Map heat layer; neighbourhood risk notes for the supervisor |
+| **Personal voice baselines** (biomech) | per-resident acoustic features across check-ins; deviation score | Flags "Mrs. Kim sounds more breathless than her last 6 calls", which moves her up the callback and welfare priority |
+
+**Customer-facing output (feasibility: this is part of what the Tuesday customer pays for):**
+- A weekly **Community Pulse** digest for the council office or USC: top concerns by area, unmet needs, language demand, response times.
+- Anonymised and aggregated only.
+
+**Demo / pitch moment:**
+- "From our live campus drill: N calls → 6 topics. One topic we never planned for became an FAQ, and here's the agent answering it now."
+- Show the triage-accuracy confusion matrix before and after re-weighting.
+
+**Privacy:**
+- Scrub names, numbers and addresses from transcripts before analysis.
+- Analytics only ever see aggregates.
+- Recordings are deleted after the event.
+
+**Priority:**
+- **P1:** logging + labels + ops metrics + topic clustering + baseline trigger
+- **P2:** knowledge-base auto-update, re-weighting, personal voice baselines, digest
+
 ## 6. Architecture (keep it boring)
 
 ```
