@@ -37,6 +37,9 @@ def init():
         CREATE TABLE IF NOT EXISTS calls(call_id TEXT PRIMARY KEY,direction TEXT,agent TEXT,caller_last4 TEXT,status TEXT,started REAL,ended REAL,
           duration_s INTEGER,disconnection_reason TEXT,summary TEXT,sentiment TEXT,updated REAL);
         ''')
+        for col in ('lat REAL','lon REAL','geo_tried INTEGER DEFAULT 0'):  # map position, filled by geocode_pending()
+            try: c.execute(f'ALTER TABLE reports ADD COLUMN {col}')
+            except sqlite3.OperationalError: pass
         # Placeholder team for local runs only; init_fns() replaces it with DIZA_RESPONDERS when that is set.
         for row in [('alex','Alex Chen','facilities,logistics','available'),('sam','Sam Rivera','facilities,logistics,medical,safety','available'),('maya','Maya Patel','medical,safety','available')]:
             c.execute('INSERT OR IGNORE INTO responders VALUES(?,?,?,?)', row)
@@ -92,7 +95,7 @@ def save_report(r):
         prev=c.execute('SELECT cluster_id FROM reports WHERE lower(trim(location))=? AND category=? AND created>? ORDER BY created DESC LIMIT 1',(r.location_text.strip().lower(),r.hazard,now-600)).fetchone()
         cluster=prev['cluster_id'] if prev else str(uuid.uuid4())
         rid=str(uuid.uuid4())
-        c.execute('INSERT INTO reports VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',(rid,r.idempotency_key,cluster,r.location_text,r.hazard,r.summary,r.evidence,json.dumps(r.unknowns),severity,reason,r.language,r.source,now))
+        c.execute('INSERT INTO reports(id,dedupe,cluster_id,location,category,summary,evidence,unknowns,severity,reason,language,source,created) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',(rid,r.idempotency_key,cluster,r.location_text,r.hazard,r.summary,r.evidence,json.dumps(r.unknowns),severity,reason,r.language,r.source,now))
         if severity != 'P3':
             qid=str(uuid.uuid4())
             c.execute('INSERT INTO requests VALUES(?,?,?,?,?,?)',(qid,rid,'new',None,now,now))
@@ -138,6 +141,12 @@ async def lifespan(app):
         while True:
             expire()
             await asyncio.sleep(1)
+    async def geocoder():
+        while True:
+            try: await asyncio.to_thread(geocode_pending)
+            except Exception as e: print('geocode failed:',e)
+            await asyncio.sleep(2)
+    geo=asyncio.create_task(geocoder())
     async def call_sync():
         while True:
             try: await asyncio.to_thread(sync_calls)
@@ -146,7 +155,7 @@ async def lifespan(app):
     task=asyncio.create_task(worker())
     sync=asyncio.create_task(call_sync()) if os.getenv('RETELL_API_KEY') else None
     yield
-    task.cancel()
+    task.cancel(); geo.cancel()
     if sync: sync.cancel()
 
 app=FastAPI(title='DIZA MVP',lifespan=lifespan)
@@ -173,7 +182,7 @@ def state():
           'cases':[dict(r) for r in c.execute('SELECT code,type,status,pool,created,updated FROM cases ORDER BY created DESC LIMIT 200')],
           'calls':[dict(r) for r in c.execute('SELECT * FROM calls ORDER BY started DESC LIMIT 100')],
           'kb_gaps':[dict(r) for r in c.execute('SELECT id,question,created FROM kb_gaps ORDER BY created DESC LIMIT 50')],
-          'alerts':list_alerts()['alerts']}
+          'alerts':list_alerts()['alerts'],'places':places()}
 
 @app.post('/api/reports')
 def submit(r:Report):
@@ -275,7 +284,7 @@ def merge_into_p0(call_id,r):
                        (r.location_text.strip().lower(),r.hazard,time.time()-600,p0['id'])).fetchone()
         summary=r.summary if r.summary.startswith(p0['summary']) else f"{r.summary} · {p0['summary']}"
         evidence=' · '.join(x for x in (p0['evidence'],r.evidence) if x)
-        c.execute('UPDATE reports SET location=?,category=?,summary=?,evidence=?,unknowns=?,language=?,cluster_id=? WHERE id=?',
+        c.execute('UPDATE reports SET location=?,category=?,summary=?,evidence=?,unknowns=?,language=?,cluster_id=?,lat=NULL,lon=NULL,geo_tried=0 WHERE id=?',
                   (r.location_text,r.hazard,summary[:2000],evidence[:2000],json.dumps(r.unknowns),r.language,prev['cluster_id'] if prev else p0['cluster_id'],p0['id']))
         q=c.execute('SELECT id FROM requests WHERE report_id=?',(p0['id'],)).fetchone()
         if q: event(c,q['id'],f'Caller details added: {r.location_text}')
@@ -299,6 +308,21 @@ def log_call(data):
             summary=COALESCE(excluded.summary,calls.summary),sentiment=COALESCE(excluded.sentiment,calls.sentiment),updated=excluded.updated''',
             (cid,call.get('direction') or '',call.get('agent_name') or call.get('agent_id') or '',re.sub(r'\D','',person_number(call))[-4:],status,started,ended,
              int(ended-started) if ended else None,call.get('disconnection_reason'),analysis.get('call_summary'),analysis.get('user_sentiment'),time.time()))
+
+def geocode_pending():
+    # Map pins: geocode new report locations off the call path (Census/OSM, cached), a few at a time.
+    from . import resources
+    with connect() as c:
+        rows=c.execute("SELECT id,location FROM reports WHERE geo_tried=0 ORDER BY created DESC LIMIT 3").fetchall()
+    for r in rows:
+        loc=r['location'] or ''
+        pos=None if loc.startswith('(') else resources.geocode(loc,time.monotonic()+4)
+        with connect() as c:
+            c.execute('UPDATE reports SET lat=?,lon=?,geo_tried=1 WHERE id=? AND location=?',(pos[0] if pos else None,pos[1] if pos else None,r['id'],loc))
+
+def places():
+    from . import resources
+    return [{k:x.get(k) for k in ('name','type','address','lat','lon')} for x in resources.resources() if x.get('lat') is not None]
 
 def sync_calls():
     # Backfill from Retell's API so calls made before a deploy, or a missed webhook, still show up.

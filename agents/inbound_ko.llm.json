@@ -17,7 +17,8 @@
     "check_status",
     "opt_out",
     "swap_to_english_spanish",
-    "end_call"
+    "end_call",
+    "text_caller"
   ],
   "model": "gpt-4.1-mini",
   "model_temperature": 0.1,
