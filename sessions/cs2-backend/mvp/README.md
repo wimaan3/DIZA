@@ -43,6 +43,16 @@ Set `RETELL_API_KEY` to the webhook-enabled key and expose only the Retell paths
 
 Unconfigured Retell endpoints fail closed with 503. Real phone operation requires an account, agent, telephone setup, reachable HTTPS endpoint, and a real integration test. Do not claim these are connected based on the local simulator.
 
+## Retell functions (backend/app/retell_fns.py)
+
+All 00_CONTRACTS functions answer at `/retell/fn/<name>` with the contract's response shapes, signature-checked, idempotent per call + arguments (Retell retries once). Nothing dials, texts or dispatches; each request becomes a case (`D-1234`) a person must act on, visible in `/api/state` → `cases` and the event log.
+
+- `flag_urgent` creates a P0 report that is escalated to the supervisor and never offered to helpers.
+- `route_to_human` picks the available responder with the most matching skills/language (`lang:es`) from `DIZA_RESPONDERS` (env only), never a `volunteer` for P0/P1, marks them busy, and frees them on the call's `call_ended` webhook. Nobody available → `oncall_number: ""` + `fallback: callback`.
+- `submit_report`: free-text hazards map to the category enum (so grouping works), vulnerability or people at risk raise severity to P1, and `cluster_match` is only set when other reports share the cluster.
+- Forms use `agents/forms/*.yaml` (`FORMS_DIR`). `lookup_info` logs knowledge gaps; `send_link` returns `sent: false` (no SMS provider yet).
+- Check against the agents with `python agents/contract_check.py --base-url http://127.0.0.1:8000 --key <key>` (in wimaan3/DIZA#2).
+
 ## Deliberate scope differences
 
 SQLite replaces Supabase for runnable local storage. `backend/db/schema.sql` is a draft Postgres migration, not an active adapter. No magic-link authentication, role isolation, photos, calendars, check-ins, public status page, automatic external notifications, or official public alert publishing. Supporter selection is a demo control, not authentication.
