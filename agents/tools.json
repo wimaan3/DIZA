@@ -832,5 +832,23 @@
     "keep_current_language": true,
     "keep_current_voice": true,
     "speak_during_execution": false
+  },
+  "text_caller": {
+    "type": "send_sms",
+    "name": "text_caller",
+    "description": "Text the caller (only after they said yes) the details you just gave: a place with address and directions link, a hotline number, or their case code.",
+    "speak_during_execution": true,
+    "execution_message_type": "prompt",
+    "execution_message_description": "Say briefly, in the caller's language, that you're texting it now.",
+    "sms_sender": {
+      "type": "retell_long_code"
+    },
+    "sms_destination": {
+      "type": "customer_number"
+    },
+    "sms_content": {
+      "type": "inferred",
+      "prompt": "Write ONE text message under 320 characters, in the caller's language, with only what you just told this caller. Start with 'DIZA Community Line:'. For a place: name, street address, and a Google Maps directions link https://www.google.com/maps/dir/?api=1&destination=<address URL-encoded with + for spaces>, plus 'Call 211 to confirm it is open' if you said it opens only when activated. For a hotline: name and number. For a request: their code and what happens next. Add 'Emergency: call 911.' Never include anyone else's information. End with 'Reply STOP to opt out.'"
+    }
   }
 }
