@@ -74,6 +74,40 @@ class RetellFunctions(unittest.TestCase):
    self.assertEqual((r['lat'],r['lon']),(34.18,-118.13))
   finally:res.geocode=real
   self.assertTrue(all(p['lat'] is not None for p in self.state()['places']))
+ def test_stuck_responder_freed_without_call_ended(self):
+  import backend.app.main as m
+  self.assertEqual(self.fn('route_to_human',{'needs':['evac_logistics'],'language':'es','severity':'P1','summary':'x'},{**CALL,'call_id':'c11'})['oncall_number'],'+15555550001')
+  with m.connect() as c:c.execute('UPDATE routings SET created=created-?',(m.ROUTE_HOLD+1,))
+  m.expire()
+  self.assertEqual(next(r for r in self.state()['responders'] if r['id']=='t1')['status'],'available')
+ def test_live_transcript_then_scrubbed_copy(self):
+  call={**CALL,'call_id':'c12','direction':'inbound','start_timestamp':1700000000000}
+  for t in ('Agent: How can I help?','Agent: How can I help?\nUser: smoke at Lake Ave'):
+   self.hook('transcript_updated',{**call,'transcript':t})
+  self.assertIn('smoke at Lake Ave',self.state()['calls'][0]['transcript'])
+  self.hook('call_analyzed',{**call,'transcript':'User: my SSN is 123','scrubbed_transcript':'User: my SSN is [ssn]'})
+  self.assertEqual(self.state()['calls'][0]['transcript'],'User: my SSN is [ssn]')
+ def test_location_link_pins_the_callers_report(self):
+  self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},{**CALL,'call_id':'c13'})
+  link=self.fn('request_location',{},{**CALL,'call_id':'c13'})['link'];token=link.rsplit('/',1)[1]
+  self.assertIn('Share my location',self.c.get(f'/l/{token}').text)
+  self.assertEqual(self.c.post(f'/l/{token}',json={'lat':34.0219,'lon':-118.2859,'accuracy':12}).status_code,200)
+  r=self.state()['reports'][0];self.assertEqual((r['lat'],r['lon'],r['gps_accuracy']),(34.0219,-118.2859,12))
+  import backend.app.main as m;self.report('c13');m.geocode_pending()  # the full report keeps the GPS pin, not a geocode
+  r=self.state()['reports'][0];self.assertEqual((r['lat'],r['gps_accuracy']),(34.0219,12))
+  self.assertEqual(self.c.post('/l/nope',json={'lat':1,'lon':1}).status_code,410)
+ def test_location_without_report_still_pins(self):
+  token=self.fn('request_location',{},{**CALL,'call_id':'c14'})['link'].rsplit('/',1)[1]
+  self.c.post(f'/l/{token}',json={'lat':34.1,'lon':-118.2,'accuracy':30})
+  self.assertEqual(self.state()['reports'][0]['lat'],34.1)
+ def test_text_chat_functions_and_page(self):
+  raw=json.dumps({'name':'create_request','chat':{'chat_id':'chat_1','agent_id':'a'},'args':{'type':'errand','details':'water','location_text':'Expo Park'}})
+  r=self.c.post('/retell/fn/create_request',content=raw,headers={'x-retell-signature':symmetric['sign'](raw,'test-key')})
+  self.assertEqual(r.status_code,200,r.text);self.assertTrue(r.json()['code'].startswith('D-'))
+  raw=json.dumps({'event':'chat_analyzed','chat':{'chat_id':'chat_1','start_timestamp':1700000000000,'chat_analysis':{'chat_summary':'x'}}})
+  self.c.post('/retell/webhook',content=raw,headers={'x-retell-signature':symmetric['sign'](raw,'test-key')})
+  self.assertEqual(self.state()['calls'][0]['direction'],'text')
+  self.assertIn('Text the DIZA Community Line',self.c.get('/text').text)
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])

@@ -36,5 +36,9 @@
   "services": {
     "agent_id": "agent_be27435a7b8f47693935b59424",
     "llm_id": "llm_aedf435263fe235c8b8a9596e9f6"
+  },
+  "sms": {
+    "chat_agent_id": "agent_0de7c1aac114fece90113208a0",
+    "llm_id": "llm_bf87033e9d3b2d201b1abfd81ab1"
   }
 }

@@ -43,6 +43,7 @@ EXAMPLES = {
     "book_appointment": {"with_skill": "mental_health", "preferred_times": ["tomorrow afternoon"]},
     "send_link": {"code": "D-417"},
     "record_consent": {"feature_consent": True, "analytics_consent": True},
+    "request_location": {},
 }
 # Response fields the prompts rely on (00_CONTRACTS.md).
 EXPECT = {
