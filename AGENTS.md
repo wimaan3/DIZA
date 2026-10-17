@@ -15,11 +15,12 @@ Several AI agent sessions push here. Keep their outputs separate so they don't o
    - Use `sessions/planning-claude/SESSION_CONTEXT.md` as the template.
 3. **`sources/` is official hackathon material only.** Add new files; don't edit existing ones.
 4. **Shared root files (`README.md`, `AGENTS.md`):** only append small changes. Don't restructure them.
-5. **Branches (team decision):**
-   - **Each person or agent works on their own branch.**
-   - **`main` is the real app only.** It gets code via small PRs, reviewed by a teammate, and must always demo.
-   - Session docs and context stay on your own branch (in `sessions/<name>/`). The synthesized plan can go to `main` under `docs/` via PR.
-   - Before pushing: `git pull --rebase` on your own branch. Never force-push a branch you didn't create, and never push directly to `main`.
+5. **Branches + PRs (team decision, updated):**
+   - **`main` is the shared trunk.** Everyone contributes to it **only through pull requests**: app code, configs, and your `sessions/<name>/` docs.
+   - Work on a short-lived branch (`cs1/…`, `cs2/…`, `ds/…`, `bio/…`, or your agent's branch), then open a PR to `main`.
+   - **Review:** code PRs need one teammate's review (backend/dashboard → CS#2, agents → CS#1, config/analysis → DS, docs/deliverables → biomech). Docs-only PRs to your own `sessions/` folder can be self-merged.
+   - Keep PRs small. `main` must always run and demo.
+   - Before pushing: `git pull --rebase origin main` on your branch. Never force-push someone else's branch, and never push directly to `main`.
 6. **No secrets.** Never commit API keys, `.env` files, or personal phone numbers.
 7. **Code** goes in top-level app folders (`backend/`, `dashboard/`, `agents/`, `analysis/`, `sim/`) once the team agrees on the structure. Until then, put it in your session folder.
 8. **Synthesis:** one designated session reads every `sessions/*/SESSION_CONTEXT.md` and writes the merged plan to `docs/` (e.g. `docs/MASTER_PLAN.md`), citing which session each decision came from.

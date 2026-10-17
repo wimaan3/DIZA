@@ -1,6 +1,6 @@
 # 01 · CS#1: Retell voice agents (everything inside Retell)
 
-> **Paste to your AI agent:** "You are building the Retell AI voice agents for team DIZA at the InnovateLA Dual-Use Hackathon (Resilience Comms track). Read `sessions/planning-claude/handoff/01_CS1_RETELL_AGENT.md` and `00_CONTRACTS.md` in https://github.com/wimaan3/DIZA (branch `claude/relaxed-goodall-tmz8gz`), then the referenced docs. Work on branch `cs1/<topic>`, put code in `agents/`, keep notes in `sessions/cs1-retell/` with a SESSION_CONTEXT.md, open small PRs to `main`. Never commit keys. Use the Retell MCP/CLI but keep git as the source of truth. Do the tasks in priority order and check off acceptance criteria."
+> **Paste to your AI agent:** "You are building the Retell AI voice agents for team DIZA at the InnovateLA Dual-Use Hackathon (Resilience Comms track). Read `sessions/planning-claude/handoff/01_CS1_RETELL_AGENT.md` and `00_CONTRACTS.md` in https://github.com/wimaan3/DIZA (branch `main`), then the referenced docs. Work on branch `cs1/<topic>`, put code in `agents/`, keep notes in `sessions/cs1-retell/` with a SESSION_CONTEXT.md, open small PRs to `main` (rebase on `main` first). Never commit keys. Use the Retell MCP/CLI but keep git as the source of truth. Do the tasks in priority order and check off acceptance criteria."
 
 **Read first:**
 - `00_CONTRACTS.md`

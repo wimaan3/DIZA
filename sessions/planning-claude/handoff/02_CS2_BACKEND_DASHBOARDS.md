@@ -1,6 +1,6 @@
 # 02 · CS#2: Backend, systems and every screen
 
-> **Paste to your AI agent:** "You are building the backend and all dashboards for team DIZA at the InnovateLA Dual-Use Hackathon (Resilience Comms / Retell AI). Read `sessions/planning-claude/handoff/02_CS2_BACKEND_DASHBOARDS.md` and `00_CONTRACTS.md` in https://github.com/wimaan3/DIZA (branch `claude/relaxed-goodall-tmz8gz`), then the referenced docs. First create the `main` app skeleton exactly as in the contracts (via PR). Work on `cs2/<topic>` branches, notes in `sessions/cs2-backend/` with a SESSION_CONTEXT.md. Never commit secrets. Python FastAPI + Supabase + React (Vite) + Leaflet. Do the tasks in priority order and meet the acceptance criteria."
+> **Paste to your AI agent:** "You are building the backend and all dashboards for team DIZA at the InnovateLA Dual-Use Hackathon (Resilience Comms / Retell AI). Read `sessions/planning-claude/handoff/02_CS2_BACKEND_DASHBOARDS.md` and `00_CONTRACTS.md` in https://github.com/wimaan3/DIZA (branch `main`), then the referenced docs. First create the app skeleton on `main` exactly as in the contracts (via PR). Work on `cs2/<topic>` branches, notes in `sessions/cs2-backend/` with a SESSION_CONTEXT.md. Never commit secrets. Python FastAPI + Supabase + React (Vite) + Leaflet. Do the tasks in priority order and meet the acceptance criteria."
 
 **Read first:**
 - `00_CONTRACTS.md`

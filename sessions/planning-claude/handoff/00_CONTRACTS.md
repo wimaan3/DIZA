@@ -19,9 +19,9 @@ docs/               deck assets, TWISTS.md, TOOLS.md, Devpost text (biomech)
 ```
 
 ## Branches
-- Personal branches: `cs1/*`, `cs2/*`, `ds/*`, `bio/*`
-- **`main` = real app, via small PRs only.** Reviewers: CS#2 for backend/dashboard, CS#1 for agents, DS for config/analysis.
-- Session notes go in `sessions/<you>/` on your own branch (see AGENTS.md).
+- Work branches: `cs1/*`, `cs2/*`, `ds/*`, `bio/*` → **PR to `main`** (the shared trunk)
+- Reviewers: CS#2 for backend/dashboard, CS#1 for agents, DS for config/analysis, biomech for docs/deliverables. Docs-only PRs to your own `sessions/<you>/` can be self-merged.
+- `main` must always run. Small PRs; rebase on `main` before opening.
 
 ## Environment variables (`.env.example`)
 ```
