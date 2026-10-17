@@ -1,8 +1,10 @@
 {
   "agent_id": "agent_84c4ab107b9f4ad840d790eda8",
   "agent_name": "diza-alert-outbound",
+  "allow_dtmf_interruption": true,
   "allow_user_dtmf": true,
   "assigned_tags": [],
+  "begin_message_delay_ms": 800,
   "boosted_keywords": [
     "humo",
     "fuego",
@@ -27,15 +29,31 @@
   ],
   "channel": "voice",
   "contact_memory_config": {
-    "enable_read": true,
+    "enable_read": false,
     "enable_update": false
   },
   "data_storage_retention_days": 7,
-  "data_storage_setting": "everything",
+  "data_storage_setting": "everything_except_pii",
   "denoising_mode": "noise-cancellation",
   "enable_backchannel": true,
   "end_call_after_silence_ms": 30000,
+  "guardrail_config": {
+    "input_topics": [
+      "platform_integrity_jailbreaking"
+    ]
+  },
+  "handbook_config": {
+    "ai_disclosure": false,
+    "echo_verification": true,
+    "high_empathy": true,
+    "speech_normalization": true
+  },
   "interruption_sensitivity": 0.75,
+  "ivr_option": {
+    "action": {
+      "type": "hangup"
+    }
+  },
   "language": [
     "en-US",
     "es-419"
@@ -115,6 +133,28 @@
     }
   ],
   "post_call_analysis_model": "gpt-4.1-mini",
+  "pronunciation_dictionary": [
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˌæltəˈdiːnə",
+      "word": "Altadena"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "doʊˈhiːni",
+      "word": "Doheny"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈliːvi",
+      "word": "Leavey"
+    },
+    {
+      "alphabet": "ipa",
+      "phoneme": "ˈiːtən",
+      "word": "Eaton"
+    }
+  ],
   "reminder_max_count": 2,
   "reminder_trigger_ms": 8000,
   "response_engine": {
@@ -123,7 +163,9 @@
     "version": 0
   },
   "responsiveness": 1,
-  "user_dtmf_options": {},
+  "user_dtmf_options": {
+    "timeout_ms": 2000
+  },
   "voice_id": "cartesia-Cleo",
   "voice_model": "sonic-3",
   "voicemail_option": {

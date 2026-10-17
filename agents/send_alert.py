@@ -22,10 +22,12 @@ import os
 import re
 import sys
 
-from retell_api import AGENTS_DIR, RetellError, call, load_dotenv, load_ids
+from retell_api import AGENTS_DIR, RetellError, call, items, load_dotenv, load_ids
 
 LOCALES = {"ko": "ko-KR", "zh": "zh-CN", "hy": "hy-AM", "tl": "fil-PH"}  # en/es use the agent's own languages
-DRILL_PREFIX = {"en": "This is a drill for a USC student project.", "es": "Esto es un simulacro de un proyecto estudiantil de USC."}
+DRILL_PREFIX = {"en": "This is a drill for a USC student project. ", "es": "Esto es un simulacro de un proyecto estudiantil de USC. "}
+INTRO = {"en": "Hi {name}, this is the DIZA Community Line with an urgent safety message for {zone}.",
+         "es": "Hola {name}, le llama la Línea Comunitaria DIZA con un mensaje urgente de seguridad para {zone}."}
 
 
 def load_alert(path):
@@ -61,14 +63,15 @@ def task_for(contact, alert, agent_id, version):
     text = alert["messages"].get(lang) or alert["messages"]["en"]
     used_lang = lang if lang in alert["messages"] else "en"
     message = text["message"].strip()
-    if alert["mode"] == "drill":
-        message = f"{DRILL_PREFIX.get(used_lang, DRILL_PREFIX['en'])} {message}"
+    first = contact["name"].split(" ")[0] if contact["name"] else ""
+    intro = INTRO.get(used_lang, INTRO["en"]).format(name=first or ("there" if used_lang != "es" else ""), zone=alert["zone_name"])
     task = {
         "to_number": contact["phone"],
         "override_agent_id": agent_id,
         "override_agent_version": version,
         "retell_llm_dynamic_variables": {
-            "caller_name": contact["name"].split(" ")[0] if contact["name"] else "there",
+            "caller_name": first or "there", "alert_intro": re.sub(r"\s+,", ",", intro),
+            "drill_prefix": DRILL_PREFIX.get(used_lang, DRILL_PREFIX["en"]) if alert["mode"] == "drill" else "",
             "language": used_lang, "zone_name": alert["zone_name"], "alert_message": message,
             "alert_action": text.get("action", "").strip(), "alert_source": alert["source"],
             "alert_id": alert["id"], "drill_mode": "true" if alert["mode"] == "drill" else "false",
@@ -92,7 +95,7 @@ def main():
     p.add_argument("--live", action="store_true", help="required for mode: live alerts")
     p.add_argument("--emergency", action="store_true", help="skip the 8 AM-9 PM calling window (emergency-purpose calls)")
     p.add_argument("--max", type=int, default=10)
-    p.add_argument("--version", default="latest", help="alert agent version: latest (draft) or latest_published")
+    p.add_argument("--version", default="", help="alert agent version (default: latest_published, or the draft if nothing is published yet)")
     a = p.parse_args()
     load_dotenv()
 
@@ -103,6 +106,12 @@ def main():
     ids = load_ids()
     if "alert" not in ids:
         sys.exit("No alert agent yet: run push.py first")
+    if not a.version:
+        # 'latest' includes drafts, so a staging push would change what prod alerts say. Prefer the published version.
+        versions = items(call("GET", f"/list-agent-versions/{ids['alert']['agent_id']}?limit=50"))
+        a.version = "latest_published" if any(v.get("is_published") for v in versions) else "latest"
+        if a.version == "latest":
+            print("! alert agent has no published version yet: using the draft ('latest')")
     from_number = os.environ.get("RETELL_FROM_NUMBER")
     if not from_number:
         sys.exit("Set RETELL_FROM_NUMBER (the DIZA line) to send from.")
@@ -119,7 +128,7 @@ def main():
     print(f"Alert {alert['id']} [{alert['mode'].upper()}] for {alert['zone_name']}, approved by {alert['approved_by']} at {alert['approved_at']}")
     for t in body["tasks"]:
         v = t["retell_llm_dynamic_variables"]
-        print(f"  → {mask(t['to_number'])} ({v['language']}): {v['alert_message']} {v['alert_action']}")
+        print(f"  → {mask(t['to_number'])} ({v['language']}): {v['drill_prefix']}{v['alert_intro']} {v['alert_message']} {v['alert_action']}")
     missing = sorted({c["language"] for c in contacts} - set(alert["messages"]))
     if missing:
         print(f"  ⚠ no approved text in {', '.join(missing)}: those contacts hear the English text. Add messages.<lang> to the alert file.")

@@ -14,7 +14,8 @@ Git is the source of truth. Retell is a deploy target. Don't edit agents in the 
 | `retell.ids.json` | Agent, LLM and knowledge-base IDs (not secret; commit them) |
 | `kb/*.md` + `kb_sync.py` | Knowledge bases `line-policy`, `la-resources`, `campus-faq`. Each `## ` section = one snippet. Numbers verified 2026-10-17 on official pages |
 | `forms/*.yaml` | **Draft** form schemas for the `start_form`/`fill_form`/`submit_form` loop (biomech owns content) |
-| `prompts/language_line.md` | Shared prompt for the Korean/Chinese lines |
+| `prompts/language_line.md` | Full prompt for the Korean/Chinese lines (own crisis intake) |
+| `send_alert.py`, `alerts/` | Approved alert + opted-in CSV → Retell batch call (dry run by default) |
 | `remote/` | Snapshot of what's live, written by `pull.py`, for diffs |
 | `CHANGELOG.md` | One line per prod publish |
 | `safety_check.py` | Text-only safety regression (real person?, no false dispatch, 988, Spanish P0, prompt injection) |
@@ -23,10 +24,12 @@ Git is the source of truth. Retell is a deploy target. Don't edit agents in the 
 ## Agents
 | Name | Retell name | Role | Swaps to |
 |---|---|---|---|
-| `inbound` | diza-inbound-en-es | Everyday line + first answer for every inbound call (EN+ES). Forms, escorts, appointments, volunteers | `crisis`, `inbound_ko`, `inbound_zh` |
+| `inbound` | diza-inbound-en-es | Front door for every inbound call (EN+ES): emergencies, questions, nearest place, a person, callbacks. Kept lean (~3.3k tokens) | `crisis`, `services`, `inbound_ko`, `inbound_zh` |
+| `services` | diza-services | Help desk on the same call: forms, escorts, appointments, reminders, check-in sign-up, notify a contact, status, links, volunteers | `crisis`, `inbound` |
 | `crisis` | diza-crisis | Crisis intake: safe? what? where? who? vulnerability → `submit_report` → route | `inbound` (false alarm, never after a P0) |
 | `inbound_ko` | diza-inbound-ko | Korean line; does its own crisis intake (no Korean crisis agent) | `inbound` (English/Spanish) |
 | `inbound_zh` | diza-inbound-zh | Mandarin line; same design | `inbound` |
+| `alert` | diza-alert-outbound | Approved alert calls (`send_alert.py` / backend approve button): reads the alert word for word, two-way help | — |
 | `checkin` | diza-checkin-outbound | Outbound wellness check-in; names the service, "say stop anytime", voicemail message | `crisis` |
 | `welfare` | diza-welfare-outbound | Outbound crisis call-down: safe / not safe, needs, can leave? | — |
 
@@ -50,8 +53,16 @@ Optional env vars: `RETELL_FROM_NUMBER` (bind the number: inbound → `inbound`,
 
 **Crisis line safety:** `transfer_to_crisis_line` dials `{{crisis_line_number}}`. During the hackathon it must be a **teammate's phone in both envs**, because drill callers role-play self-harm, and we must not send role-play calls to the real 988 Lifeline. The backend can also override it per call in the inbound webhook.
 
+## Settings applied from Retell's docs (2026-10-17 review)
+- Prompt + tools ≤ ~3.3k tokens per agent (Retell bills extra above 4k incl. KB + transcript): one copy of each rule, short tool descriptions, services split out of inbound.
+- `max_retry` 0 on write functions (Retell retries on any failure); 1 on lookups/routing.
+- Warm transfer: generated private brief, three-way intro, waits for a real person (not voicemail).
+- `data_storage_setting: everything_except_pii` (pii_config only scrubs under it); contact memory off; `handbook_config` high empathy + speech normalization + echo verification (AI disclosure off: team decision, the agent still answers truthfully); guardrail on jailbreak input only (output topics would mask 988/911 lines).
+- DTMF interrupts speech (`allow_dtmf_interruption`), 2 s digit timeout; inbound waits 75 s of silence; outbound: 0.8 s start delay, hang up on phone menus; IPA pronunciations for Altadena, Doheny, Leavey, Eaton; codes read with `<spell>`.
+
 ## For CS#2 (backend)
 - **Inbound webhook response must be wrapped:** `{"call_inbound": {"override_agent_id": ..., "dynamic_variables": {...}, "metadata": {...}}}` (Retell docs: features/inbound-call-webhook). All dynamic-variable values must be strings.
+- **Outbound openers:** check-in/welfare/alert start with `{{drill_prefix}}` ("This is a drill for a USC student project. " or empty). Alert calls also take `alert_intro` (full localized sentence, no nested variables), `alert_message`, `alert_action`, `alert_source`. Use `override_agent_version: latest_published` once published (`latest` includes drafts).
 - **Greeting:** the first line is fixed text, `{{recording_notice}} {{opening_line}}`. Default `opening_line` = "Thanks for calling the DIZA Community Line. How can I help?". For a zone at watch/ask/crisis, return `opening_line` like "If you're calling about the fire near Lake Ave: we know about it and we're tracking it. Are you safe right now?".
 - Dynamic variables the prompts read: `caller_name, language, zone_id, zone_level, known_incidents, is_registered, drill_mode` (inbound webhook). Also `crisis_line_number` (optional override) and, for outbound `create-phone-call`, `needs, reason, consent_status` (`active` | `pending_consent`).
 - Functions use Retell's default body `{"name": ..., "call": {call_id, transcript, ...}, "args": {...}}` (`args_at_root: false`), so you get `call.call_id` for idempotency and the transcript. Timeout 5 s, 1 retry, so make writes idempotent.

@@ -51,11 +51,11 @@
     "alert_message": "",
     "alert_action": "",
     "alert_source": "",
-    "alert_id": ""
+    "alert_id": "",
+    "drill_prefix": "",
+    "alert_intro": ""
   },
   "_knowledge_bases": [
-    "line-policy",
-    "la-resources",
     "guides"
   ]
 }
