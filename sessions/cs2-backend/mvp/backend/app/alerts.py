@@ -5,7 +5,7 @@ approves it (the dashboard button) → we start one Retell batch call to opted-i
 `alert` agent → call webhooks update each recipient (reached / voicemail / no answer / needs help /
 safe / opted out) → the console shows the tally → "retry unreached" redials no-answers.
 The AI never decides to alert or what to say (never-automate rule); nothing here posts public alerts.
-Env: RETELL_API_KEY, RETELL_FROM_NUMBER, RETELL_ALERT_AGENT_ID, ALERT_CONTACTS_FILE (opted-in CSV:
+Env: RETELL_API_KEY, RETELL_FROM_NUMBER, RETELL_ALERT_AGENT_ID, ALERT_CONTACTS_FILE or ALERT_CONTACTS_CSV (opted-in CSV:
 name,phone,language[,opted_out], never committed), ALLOW_LIVE_ALERTS=true to permit mode=live.
 """
 import csv, hashlib, json, os, re, secrets, time, urllib.request
@@ -38,13 +38,19 @@ def retell_post(path, body):
 
 
 def contacts():
-    path = os.getenv('ALERT_CONTACTS_FILE', '')
-    if not path or not os.path.exists(path):
-        raise HTTPException(503, 'ALERT_CONTACTS_FILE (opted-in contacts CSV) is not configured')
+    # Opted-in contacts: a CSV file path, or the CSV text itself (handy on hosts like Railway).
+    path, inline = os.getenv('ALERT_CONTACTS_FILE', ''), os.getenv('ALERT_CONTACTS_CSV', '')
+    if inline:
+        import io
+        source = io.StringIO(inline.replace('\\n', '\n'))
+    elif path and os.path.exists(path):
+        source = open(path, newline='')
+    else:
+        raise HTTPException(503, 'ALERT_CONTACTS_FILE or ALERT_CONTACTS_CSV (opted-in contacts) is not configured')
     with connect() as c:  # anyone who said "stop calling" on any call is never called again
         blocked = {r['caller_hash'] for r in c.execute('SELECT caller_hash FROM consents WHERE do_not_call=1')}
     out = []
-    for row in csv.DictReader(open(path, newline='')):
+    for row in csv.DictReader(source):
         phone = re.sub(r'[^\d+]', '', row.get('phone', ''))
         if hashlib.sha256(phone.encode()).hexdigest() in blocked:
             continue
