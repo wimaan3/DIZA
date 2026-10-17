@@ -36,7 +36,8 @@
     "match_reason": "",
     "needs": "",
     "reason": "",
-    "consent_status": "active"
+    "consent_status": "active",
+    "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?"
   },
   "knowledge_base_ids": []
 }

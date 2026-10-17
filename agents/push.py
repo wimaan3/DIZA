@@ -142,9 +142,14 @@ def bind_number(ids, env, values, dry_run):
     body = {
         "inbound_agents": [{"agent_id": ids["inbound"]["agent_id"], "agent_version": version, "weight": 1}],
         "outbound_agents": [{"agent_id": ids["checkin"]["agent_id"], "agent_version": version, "weight": 1}],
-        "inbound_webhook_url": f"{values['BASE_URL']}/retell/inbound",
         "nickname": "DIZA line",
     }
+    if values["BASE_URL"] == UNSET_BASE_URL:
+        # A dead inbound webhook would stall every call; without one the agent uses its default variables.
+        body["inbound_webhook_url"] = None
+        print("· no backend yet: inbound webhook left unset")
+    else:
+        body["inbound_webhook_url"] = f"{values['BASE_URL']}/retell/inbound"
     if os.environ.get("RETELL_FALLBACK_NUMBER"):
         body["fallback_number"] = os.environ["RETELL_FALLBACK_NUMBER"]
     if dry_run:

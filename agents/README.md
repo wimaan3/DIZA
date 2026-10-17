@@ -14,6 +14,7 @@ Git is the source of truth. Retell is a deploy target. Don't edit agents in the 
 | `retell.ids.json` | Agent + LLM IDs (not secret; commit them) |
 | `remote/` | Snapshot of what's live, written by `pull.py`, for diffs |
 | `CHANGELOG.md` | One line per prod publish |
+| `safety_check.py` | Text-only safety regression (real person?, no false dispatch, 988, Spanish P0, prompt injection) |
 
 ## Agents
 | Name | Retell name | Role | Swaps to |
@@ -33,6 +34,7 @@ python agents/push.py --env staging --dry-run   # see the payloads
 python agents/push.py --env staging             # update drafts (nothing published)
 python agents/push.py --env prod                # update + publish + CHANGELOG line
 python agents/pull.py                           # mirror live config into remote/
+python agents/safety_check.py                   # text safety tests on the drafts (a few cents); run before prod
 ```
 Optional env vars: `RETELL_FROM_NUMBER` (bind the number: inbound → `inbound`, outbound → `checkin`, inbound webhook → `${BASE_URL}/retell/inbound`), `RETELL_FALLBACK_NUMBER` (CS#2's Twilio voicemail line), `PROD_CRISIS_LINE_NUMBER`.
 
@@ -42,8 +44,10 @@ Optional env vars: `RETELL_FROM_NUMBER` (bind the number: inbound → `inbound`,
 
 ## For CS#2 (backend)
 - **Inbound webhook response must be wrapped:** `{"call_inbound": {"override_agent_id": ..., "dynamic_variables": {...}, "metadata": {...}}}` (Retell docs: features/inbound-call-webhook). All dynamic-variable values must be strings.
+- **Greeting:** the first line is fixed text, `{{recording_notice}} {{opening_line}}`. Default `opening_line` = "Thanks for calling the DIZA Community Line. How can I help?". For a zone at watch/ask/crisis, return `opening_line` like "If you're calling about the fire near Lake Ave: we know about it and we're tracking it. Are you safe right now?".
 - Dynamic variables the prompts read: `caller_name, language, zone_id, zone_level, known_incidents, is_registered, drill_mode` (inbound webhook). Also `crisis_line_number` (optional override) and, for outbound `create-phone-call`, `needs, reason, consent_status` (`active` | `pending_consent`).
-- Functions are sent with `args_at_root: true`: the JSON body is just the arguments, with no `{call, args}` wrapper. Timeout 5 s, 1 retry, so make writes idempotent.
+- Functions use Retell's default body `{"name": ..., "call": {call_id, transcript, ...}, "args": {...}}` (`args_at_root: false`), so you get `call.call_id` for idempotency and the transcript. Timeout 5 s, 1 retry, so make writes idempotent.
+- `submit_report.cluster_match` must be `""` unless there's a real match: the agent reads any non-empty value aloud.
 - `route_to_human` must return `oncall_number` (E.164, or `""`), `responder_name`, `brief`, `match_reason`. They become `{{variables}}` for the warm transfer + whisper.
 - Agent webhook events: `call_started, call_ended, call_analyzed, transcript_updated, transfer_started, transfer_bridged, transfer_cancelled, transfer_ended`. On a swap, both agents' webhooks fire.
 - Post-call analysis fields (inbound/crisis): `severity, category, language, needs_followup, people_at_risk, vulnerability, location_text, outcome`. Check-in: `wellbeing, needs_followup, needs_mentioned, consent_confirmed, language, outcome`. Welfare: `safe_status, can_evacuate, severity, needs_followup, people_at_risk, vulnerability, language, outcome`.
