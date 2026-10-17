@@ -161,6 +161,6 @@ One compliance case also preserves a previous P0 label.
 
 For backend compatibility, copy `sessions/cs2-backend/mvp` into this session's ignored `artifacts/backend-compat/`, install its requirements in this session's virtual environment, and run `npm ci` and `npm run build` inside the copy's dashboard folder.
 Then run `python sessions/ds-analytics/scripts/check_backend.py sessions/ds-analytics/artifacts/backend-compat` using that virtual environment.
-The runner isolates test modules because their import-time environment changes otherwise mix live and simulation settings, and mocks the periodic Retell backfill job to avoid provider calls.
+The runner isolates test modules because their import-time environment changes otherwise mix live and simulation settings, and mocks periodic Retell backfill and geocoding jobs to avoid provider calls.
 
 Live backend wiring, official feed polling, reviewed production polygons, real caller collection, Supabase analytics migrations, embedding-based topic discovery/answer caching, acoustic models, and real agent/judge runs remain separate integration work.

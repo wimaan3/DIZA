@@ -1,7 +1,7 @@
 # Session context: ds-analytics
 
 - **Session:** Codex implementation of the DIZA data science work package, requested by Deepanshu.
-- **Branch:** `ds/analysis-triage`, based on `origin/main` at `da67553`.
+- **Branch:** `ds/analysis-triage`, started from `da67553` and rebased onto `origin/main` at `5dff053`.
 - **Scope:** Installable deterministic triage and analysis package, synthetic data, evals, metric CLI, source loaders, and tests.
 
 ## Files in this folder
