@@ -122,9 +122,15 @@ def offer(c,qid):
     c.execute('INSERT INTO attempts VALUES(?,?,?,?,?)',(str(uuid.uuid4()),qid,candidate['id'],'offered',time.time()+TIMEOUT))
     event(c,qid,f"Offer visible in supporter inbox: {candidate['name']} · awaiting acceptance (no phone notification sent)")
 
+ROUTE_HOLD=int(os.getenv('ROUTE_HOLD_SECONDS','900'))
+
 def expire():
     with connect() as c:
         c.execute('BEGIN IMMEDIATE')
+        # A responder reserved for a phone transfer is freed by call_ended; if that webhook never comes, free them after ROUTE_HOLD.
+        for row in c.execute('SELECT call_id,responder_id FROM routings WHERE created<=?',(time.time()-ROUTE_HOLD,)).fetchall():
+            c.execute("UPDATE responders SET status='available' WHERE id=? AND status='busy'",(row['responder_id'],))
+            c.execute('DELETE FROM routings WHERE call_id=? AND responder_id=?',(row['call_id'],row['responder_id']))
         for a in c.execute("SELECT * FROM attempts WHERE status='offered' AND expires<=?",(time.time(),)).fetchall():
             c.execute("UPDATE attempts SET status='timed_out' WHERE id=?",(a['id'],))
             c.execute("UPDATE responders SET status='available' WHERE id=?",(a['responder_id'],))
@@ -194,6 +200,13 @@ def submit(r:Report):
 def assign(qid:str):
     with connect() as c:
         c.execute('BEGIN IMMEDIATE'); offer(c,qid)
+    return {'ok':True}
+
+@app.post('/api/responders/{rid}/available')
+def responder_available(rid:str):
+    with connect() as c:
+        c.execute("UPDATE responders SET status='available' WHERE id=?",(rid,))
+        c.execute('DELETE FROM routings WHERE responder_id=?',(rid,))
     return {'ok':True}
 
 class Decision(BaseModel):
