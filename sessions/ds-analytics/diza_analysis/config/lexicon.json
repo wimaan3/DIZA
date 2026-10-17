@@ -1,0 +1,19 @@
+[
+  {"tier":"P0","category":"medical","skills":["medical"],"terms":{"en":["can't breathe","cannot breathe","can't catch my breath","not breathing","unconscious","chest pain","bleeding a lot","overdose","face is drooping"],"es":["no puedo respirar","inconsciente","dolor de pecho","sangrando mucho","sobredosis"]}},
+  {"tier":"P0","category":"mental_health","skills":["mental_health"],"terms":{"en":["kill myself","want to die","suicide"],"es":["me quiero morir","quiero matarme","suicidio"]}},
+  {"tier":"P0","category":"safety_crime","skills":[],"terms":{"en":["trapped","stuck","being attacked","gun","weapon"],"es":["atrapado","atrapada","atascado","atascada","me estan atacando","pistola"]}},
+  {"tier":"P1","category":"fire","skills":["evac_logistics"],"terms":{"en":["fire","flames"],"es":["fuego","incendio","llamas"]}},
+  {"tier":"P1","category":"smoke","skills":["evac_logistics"],"terms":{"en":["smoke"],"es":["humo"]}},
+  {"tier":"P1","category":"gas","skills":["evac_logistics"],"terms":{"en":["smell gas","gas leak","explosion"],"es":["huele a gas","fuga de gas","explosion"]}},
+  {"tier":"P1","category":"flood","skills":["evac_logistics"],"terms":{"en":["water rising","flood","flooding"],"es":["inundacion","agua subiendo"]}},
+  {"tier":"P1","category":"infrastructure","skills":["facilities"],"terms":{"en":["power lines down","building collapsed","earthquake damage"],"es":["cables caidos","edificio derrumbado"]}},
+  {"tier":"BOOST","vulnerability":"mobility","skills":["evac_logistics"],"terms":{"en":["wheelchair","bedridden","can't drive","blind","deaf"],"es":["silla de ruedas","encamado","no puedo conducir","ciego","sordo"]}},
+  {"tier":"BOOST","vulnerability":"medical_device","skills":["medical"],"terms":{"en":["oxygen","dialysis","ventilator","medical device"],"es":["oxigeno","dialisis","ventilador"]}},
+  {"tier":"BOOST","vulnerability":"alone","skills":[],"terms":{"en":["live alone","alone"],"es":["vivo solo","vivo sola","sola"]}},
+  {"tier":"BOOST","vulnerability":"age_risk","skills":[],"terms":{"en":["elderly","baby"],"es":["anciano","anciana","bebe"]}},
+  {"tier":"P2","category":"mental_health","skills":["mental_health"],"terms":{"en":["scared","panicking","anxious"],"es":["tengo miedo","panico","ansioso"]}},
+  {"tier":"P2","category":"logistics","skills":["general"],"terms":{"en":["can't reach my mom","nowhere to go","lost"],"es":["no encuentro a mi mama","no tengo donde ir","perdido"]}},
+  {"tier":"P3","category":"infrastructure","skills":["facilities"],"terms":{"en":["heater","maintenance","wi-fi","printing"],"es":["calefaccion","mantenimiento","impresora"]}},
+  {"tier":"P3","category":"logistics","skills":["safety_escort"],"terms":{"en":["escort"],"es":["acompanamiento"]}},
+  {"tier":"P3","category":"info","skills":[],"terms":{"en":["dining","class","hours","appointment","reminder","housing"],"es":["horario","cita","recordatorio","vivienda"]}}
+]

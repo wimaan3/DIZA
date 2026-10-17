@@ -1,0 +1,8 @@
+{
+  "provenance": "Illustrative demo assumptions, not Census estimates; replace per zone with a fetched ACS profile",
+  "zones": {
+    "altadena": {"language_weights":{"en":0.55,"es":0.25,"ko":0.08,"zh":0.06,"tl":0.03,"hy":0.03},"age_65_share":0.25},
+    "usc_campus": {"language_weights":{"en":0.70,"es":0.15,"ko":0.05,"zh":0.05,"tl":0.03,"hy":0.02},"age_65_share":0.05},
+    "san_pedro_wilmington": {"language_weights":{"en":0.50,"es":0.35,"ko":0.03,"zh":0.04,"tl":0.05,"hy":0.03},"age_65_share":0.20}
+  }
+}
