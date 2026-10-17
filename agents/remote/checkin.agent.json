@@ -1,0 +1,143 @@
+{
+  "agent_id": "agent_38e6a8853b75e3f28ec159496b",
+  "agent_name": "diza-checkin-outbound",
+  "allow_user_dtmf": true,
+  "assigned_tags": [],
+  "boosted_keywords": [
+    "humo",
+    "fuego",
+    "incendio",
+    "atrapado",
+    "atrapada",
+    "oxígeno",
+    "inundación",
+    "huele a gas",
+    "no puedo respirar",
+    "inconsciente",
+    "Altadena",
+    "Lake Avenue",
+    "Pasadena",
+    "Eaton",
+    "USC",
+    "Leavey",
+    "Doheny",
+    "Tommy Trojan",
+    "988",
+    "911"
+  ],
+  "channel": "voice",
+  "contact_memory_config": {
+    "enable_read": true,
+    "enable_update": false
+  },
+  "data_storage_retention_days": 7,
+  "data_storage_setting": "everything",
+  "denoising_mode": "noise-cancellation",
+  "enable_backchannel": true,
+  "end_call_after_silence_ms": 30000,
+  "interruption_sensitivity": 0.75,
+  "language": [
+    "en-US",
+    "es-419"
+  ],
+  "max_call_duration_ms": 600000,
+  "opt_in_signed_url": false,
+  "pii_config": {
+    "categories": [
+      "ssn",
+      "credit_card",
+      "bank_account",
+      "password",
+      "pin",
+      "passport",
+      "driver_license"
+    ],
+    "mode": "post_call"
+  },
+  "post_call_analysis_data": [
+    {
+      "choices": [
+        "ok",
+        "concern",
+        "urgent",
+        "no_answer",
+        "opted_out"
+      ],
+      "description": "How the person is doing.",
+      "name": "wellbeing",
+      "type": "enum"
+    },
+    {
+      "description": "True if a person on our team should follow up with this caller.",
+      "name": "needs_followup",
+      "type": "boolean"
+    },
+    {
+      "description": "Needs the person mentioned (food, medicine, ride, help at home), or empty.",
+      "name": "needs_mentioned",
+      "type": "string"
+    },
+    {
+      "description": "True if a pending-consent person agreed to check-ins on this call.",
+      "name": "consent_confirmed",
+      "type": "boolean"
+    },
+    {
+      "choices": [
+        "en",
+        "es",
+        "ko",
+        "zh",
+        "hy",
+        "tl",
+        "other"
+      ],
+      "description": "Language the caller mainly used.",
+      "name": "language",
+      "type": "enum"
+    },
+    {
+      "choices": [
+        "ai_resolved",
+        "human_transferred",
+        "callback_queued",
+        "safety_911_988",
+        "abandoned",
+        "voicemail"
+      ],
+      "description": "How the call ended.",
+      "name": "outcome",
+      "type": "enum"
+    }
+  ],
+  "post_call_analysis_model": "gpt-4.1-mini",
+  "reminder_max_count": 2,
+  "reminder_trigger_ms": 8000,
+  "response_engine": {
+    "llm_id": "llm_70ffada52da62a93cd01588a2ed3",
+    "type": "retell-llm",
+    "version": 0
+  },
+  "responsiveness": 1,
+  "user_dtmf_options": {},
+  "voice_id": "cartesia-Cleo",
+  "voice_model": "sonic-3",
+  "voicemail_option": {
+    "action": {
+      "text": "Hi, this is the DIZA Community Line with your check-in call. We'll try again soon. If you need anything, call us back at this number. If it's an emergency, call 911.",
+      "type": "static_text"
+    }
+  },
+  "webhook_events": [
+    "call_started",
+    "call_ended",
+    "call_analyzed",
+    "transcript_updated",
+    "transfer_started",
+    "transfer_bridged",
+    "transfer_cancelled",
+    "transfer_ended"
+  ],
+  "webhook_timeout_ms": 10000,
+  "webhook_url": "https://backend-not-configured.invalid/retell/webhook"
+}

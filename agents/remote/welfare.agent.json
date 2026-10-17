@@ -1,0 +1,157 @@
+{
+  "agent_id": "agent_3439382a91c5988203681e5a51",
+  "agent_name": "diza-welfare-outbound",
+  "allow_user_dtmf": true,
+  "assigned_tags": [],
+  "boosted_keywords": [
+    "humo",
+    "fuego",
+    "incendio",
+    "atrapado",
+    "atrapada",
+    "oxígeno",
+    "inundación",
+    "huele a gas",
+    "no puedo respirar",
+    "inconsciente",
+    "Altadena",
+    "Lake Avenue",
+    "Pasadena",
+    "Eaton",
+    "USC",
+    "Leavey",
+    "Doheny",
+    "Tommy Trojan",
+    "988",
+    "911"
+  ],
+  "channel": "voice",
+  "contact_memory_config": {
+    "enable_read": true,
+    "enable_update": false
+  },
+  "data_storage_retention_days": 7,
+  "data_storage_setting": "everything",
+  "denoising_mode": "noise-cancellation",
+  "enable_backchannel": true,
+  "end_call_after_silence_ms": 45000,
+  "interruption_sensitivity": 0.75,
+  "language": [
+    "en-US",
+    "es-419"
+  ],
+  "max_call_duration_ms": 300000,
+  "opt_in_signed_url": false,
+  "pii_config": {
+    "categories": [
+      "ssn",
+      "credit_card",
+      "bank_account",
+      "password",
+      "pin",
+      "passport",
+      "driver_license"
+    ],
+    "mode": "post_call"
+  },
+  "post_call_analysis_data": [
+    {
+      "choices": [
+        "safe",
+        "not_safe",
+        "unknown"
+      ],
+      "description": "Is the person safe?",
+      "name": "safe_status",
+      "type": "enum"
+    },
+    {
+      "description": "True if the person can leave on their own if needed.",
+      "name": "can_evacuate",
+      "type": "boolean"
+    },
+    {
+      "choices": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "description": "Highest severity in the call: P0 life in danger now, P1 active hazard, P2 needs a person soon, P3 routine.",
+      "name": "severity",
+      "type": "enum"
+    },
+    {
+      "description": "True if a person on our team should follow up with this caller.",
+      "name": "needs_followup",
+      "type": "boolean"
+    },
+    {
+      "description": "Number of people at risk mentioned, 0 if none.",
+      "name": "people_at_risk",
+      "type": "number"
+    },
+    {
+      "description": "Comma-separated vulnerability flags mentioned (wheelchair, oxygen, dialysis, elderly_alone, baby, no_car, pets, deaf, blind), or empty.",
+      "name": "vulnerability",
+      "type": "string"
+    },
+    {
+      "choices": [
+        "en",
+        "es",
+        "ko",
+        "zh",
+        "hy",
+        "tl",
+        "other"
+      ],
+      "description": "Language the caller mainly used.",
+      "name": "language",
+      "type": "enum"
+    },
+    {
+      "choices": [
+        "ai_resolved",
+        "human_transferred",
+        "callback_queued",
+        "safety_911_988",
+        "abandoned",
+        "voicemail"
+      ],
+      "description": "How the call ended.",
+      "name": "outcome",
+      "type": "enum"
+    }
+  ],
+  "post_call_analysis_model": "gpt-4.1-mini",
+  "reminder_max_count": 2,
+  "reminder_trigger_ms": 8000,
+  "response_engine": {
+    "llm_id": "llm_b8a398791945b78171e435732ef7",
+    "type": "retell-llm",
+    "version": 0
+  },
+  "responsiveness": 1,
+  "user_dtmf_options": {},
+  "voice_id": "cartesia-Cleo",
+  "voice_model": "sonic-3",
+  "voicemail_option": {
+    "action": {
+      "text": "Hi, this is the DIZA Community Line calling to check you're safe because of an emergency near you. Please call us back at this number. If you're in danger, call 911.",
+      "type": "static_text"
+    }
+  },
+  "webhook_events": [
+    "call_started",
+    "call_ended",
+    "call_analyzed",
+    "transcript_updated",
+    "transfer_started",
+    "transfer_bridged",
+    "transfer_cancelled",
+    "transfer_ended"
+  ],
+  "webhook_timeout_ms": 10000,
+  "webhook_url": "https://backend-not-configured.invalid/retell/webhook"
+}

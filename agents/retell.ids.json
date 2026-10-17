@@ -1,0 +1,18 @@
+{
+  "crisis": {
+    "agent_id": "agent_bdd2bd8327e2f2b8f556d3a8c4",
+    "llm_id": "llm_627c8c204c909a70575525a77d8f"
+  },
+  "inbound": {
+    "agent_id": "agent_3a4eb95c4f1db9410e9b393952",
+    "llm_id": "llm_d580bade2d274e59c85f0057822a"
+  },
+  "checkin": {
+    "agent_id": "agent_38e6a8853b75e3f28ec159496b",
+    "llm_id": "llm_70ffada52da62a93cd01588a2ed3"
+  },
+  "welfare": {
+    "agent_id": "agent_3439382a91c5988203681e5a51",
+    "llm_id": "llm_b8a398791945b78171e435732ef7"
+  }
+}
