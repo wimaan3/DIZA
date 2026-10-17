@@ -23,6 +23,7 @@
 | `BUILD_PLAN.md` | Per-person task lists by time + priority, milestones M0–M4, shared table schema + function contracts, daily rhythm |
 | `DECK.md` | 10-slide outline, required numbers, lines we must say, demo video cut, Devpost write-up sections + responsible-use text |
 | `SYSTEM_SPEC.md` | 4-layer spec: agent may/must-not + intents, helper pools + volunteer verification, case system, KB learning loop (what can/can't enter), photo uploads, SMS links, public data + anonymization, 3 dashboards by privacy level, new owners |
+| `handoff/` | **Four work packages** (one per teammate, each with a paste-ready prompt for their AI agent) + `00_CONTRACTS.md` shared contracts |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
