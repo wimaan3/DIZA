@@ -23,6 +23,31 @@
   - **Travel:** does it work on a tenth of the budget?
   - Say out loud which way we lean before a judge does.
 
+### Who's judging and mentoring (from the roster PDF): pitch to *them*
+
+- **City people are on the jury:**
+  - Betty Lieu (Torrance councilmember)
+  - Brad Waller (Redondo Beach Mayor Pro Tem)
+  - Andy Wilson (ex-vice mayor, USC)
+  - Krystal Ayala (SCAG regional planning)
+  - an ex-White House judge
+  - **Sell to them:** "your council office can run this for your seniors on Tuesday" is a pitch they can picture buying.
+- **Defense and federal people are on the jury too:**
+  - Matthew Finney (Accenture Federal, Data & AI)
+  - a special-ops veteran
+  - ex-Navy EOD Josh Duntz
+  - Mert Turna (YC)
+  - Tariq Nazar (Mithrandir Dynamics)
+  - The roster's own scorecard phrases dual-use as *"Does it serve everyday LA **and national resilience** at once?"*
+  - **So** the military and national angle earns a strong slide: the same stack serves base family-support lines, VA wellness check-ins, or a FEMA or National Guard surge line. Keep the core story LA everyday + crisis.
+- **Finney's talk is titled "The Great Inversion":** *"AI made building cheap. Knowing which problem to solve is now the scarce skill."* Lead the pitch with the **problem choice** (Altadena), not the tech.
+- **Mentors to book first (Saturday):**
+  1. **Abhi Nemani** (LA's first Chief Data Officer, govtech): procurement, and what a city would actually buy.
+  2. **Alison Frazzini** (LA County Chief Sustainability Office): county emergency context.
+  3. **Justin McEwen** (FedTech, USAF): the national-resilience framing.
+  4. **Ayush Kumar** (AWS, AI agents): the agent architecture.
+- **Avoid lobbying judges as mentors.** Sobti, Turna and Nazar also mentor, and judges who mentored us carry less weight.
+
 ## 2. Scorecard → how we win each line
 
 | Criterion (1–5) | Our answer |
