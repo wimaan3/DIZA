@@ -509,7 +509,7 @@
   "transfer_to_crisis_line": {
     "type": "transfer_call",
     "name": "transfer_to_crisis_line",
-    "description": "Transfer to the 988 Suicide and Crisis Lifeline.",
+    "description": "Transfer to the suicide and crisis line.",
     "transfer_destination": {
       "type": "predefined",
       "number": "{{crisis_line_number}}"
