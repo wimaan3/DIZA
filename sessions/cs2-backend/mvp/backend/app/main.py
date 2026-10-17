@@ -130,6 +130,7 @@ def expire():
 async def lifespan(app):
     init()
     init_fns()
+    init_alerts()
     async def worker():
         while True:
             expire()
@@ -210,7 +211,7 @@ def surge():
 def reset():
     if not DEMO: raise HTTPException(403)
     with connect() as c:
-        for table in ('attempts','requests','reports','events','webhook_events','cases','fn_results','routings','kb_gaps','kb_items'): c.execute(f'DELETE FROM {table}')
+        for table in ('attempts','requests','reports','events','webhook_events','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients'): c.execute(f'DELETE FROM {table}')
         c.execute("UPDATE responders SET status='available'")
     return {'ok':True}
 
@@ -257,9 +258,11 @@ async def webhook(req:Request):
     # Report submission happens during the call; call_ended frees whoever we routed it to.
     if data.get('event')=='call_ended':
         release_call(data.get('call',{}).get('call_id',''))
+    on_alert_call_event(data)
 
 from .retell_fns import router as retell_fn_router, init_fns, release_call
 app.include_router(retell_fn_router)
+from .alerts import init_alerts, on_alert_call_event
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():
