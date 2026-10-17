@@ -1,0 +1,389 @@
+
+=====TAB t.0 All information =====
+The Dual-Use Hackathon: Participant Hub
+InnovateLA at USC Viterbi | October 16 to 18, 2026 | Closing event of LA Tech Week
+Build for LA. Build for the world.
+This is the single source of truth for participants.
+Questions: jainamja@usc.edu (Vice-Chair InnovateLA) or ajbartol@usc.edu (Exec Chair InnovateLA), or the help desk in the Build room during the weekend.
+Last updated: October 14, 2026
+The short version
+Doors Open + Mingle | Friday, Oct 16, 5:00 PM, MCB 101
+Kick Off | Friday, 5:30 PM, MCB 101
+The problem drops | Friday 6:00 PM, revealed live
+Submit | Saturday 10:00 PM on Devpost. No extensions.
+Finals | Sunday 12:00 PM to 3:30 PM, Ginsburg Hall
+Cost | Free
+Teams | 2 to 4 people. Locked Friday 9:00 PM.
+Who can enter | Anyone.
+Quick links
+Join our WhatsApp to stay up-to-date with important announcements here
+The portal (accounts, lens picks, team registration, mentor slots, leaderboard): 
+https://www.innovatelosangeles.com/dual-use/sign-in 
+Devpost (every project is submitted to Devpost
+IBM Bob free 30-day trial: IBM free trial
+IBM SkillsBuild talk registration (Sat 1 PM): Register here: IBM SkillsBuild 
+Ambassador A-Baki talk registration (Sat 11 AM): Register here: Ambassador Baki
+Partiful Event page: InnovateLA x Dual Use Hackathon Partiful
+
+Before Friday: five things, ten minutes
+Make your portal account. Sign in with the code we email you.
+Make a Devpost account. Every project is submitted there.
+Start your free IBM Bob trial. 30 days of IBM's AI coding partner.
+Register for Saturday's talks. In-room questions go first.
+Pick your top two lenses in your portal profile.
+Coming with friends? Make a squad in the portal. Solo? We match you on Friday.
+What to bring
+Laptop and charger
+A charged phone
+Your software stack, installed + Any hardware you'll want
+First hackathon? No problem.
+Plenty of the room is new to this. Nobody expects a finished company by Sunday. Show up, pick a role, build something that works, learn fast.
+You don't have to code. Designers, researchers, business and policy minds: every winning squad needs them.
+You won't be alone. Friday's matching rounds put you on a squad. Solo recruits are never left behind.
+Mentors guide you. 1:1 sessions on Saturday with engineers and founders.
+Stuck? Call it in. The help desk is in the build room all weekend.
+Your field kit is ready on our website. First-timers get a starter kit before Friday: how a hackathon runs, how to scope a 48-hour build, and what tools to start with.
+Mark "first hackathon" in your portal profile so we can look out for you.
+How it works: one problem, your angle
+1 mystery problem, revealed Friday at 6:00 PM. Everyone gets the same one.
+5 lenses. Pick your angle. The four sponsored lenses each crown a winner.
+3 live twists. Friday night into Saturday morning. The problem shifts and you adapt.
+
+Crisis Mitigation | with NULL Labs
+Energy & Grid Hardening | with Base Power
+Resilience Comms | with Retell AI
+Ports & Logistics | with Terminal49
+ALL LENS | IBM SkillsBuild (Best Build with IBM Bob)
+
+Twist schedule: Friday 11:30 PM (Twist 1), Saturday 4:30 AM (Twist 2), Saturday 7:00 AM (Twist 3, the last one). You have 6 hours after each twist to send your response.
+Where you'll be
+All on USC's University Park Campus. The portal always shows the room you need right now.
+When | Where | What
+Fri Oct 16, 5:00 to 8:30 PM | MCB 101, Michelson Center | Check-in, the problem reveal, team formation
+Fri Oct 16, 8:30 PM onward | RTH 526, Ronald Tutor Hall | Your building room. Open overnight.
+Sat Oct 17, all day and night | RTH 526 and the larger RTH space | Build, mentors, submissions desk, the Midnight Games
+Sun Oct 18, 12:00 to 3:30 PM | Ginsburg Hall | The demo area, seven finalist pitches, every award
+
+Hour by hour
+Friday, October 16
+5:00 PM | Doors open + Mingle. MCB 101. Check in on your phone.
+5:30 PM | Kick off. MCB 101.
+6:00 PM | The mystery problem. Revealed live, with the five lenses, explained.
+6:30 PM | Squad formation. Quick matching rounds, we’ll guide you through the process.
+8:30 PM | Move out to RTH 526. Start building. We match you with your mentors.
+9:00 PM | Squads lock. 2 to 4 people registered in the portal.
+11:30 PM | Twist 1.
+
+Saturday, October 17
+4:30 AM | Twist 2.
+7:00 AM | Twist 3, the last shift.
+10:30 AM | Retell AI info session - how to best build with Retell
+11:00 AM | Amb. Ivonne A-Baki, UN Secretary-General candidate. Zoom, registration required if attending virtually.
+1:00 PM | IBM SkillsBuild. IBM Bob and the AI Builders Challenge. Zoom, registration required if attending virtually.
+10 AM to 10 PM | 1:1 mentor sessions. Your slots will be bookable from the portal after teams are locked
+10:00 PM | Final submission due. Devpost. No extensions.
+10:30 PM | The Midnight Games. Points on the line for the Most Fun Team!
+12:00 AM | 7 finalists notified. Everyone else demos Sunday.
+
+Sunday, October 18
+9:00 AM | Finalists: final deck due for finalists
+12:00 PM | Demo area opens. Every non-finalist team demos live. Guests + Judges vote.
+1:00 PM | Featured talk: Matthew Finney, Accenture Federal Services.
+1:15 PM | 7 Finalist Pitches, then every award is announced. 
+2:30 PM | Judges deliberate
+3:30 PM | Close. Photos, then go home and sleep!!
+Times may shift. The portal is always current.
+Deadlines: three, no extensions
+Fri 9 PM | Lock your team. 2 to 4 people, registered in the portal.
+Sat 10 PM | Final submission. Your Devpost project, complete. Then it locks.
+Sun 9 AM | Finalists only: final deck in for the tech check.
+
+Your Devpost project needs
+Name + lens + one line · Pitch deck · Demo video · Code repo · All teammates listed · Responsible-use note
+Deck Rules (Round 1 and 2): 
+
+
+The 5 minute pitch + 5 minute QnA (for Round 2)
+0:30 the problem · Show it working thing first · Twist how it holds up,if it does· Next, where it goes, how feasible is it. Hardware? Bring a backup video or demo is just as fine. 
+How judging works
+Round 1, Saturday night. Every project is reviewed. Submit on Devpost by 10 PM. A review committee scores every project. 
+Seven finalists named by midnight on Saturday.
+
+Round 2, Sunday 1.15 PM. Seven teams pitch live. The jury picks the top three overall and one winner per lens. A team can win both. Not every finalist will.
+Judges who mentored your team carry less weight. How you adapt to the twists counts in your score and for its own prize.
+The scorecard: five things judges score, 1 to 5 points each
+Dual-use fit. Everyday LA problem, still works when things break?
+Technical execution. Is it real, and does it work?
+Feasibility and impact. Could it ship? Who is better off?
+Adapting to twists. How well did you absorb the shifts?
+Demo and pitch. Does it land in five minutes?
+Tie? Dual-use fit decides.
+Prizes
+Top three overall (finalists only)
+$1,000, $500 and $200
+All three advance to the Das Family Incubator for a share of $30,000
+Needs one USC student on the team
+
+Track winners (finalists only)
+One winner in each sponsored lens, judged with that lens’s sponsor. The same team can win more than one prize.
+Lens | Sponsor | Prize | Criteria / Requirement
+Crisis Mitigation | NULL Labs | Internship interview for every teammate, 45 minutes with the founders, a run in their autonomy sim | Teams that picked Crisis Mitigation at submission. Technical depth: does it detect, warn and respond, not just display data? Feasibility: could responders use it during a real incident? Impact: how many people are safer, and how much faster? Dual-use: useful on a normal day and when a wildfire, flood or port threat hits.
+Energy & Grid | Base Power | $200 cash + trophy, fast-track interview or office hours with Base | Teams that picked Energy & Grid at submission. Technical depth: a working model, data flow or prototype, not a concept. Feasibility: could a utility, city or homeowner deploy it? Impact: how many homes or hours of outage it protects. Dual-use: saves energy or money every day and keeps power on during outages.
+Resilience Comms | Retell AI | $200 cash + trophy, fast-track interview | Teams that picked Resilience Comms at submission. Technical depth: a working voice, text or messaging flow (Retell voice agents encouraged, with $10 in free credits). Feasibility: works when networks are weak or people speak different languages. Impact: who it reaches that today’s alerts miss. Dual-use: useful for everyday service and still works in a crisis.
+Ports & Logistics | Terminal49 | $200 cash + trophy, fast-track interview, Terminal49 swag | Teams that picked Ports & Logistics at submission. Technical depth: mock data data. Feasibility: could a shipper, port or trucker use it next week? Impact: delays, cost or emissions cut. Dual-use: smooths daily freight flow and holds up when the port is disrupted.
+Best Build with IBM Bob (all lenses) | IBM SkillsBuild | IBM swag, IBM LA office visit | Open to any lens. You must build with IBM Bob and say how on Devpost. Technical depth: how central Bob was to what you built. Feasibility: the code is clean and runs. Impact: the problem it solves. Dual-use: fit with your chosen lens.
+
+
+
+
+Open to more teams (Even if you don’t make it to the finalist) 
+Award | Who can win | How it’s judged
+Best Shift Adapter | Every team | Scored from your three twist responses: what changed, why, and proof it works. The best adapters change the build, not just the slides.
+Best Live Demo | Non-finalists | The best working demo in the Ginsburg demo area. Judges and mentors walk the floor from 12 PM to 2:30 PM. Three minutes, working thing first.
+People’s Choice | Non-finalists | Guests vote at the demo area on Sunday. Innovators vote in the portal, never for their own team. Bring your friends.
+Fun Team Award | Every team | The highest fun score across the weekend, shown live on the portal leaderboard. Fun points never decide the top three or the track prizes.
+
+
+
+
+
+
+
+
+
+
+The rules, all twelve
+Who can compete. Anyone with the hunger to build!
+Teams of 2 to 4. One team per person. Teams lock Friday at 9 PM; changes go through the help desk.
+Build it this weekend. Project work starts after Friday's reveal. Ideas and skills you bring are fair game.
+Tools are open. Open-source code, public APIs and AI tools are allowed. List what you used.
+One submission. One Devpost project per team, by Saturday 10 PM. Late projects are not judged.
+Your work is yours. Your team owns what it builds. 
+Build responsibly. Add two lines on how your tool could be misused and how you limit that.
+Code of conduct. Respect everyone. Harassment of any kind means removal. Report to any organizer.
+Photos and video. The weekend is filmed and covered by Annenberg Media. Opt out at check-in.
+Staying overnight. Rooms stay open. Tell the help desk you're staying, and look out for each other.
+Incubator entry. To advance to the Das Family Incubator, a team needs one USC student.
+Prizes and decisions. Prizes stack. Judges' decisions are final. Cash goes through USC; tax forms may apply.
+Questions about a rule? Ask the help desk before you build, not after.
+
+
+
+
+
+
+
+
+FAQ
+The weekend
+Is it free? No cost to enter. Just show up and build.
+Where do I go first? MCB 101 on Friday. Doors open at 5:00 PM, kickoff at 5:30 PM.
+Parking? We recommend the USC Downey Way Parking Structure ($20/day, closest and most economical); we do not cover those costs. 
+Do I stay overnight? Your call. RTH stays open. Tell the help desk if you stay.
+Is food provided? Yes, all weekend. Add dietary needs in the portal.
+What should I bring? Laptop, charger, charged phone, student ID, any hardware.
+Can I leave and come back? Yes. Just be there for the reveal and on Sunday.
+Can I join remotely? No. Building and judging are in person.
+Can guests come Sunday? Yes. They vote for People's Choice at the demo area.
+Where's the leaderboard? In the portal, once you sign in.
+Need experience? None. First-timers, see the "First hackathon?" section above.
+Who do I ask? jainamja@usc.edu, or the help desk.
+Teams, judging and prizes
+No team? Most people don't have one. We match you Friday at 6:30 PM.
+Can my team change? Until 9 PM Friday. After that, only via the help desk.
+Can I start building early? Bring skills and ideas. Build after the reveal.
+Can I use AI tools? Yes. IBM Bob is free for 30 days. List what you used.
+How are finalists picked? The review committee scores every project Saturday night.
+Is every lens on stage? Yes. The seven include the strongest team in each lens.
+Not a finalist? Demo in the Ginsburg demo area for Best Demo and People's Choice.
+Can we win twice? Yes. A finalist can win overall and its lens.
+Do all finalists win? No. Seven pitch; not all seven take home a prize.
+Built hardware? Bring it, plus a backup video in case it misbehaves.
+Not from USC? Welcome. You need one USC teammate only for the incubator.
+What happens after? Top three go to the Das Family Incubator. Keep building.
+Who to contact
+Anything about the weekend | Jainam Jain, Vice Chair, jainamja@usc.edu
+During the event | The help desk, in the build room
+Venue, food, logistics | Alex Bartolomei, ajbartol@usc.edu
+
+Build for LA. Build for the world. See you Friday.
+
+
+
+=====TAB t.rx44ydn1skht Past Announcements =====
+Announcement #1 (Oct 13 @ 8 am) 
+
+Hi Innovator,
+You made it. You’re officially in! 
+This Friday, 250+ innovators from USC and beyond come together for 48 hours to take on one mystery problem. At InnovateLA, dual-use means building something that solves an everyday problem in Los Angeles and still holds up when everything goes wrong. Solve it here, and it can strengthen communities around the world. Build for LA. Build for the world.
+Here’s how it works. Everyone gets the same mystery problem, but you pick the lens you attack it through:
+Crisis Mitigation
+Energy Independence & Grid Hardening
+Resilience Comms
+Ports & Logistics
+And just when you think you’ve cracked it, the problem shifts. Live twists drop throughout Friday night, with special prizes for the teams that adapt fastest.
+What’s on the line 
+$1,000 for first, $500 for second and $200 for third overall 
+The top three teams advance to the Das Family Incubator to compete for a share of $30,000
+Track prizes from NULL Labs, Base Power, IBM SkillsBuild and Terminal49, including internship interviews, fast-track interviews, an IBM office visit and more. Everything is on the attached flyer and more revealing soon.
+Your pre-game checklist 
+Watch your inbox. Your onboarding packet is coming soon, with the schedule, judging criteria, all prizes, and your LinkedIn kit.
+Clear your weekend. Friday 5 PM through Sunday 5 PM is ours.
+Grab your free 30-day IBM Bob trial and get a head start. More resources dropping soon!
+Know a friend who might be interested? Now is the time to have them signed up.
+Flying solo? Perfect. Some of the best teams start as strangers. We’ll help you find yours.
+Speaking of strangers, last year’s winning team met for the first time when we hosted The Games Week @ USC. They walked out with a $20,000 prize in spring from The Das Family Incubator and a deployment at the LA Coliseum ahead of LA28.
+Your turn. We can’t wait to see what you build! 
+See you Friday!
+Jainam JainVice Chair, InnovateLA at USC Viterbi | LinkedIn | jainamja@usc.edu 
+Announcement #2 (Oct 15 @ 9 am) 
+Hi Innovator,
+The clock on the website is already running! 
+Friday, 17:00, MCB 101. Doors open, badges out. Kick off at 17:30. At 18:15 the problem drops. 48 hours later, 7 squads pitch at Ginsburg for $2,300 on the table and a path into the $30,000 Das Family Incubator! 
+PRE-MISSION CHECKLIST (BEFORE FRIDAY)  
+Four things, ten minutes. Complete it now and it adds +10 to your squads point later, for Most Fun Team.
+Make your portal account. Mentors get booked here. Your squad lives here. (Note: this Sign in page is at the Dual-Use Hackathon website, not InnovateLA main website)
+Sign up and join us on Devpost. Submission closes Saturday 22:00. No extensions, best to be prepared in advance!
+Put the whole weekend on your phone in one click, all parts of the event on your calendar! 
+YOUR FIELD MANUAL 
+As attached below, includes:
+Pre-mission checklist + Join our WhatsApp Channel + Stay tuned on Instagram. 
+The hour-by-hour schedule, rooms for all three days. 
+The judging scorecard overview
+What to bring, and first-time builder resources, all in one place. 
+JUST JOINED US? 
+If you RSVPed in the last few days, you have missed our past announcement. Every announcement so far is in the Announcements tab of the Participant Hub (included in your field manual), in order. One read and you are current - with everything. 
+ONE LAST THING 
+15 judges and 20 mentors . They have built at SpaceX, NVIDIA, Y Combinator and the White House, etc. Last year's winning squad met as strangers at our Games Week, won $1,000, took $20,000 in the spring, and is now deploying at the LA Coliseum. 
+That door to Innovation opens again this Friday at 17:00!
+And if you know someone who should be in that room, this is the final call. Send them the link asap. 
+Laptop. Charger. Stack installed. Phone charged.
+Eyes on target for Friday! 
+Jainam JainVice Chair, InnovateLA at USC Viterbi | LinkedIn | jainamja@usc.edu
+
+
+FILED MANUAL CAN BE FOUND, HERE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Announcement #3: October 15 @ 5.30 PM 
+
+Hi Innovator,
+~24 hours until Kick Off tomorrow. One problem nobody has seen yet. A room worth being in. 
+Your card is made. 
+THE ROSTER 
+Attached below. 20+ mentors and 15 judges out of SpaceX, OpenAI, NVIDIA, Amazon, IBM, Y Combinator, and the White House, etc. They are not just turning up Sunday to grade you. They are at your table while you build. 
+NO TEAM IS ALRIGHT 
+Friday opens with Co-founder Speed Dating: short rotations, everyone moving. We'll guide you through the process tomorrow. 
+5 MINUTES BUYS YOU A BETTER SQUAD 
+Finish your profile before 17:00 tomorrow. The matching runs on it: who you meet Friday night, and which two mentors land on your team. Thin profile, random draw. 
+We have resolved the website bug and you must be able to save your profile now. Remember, if you finish your profile early, it's +10 to your squad towards "Most Fun Team Award". 
+WHERE 
+MCB 101, the Michelson Center. Map pin. Doors open 17:00 Friday!
+We have food (FAQ on the website details it). For accomodation, the rooms stay open overnight, given the swift build period; you are welcome to carry a sleeping bag!  
+ANNOUNCEMENTS LAND HERE FIRST 
+Moves go out on the WhatsApp channel before they go anywhere else.
+JOINED US RECENTLY? 
+Past email can be found in the Announcements tab of the Participant Hub. One scroll and you are current. Also, reattaching the Field Manual here!
+Come Sunday, the world gets to see what you created from scratch.
+The countdown begins tomorrow at 17:00!
+Build fast, dream big, and innovate like crazy.
+Jainam JainVice Chair, InnovateLA at USC Viterbi + Instagram @innovateLA.uscLinkedIn | jainamja@usc.edu
+See who you are building with: Here
+
+
+=====TAB t.j608hzs1eve9 Problem Statement =====
+Preparing for Disaster: The Reveal Page 
+MYSTERY PROMPT @ Friday 6.15 PM
+
+KICK OFF DECK
+As automation takes centre stage in the systems we depend on, more of them act on their own, and sometimes they stop behaving as expected. Something is where it shouldn't be, doing what nobody authorized, or has gone quiet when it should be talking. It could be a vehicle, a grid, a phone line, a shipment, a hospital ward. 
+The usual answer is a bang: shut it down, cut it off, call everyone. A bang works, and it often costs more than the problem.
+Your challenge: Help someone prepare for disaster, how can you be pre-emptive rather than reactionary? Pick any person who has to decide, and find the gentlest response that still works: cheap enough to use widely, safe around people, and useful on an ordinary day too. This is decision making with a dual-use twist. 
+We won't tell you what to build. Three times this weekend, we'll tell you the problem has changed with twists, you are encouraged (but not required) to incorporate them.
+
+NEW TO "DUAL-USE"? THIRTY SECONDS.
+A dual-use tool leads two lives. On an ordinary day it earns its keep, so people keep it around. In a crisis it matters, and it is already in place. It serves everyday people and people in a hurry, such as responders, operators and defenders.
+GPS began as military navigation and now sits in every phone.
+The microwave oven grew out of radar.
+Android phones use their motion sensors to spot earthquakes and warn people nearby.
+Here it does not mean weapons. It means a tool worth owning before the emergency, so that it is there when the emergency comes.
+
+
+
+
+
+
+
+HOW TO START
+Between doing nothing and the bang there is a ladder: watch, ask, slow, hold, hand to a person. Your build lives on one or two rungs. Four choices make a project:
+A person who has to decide.
+A moment when they have to decide it. Use the Harbor Night in the Extended Card, or your own.
+A second customer who would use it on an ordinary Tuesday.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+THE TRACKS
+Four tracks, one night. 
+IBM SkillsBuild is open to every track. Build with IBM Bob and compete for Best Build with IBM Bob.
+01. Marine, with NULL Systems: Under the Water
+The seat: the harbor watch officer. An unauthorized autonomous vehicle is in a working harbor. Detecting small underwater vehicles is getting easier. Handling one safely is not. What sits between "seen" and "handled"? What should a small, low-cost platform decide alone, and what must a person approve? What does it do for a living on a quiet Tuesday, like finding a lost research vehicle? Cost, safety and scale all count. Elegant beats loud. Your work stops at the handoff to a human. How a vehicle is physically halted is out of scope this weekend.
+02. Energy, with Base Power: On the Grid
+The seat: the dispatcher of a home-battery fleet. Homes full of automated batteries are now part of the grid, and the harbor, the phones and the cold rooms all run on it. When something strains or goes odd, the blunt move is shedding load. What sits between "normal" and "shed"? Whose power can wait, and how would you know? When a battery goes silent, is it broken, tripped or just not talking? How does the same battery earn its keep on an ordinary day?
+03. Communication, with Retell AI: On the Line
+The seat: the overnight supervisor of a call line. A surge of calls and alerts no one can fully verify, and too few people to answer them. Residents are your earliest sensor and your biggest flood. The blunt move is to alert everyone, or send everything to a human who isn't there. How do you tell who needs a person right now? What must never be automated? What happens when someone doesn't pick up?
+04. Ports, with Terminal49: At the Gate
+The seat: the terminal planner. One box, four stories. The carrier says it's empty, the terminal scale says it's heavy, customs has a hold on it, and the refrigeration plug says it's warming. A hundred more boxes need the same gate, half the lanes are down, and the clock on charges is running. The blunt move is to hold everything or close the terminal. What can you slow, reroute, inspect or release? Which source do you trust? Which box can't wait?
+
+
+
+
+HOW IT IS JUDGED
+The five criteria on the site, 1 to 5 each:dual-use fit, technical execution, feasibility, impact, adapting to twists, demo and/or pitch. 
+HINT: The easiest way to show dual-use fit is to name your second customer and the day they would use it.
+
