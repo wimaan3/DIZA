@@ -54,7 +54,14 @@
     "alert_source": "",
     "alert_id": "",
     "drill_prefix": "",
-    "alert_intro": ""
+    "alert_intro": "",
+    "emergency_number": "911",
+    "crisis_line_name": "the 988 Suicide and Crisis Lifeline",
+    "crisis_line_spoken": "988",
+    "info_line": "2-1-1",
+    "region": "US-CA",
+    "service_area": "Los Angeles",
+    "crisis_line_note": "It's free and open 24 hours."
   },
   "_knowledge_bases": [
     "line-policy",
