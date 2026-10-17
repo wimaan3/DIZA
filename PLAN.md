@@ -3,6 +3,76 @@
 > Working name. Rename freely.
 > Submit on Devpost by **Sat 10 PM** (aim for 9 PM). Devpost links lock **Sun 11 AM**.
 
+## 0. Requirements checklist
+
+### A. Hard rules: missing any of these means not judged or not eligible
+- [ ] Team of 2–4, registered in the portal by **Fri 9 PM** (one team per person)
+- [ ] Track set to **Resilience Comms** *at submission*. Track prizes only go to teams that picked that lens.
+- [ ] Build only after Friday's reveal. Ideas and skills brought in are fine.
+- [ ] **One Devpost project by Sat 10 PM.** No extensions; late projects aren't judged. It must contain:
+  - [ ] Name + lens + one-line description
+  - [ ] Pitch deck
+  - [ ] Demo video
+  - [ ] Code repo link
+  - [ ] All teammates listed
+  - [ ] Responsible-use note: 2 lines on how it could be misused and how we limit that (rule 7)
+  - [ ] List of every tool used: AI tools, APIs, open source (rule 4)
+- [ ] In person for building and judging (no remote)
+- [ ] Incubator eligibility: **≥1 USC student** on the team
+- [ ] If finalist: **final deck by Sun 9 AM**. Everyone: confirm the demo in the app by Sun 9 AM (otherwise no judge feedback). Devpost links lock **Sun 11 AM**.
+
+### B. Retell prize criteria (judged with Retell)
+- [ ] **Technical depth:** a *working* voice, text or messaging flow, with Retell voice agents (use the $10 credits)
+- [ ] **Feasibility:** works when networks are weak *or* people speak different languages (we show both)
+- [ ] **Impact:** reaches people today's alerts miss
+- [ ] **Dual-use:** useful for everyday service *and* still works in a crisis
+
+### C. The prompt asks us to name these
+- [ ] **A person who decides:** the overnight call-line supervisor
+- [ ] **A moment:** a fire night, e.g. Altadena at 2 AM
+- [ ] **A second customer + the day they'd use it:** a home-care agency or council office, weekly check-ins, every Tuesday at 10 AM
+- [ ] Answers to: who needs a person right now / what must never be automated / what happens when nobody picks up
+- [ ] Which rung(s) of the ladder we live on: watch, ask, hand to a person
+
+### D. Scored by all judges (1–5 each; a tie goes to dual-use fit)
+- Dual-use fit · Technical execution · Feasibility & impact · Adapting to twists · Demo & pitch
+- [ ] Respond to each twist **within 6 hours** (11:30 PM, 4:30 AM, 7:00 AM). Say what changed, why, and give proof. Change the **build**, not just the slides.
+- [ ] Finalist pitch: 5 min + 5 min Q&A. Order: problem (0:30) → working thing first → twist → where it goes and how feasible it is.
+- [ ] Demo floor (non-finalists): 3 min, working thing first. Bring a backup video.
+
+### E. Optional extra prizes
+- [ ] Best Build with IBM Bob: build with Bob and explain how on Devpost
+- [ ] Best Shift Adapter: comes from the twist log
+- [ ] Best Live Demo / People's Choice: bring friends, put a QR code to "call it yourself" on the table
+- [ ] Most Fun Team: complete profiles (+10), Midnight Games Sat 10:30 PM
+
+### F. Unknowns to ask at the help desk tonight
+- Where and how twist responses are submitted (portal? Devpost update?)
+- The "Deck Rules (Round 1 and 2)" section in the hub is blank. Is there a slide limit or template?
+- Demo video length limit; whether the repo must be public
+
+### G. What we must build (priority order)
+**P0: must be working by Sat 2 PM**
+1. A real Retell phone number with an inbound agent: English + Spanish + one more LA language, plus AI disclosure
+2. Structured intake via function call → backend → shows up on the live dashboard (priority queue + map)
+3. Priority score and **warm transfer to a human with a whisper brief**; the never-automate rules enforced
+4. SMS path: text-in reports and an SMS fallback
+5. **One outbound Tuesday check-in call** to a registry resident, plus the no-answer ladder (call → SMS → contact → flag)
+6. Synthetic registry and a call simulator to show the surge
+
+**P1: makes it a winner**
+- Zone escalation ladder (watch → ask → human declares) + duplicate clustering ("we already know")
+- Corroboration texts and calls to neighbours
+- Skills-based routing to responders
+
+**P2: stretch**
+- Acoustic and physiological voice flags
+- Dead-man's-switch welfare calls
+- Heartbeat monitor with failover to a recorded message
+- Language-specific agents
+
+**Deliverables:** deck, 2–3 min demo video, Devpost write-up, `TWISTS.md`, responsible-use note, tools list.
+
 ## 1. What we're actually being asked
 
 - **Seat:** the overnight supervisor of a call line.
