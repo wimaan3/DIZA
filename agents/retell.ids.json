@@ -14,5 +14,18 @@
   "welfare": {
     "agent_id": "agent_3439382a91c5988203681e5a51",
     "llm_id": "llm_b8a398791945b78171e435732ef7"
+  },
+  "knowledge_bases": {
+    "campus-faq": "knowledge_base_09c7a6753610f42b",
+    "la-resources": "knowledge_base_c0099a222fa0ac59",
+    "line-policy": "knowledge_base_07399b2add8b1e41"
+  },
+  "inbound_ko": {
+    "agent_id": "agent_4fd0d84afe65a05e95749a857c",
+    "llm_id": "llm_8602d9e072e5fc4939be5698e009"
+  },
+  "inbound_zh": {
+    "agent_id": "agent_e17c7e01cb451d54f383e0fb4b",
+    "llm_id": "llm_e4c6313c4152518aac784f24db70"
   }
 }

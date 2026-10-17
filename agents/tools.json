@@ -54,8 +54,8 @@
     "max_retry": 1,
     "speak_after_execution": true,
     "speak_during_execution": true,
-    "execution_message_description": "Okay, I'm logging that now.",
-    "execution_message_type": "static_text"
+    "execution_message_description": "In the caller's language, say a very short line like: \"Okay, I'm logging that now.\"",
+    "execution_message_type": "prompt"
   },
   "flag_urgent": {
     "type": "custom",
@@ -133,8 +133,8 @@
     "max_retry": 1,
     "speak_after_execution": true,
     "speak_during_execution": true,
-    "execution_message_description": "Let me find someone for you.",
-    "execution_message_type": "static_text",
+    "execution_message_description": "In the caller's language, say a very short line like: \"Let me find someone for you.\"",
+    "execution_message_type": "prompt",
     "response_variables": {
       "oncall_number": "oncall_number",
       "responder_name": "responder_name",
@@ -197,8 +197,8 @@
     "max_retry": 1,
     "speak_after_execution": true,
     "speak_during_execution": true,
-    "execution_message_description": "Let me check that.",
-    "execution_message_type": "static_text"
+    "execution_message_description": "In the caller's language, say a very short line like: \"Let me check that.\"",
+    "execution_message_type": "prompt"
   },
   "create_request": {
     "type": "custom",
@@ -481,8 +481,8 @@
       }
     },
     "speak_during_execution": true,
-    "execution_message_type": "static_text",
-    "execution_message_description": "Connecting you now. Please stay on the line."
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"Connecting you now. Please stay on the line.\""
   },
   "transfer_to_crisis_line": {
     "type": "transfer_call",
@@ -498,8 +498,8 @@
       "transfer_ring_duration_ms": 30000
     },
     "speak_during_execution": true,
-    "execution_message_type": "static_text",
-    "execution_message_description": "I'm connecting you now. Please stay on the line."
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"I'm connecting you now. Please stay on the line.\""
   },
   "swap_to_crisis": {
     "type": "agent_swap",
@@ -512,8 +512,8 @@
     "keep_current_language": true,
     "keep_current_voice": true,
     "speak_during_execution": true,
-    "execution_message_type": "static_text",
-    "execution_message_description": "Okay, stay with me."
+    "execution_message_type": "prompt",
+    "execution_message_description": "In the caller's language, say a very short line like: \"Okay, stay with me.\""
   },
   "swap_to_inbound": {
     "type": "agent_swap",
@@ -530,5 +530,256 @@
     "type": "end_call",
     "name": "end_call",
     "description": "End the call after the caller has a clear next step and has said goodbye."
+  },
+  "start_form": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "start_form",
+    "description": "Start a structured intake form, passing everything the caller already said in known_fields. Returns a case_code and the fields still needed (each with how to ask).",
+    "url": "${BASE_URL}/retell/fn/start_form",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "form_type": {
+          "type": "string",
+          "enum": [
+            "medical_appointment",
+            "evacuation_assistance",
+            "maintenance_request",
+            "escort_request",
+            "lost_item",
+            "shelter_need",
+            "checkin_enrollment",
+            "benefits_help"
+          ],
+          "description": "Which form."
+        },
+        "known_fields": {
+          "type": "object",
+          "description": "Everything the caller already told you that fits this form: field name -> answer as a string (e.g. location, issue, name, time). Empty object if nothing yet."
+        }
+      },
+      "required": [
+        "form_type",
+        "known_fields"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "fill_form": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "fill_form",
+    "description": "Save answers into the form. Send every field you learned since the last call. Returns missing[], invalid[], complete, and a readback sentence when complete.",
+    "url": "${BASE_URL}/retell/fn/fill_form",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "case_code": {
+          "type": "string",
+          "description": "The case_code from start_form."
+        },
+        "fields": {
+          "type": "object",
+          "description": "Field name -> the caller's answer, as strings."
+        }
+      },
+      "required": [
+        "case_code",
+        "fields"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "submit_form": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "submit_form",
+    "description": "Submit a completed form. Only after you read back the readback sentence and the caller said yes.",
+    "url": "${BASE_URL}/retell/fn/submit_form",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "case_code": {
+          "type": "string",
+          "description": "The case_code."
+        },
+        "confirmed": {
+          "type": "boolean",
+          "description": "Must be true: the caller confirmed the readback."
+        }
+      },
+      "required": [
+        "case_code",
+        "confirmed"
+      ]
+    },
+    "speak_during_execution": true,
+    "execution_message_description": "In the caller's language, say a very short line like: \"One moment.\"",
+    "execution_message_type": "prompt"
+  },
+  "request_escort": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "request_escort",
+    "description": "Request a safety escort (walk or ride) between two places. Read back and get a yes first.",
+    "url": "${BASE_URL}/retell/fn/request_escort",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Pickup place."
+        },
+        "to": {
+          "type": "string",
+          "description": "Destination."
+        },
+        "time": {
+          "type": "string",
+          "description": "When, e.g. now or 9:30 PM."
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "time"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "book_appointment": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "book_appointment",
+    "description": "Book a slot with a person who has a given skill (e.g. peer listener, housing help, sandbox clinic). Read back and get a yes first.",
+    "url": "${BASE_URL}/retell/fn/book_appointment",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "with_skill": {
+          "type": "string",
+          "description": "Skill needed, e.g. mental_health, housing, medical_admin, academics."
+        },
+        "preferred_times": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Preferred times in the caller's words."
+        }
+      },
+      "required": [
+        "with_skill",
+        "preferred_times"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "send_link": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "send_link",
+    "description": "Text the caller a private link for their case (status page or photo upload).",
+    "url": "${BASE_URL}/retell/fn/send_link",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "The case or request code."
+        }
+      },
+      "required": [
+        "code"
+      ]
+    },
+    "speak_during_execution": false
+  },
+  "record_consent": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "record_consent",
+    "description": "Record the caller's consent choices: whether we may use a clip of this call publicly (feature_consent) and whether their call may be counted in anonymous statistics (analytics_consent).",
+    "url": "${BASE_URL}/retell/fn/record_consent",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "feature_consent": {
+          "type": "boolean",
+          "description": "True if they agreed we may use a clip publicly."
+        },
+        "analytics_consent": {
+          "type": "boolean",
+          "description": "False if they opted out of anonymous statistics."
+        }
+      },
+      "required": []
+    },
+    "speak_during_execution": false
+  },
+  "swap_to_korean": {
+    "type": "agent_swap",
+    "name": "swap_to_korean",
+    "description": "Hand the call to the Korean-language line when the caller speaks Korean or asks for Korean (Korean, 한국어).",
+    "agent_id": "@agent:inbound_ko",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": true,
+    "speak_during_execution": false
+  },
+  "swap_to_chinese": {
+    "type": "agent_swap",
+    "name": "swap_to_chinese",
+    "description": "Hand the call to the Mandarin Chinese line when the caller speaks Chinese or asks for Chinese/Mandarin (中文, 普通话).",
+    "agent_id": "@agent:inbound_zh",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": true,
+    "speak_during_execution": false
+  },
+  "swap_to_english_spanish": {
+    "type": "agent_swap",
+    "name": "swap_to_english_spanish",
+    "description": "Hand the call to the English/Spanish line when the caller switches to English or Spanish and the emergency (if any) is already reported.",
+    "agent_id": "@agent:inbound",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": true,
+    "speak_during_execution": false
   }
 }

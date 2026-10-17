@@ -1,0 +1,14 @@
+id: checkin_enrollment
+label: Wellness check-in enrollment (pending consent)
+route_pool: general_helper
+route_skill: general
+fields:
+  - {name: person_name, required: true, ask: "Who should we call for check-ins?"}
+  - {name: person_phone, required: true, validate: phone, ask: "What's their phone number?"}
+  - {name: language, required: true, ask: "What language do they prefer?"}
+  - {name: frequency, required: true, validate: enum, choices: ["daily", "weekly"], ask: "Daily or weekly?"}
+  - {name: needs, required: false, sensitive: true, ask: "Anything we should know, like mobility or medication?"}
+  - {name: enrolled_by, required: true, ask: "Is this for you, or for someone else? If someone else, what's your relationship?"}
+readback: "{frequency} check-ins for {person_name} at {person_phone} in {language}. They'll be asked to agree on the first call."
+safety_check: "Calls start only after the person agrees on the first call (pending_consent)."
+next_step_text: "We'll call them to ask if they'd like check-ins. Nothing starts until they say yes."

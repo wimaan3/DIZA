@@ -1,0 +1,12 @@
+id: lost_item
+label: Lost item report
+route_pool: general_helper
+route_skill: general
+fields:
+  - {name: item, required: true, ask: "What did you lose?"}
+  - {name: description, required: true, ask: "How would someone recognize it?"}
+  - {name: last_seen, required: true, ask: "Where and when did you last have it?"}
+  - {name: callback_phone, required: true, validate: phone, ask: "What number should we call if it's found?"}
+readback: "Lost {item}: {description}. Last seen {last_seen}. We'll call {callback_phone} if it turns up."
+safety_check: "If the lost item is medication or a medical device they need now, offer a person right away."
+next_step_text: "We'll call you if it's found. You can check the status with your code."
