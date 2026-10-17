@@ -9,7 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from . import resources
-from .main import DEMO, ROOT, Report, app, connect, event, offer, save_report, verified_body
+from .main import DEMO, ROOT, Report, app, connect, event, offer, save_report, session_of, verified_body
 
 router = APIRouter(prefix='/retell/fn')
 def forms_dir():
@@ -51,9 +51,9 @@ async def parse(req: Request):
     """Async dependency: read + verify the raw body. Handlers are plain functions, so FastAPI runs them in its
     thread pool and a slow geocode or SQLite lock never blocks the event loop for other live calls."""
     data = await verified_body(req)
-    call = data.get('call') or {}
+    call = session_of(data)
     if not call.get('call_id'):
-        raise HTTPException(422, 'call.call_id required')
+        raise HTTPException(422, 'call.call_id or chat.chat_id required')
     return call, data.get('args') or {}
 
 

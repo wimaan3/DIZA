@@ -18,6 +18,7 @@
     "book_appointment",
     "record_consent",
     "end_call",
+    "request_location",
     "text_caller"
   ],
   "model": "gpt-4.1-mini",

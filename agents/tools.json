@@ -848,7 +848,24 @@
     },
     "sms_content": {
       "type": "inferred",
-      "prompt": "Write ONE text message under 320 characters, in the caller's language, with only what you just told this caller. Start with 'DIZA Community Line:'. For a place: name, street address, and a Google Maps directions link https://www.google.com/maps/dir/?api=1&destination=<address URL-encoded with + for spaces>, plus 'Call 211 to confirm it is open' if you said it opens only when activated. For a hotline: name and number. For a request: their code and what happens next. Add 'Emergency: call 911.' Never include anyone else's information. End with 'Reply STOP to opt out.'"
+      "prompt": "Write ONE text message under 320 characters, in the caller's language, with only what you just told or created for this caller. Start with 'DIZA Community Line:'. If you just created a location link with request_location, the message is only: 'DIZA Community Line: tap to share your exact location with our team: <the link>. Emergency: call 911.' For a place: name, street address, and a Google Maps directions link https://www.google.com/maps/dir/?api=1&destination=<address URL-encoded with + for spaces>, plus 'Call 211 to confirm it is open' if you said it opens only when activated. For a hotline: name and number. For a request: their code and what happens next. Add 'Emergency: call 911.' Never include anyone else's information. End with 'Reply STOP to opt out.'"
     }
+  },
+  "request_location": {
+    "type": "custom",
+    "method": "POST",
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "name": "request_location",
+    "description": "Create a one-time link the caller taps to share their exact GPS location with our team. Returns link; then send it with text_caller.",
+    "url": "${BASE_URL}/retell/fn/request_location",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "speak_during_execution": false
   }
 }
