@@ -41,6 +41,29 @@ You are the single build agent for team DIZA (USC InnovateLA hackathon, Resilien
 | Human does | Assign, comment, close on the dashboard | Take call (warm transfer with whispered summary), dispatch outside DIZA |
 | Never | Promise a repair time the manager didn't set | Dispatch, decide who gets help, drop or downgrade a call, claim help is on the way |
 
+**Redirect to local police (non-emergency) or security, in both modes:**
+- **Who gets what:**
+  - Danger now → always "hang up and call 911", never a police or security transfer.
+  - A safety matter that isn't an emergency → with the caller's consent, warm-transfer to the right local line, with a whispered summary:
+    - noise or a disturbance in progress with no threat
+    - a suspicious person who isn't acting
+    - a theft or vandalism that already happened
+    - a lockout at night
+- **The right line:**
+  - Building mode: the building's own security or on-call staff first, then the police non-emergency line for the building's jurisdiction.
+  - 911 mode: the police non-emergency line for the *incident location's* jurisdiction. The rules engine picks it from the geocoded location, so out-of-area callers get the right department.
+- **Numbers come only from a verified allowlist,** never from the model:
+  - extend `agents/resources/resources.yaml` with `type: police_nonemergency` / `security` entries, each with `transfer_number`, `transfer_ok: true`, `source_urls`, `verified_on` and the area it covers (city or campus); building security numbers live in the building record
+  - seed only numbers you verify on the agency's official site that day (for example LAPD non-emergency on lapdonline.org; USC DPS 213-740-6000 is already verified)
+- **Built on the existing transfer:** reuse `transfer_to_resource` (or add `transfer_to_police_nonemergency` / `transfer_to_security` with the same allowlist rule). The backend returns the number from a new function such as `local_contact(kind, location_text | building_id)`.
+- **Drill mode:** the backend returns a teammate's number instead (`DIZA_RESPONDERS`), never the real department. The agent says which line it is connecting to.
+- **Ticket trail:** every redirect is logged on the ticket or card ("transferred to LAPD non-emergency, 23:14") so the manager or operator sees it.
+- **Tests:**
+  - noise complaint → offered the security or police non-emergency transfer
+  - "someone is breaking in right now" → the 911 instruction, no transfer
+  - an out-of-area location → the right department
+  - drill mode → the teammate's number
+
 Two customers, same engine; **no data link between them** (team decision). 911 mode is positioned for the 911 **non-emergency and overflow line** (NENA-STA-020.2-2026 §5.6.2 endorses AI there); live 911 lines only where policy allows.
 
 ## 2. Non-negotiable safety rules (911 mode, and danger in building mode)
@@ -69,7 +92,7 @@ Two customers, same engine; **no data link between them** (team decision). 911 m
    - Tests: urgency, cross-reference reason text, merge, idempotent retries, invalid unit asks again.
 2. **Building-mode agent (Retell).**
    - New agent `building` (+ optional per-language variants, or a language switch like the existing KO/ZH swaps). Prompt in `agents/prompts/building.md` + `_shared_rules.md` danger rules.
-   - Tools: `lookup_unit`, `create_ticket`, `ticket_status`, `route_to_human` (urgent → on-duty staff), `text_caller` (ticket code), `end_call`.
+   - Tools: `lookup_unit`, `create_ticket`, `ticket_status`, `route_to_human` (urgent → on-duty staff), `local_contact` + transfer to security or police non-emergency (see section 1), `text_caller` (ticket code), `end_call`.
    - Push with `push.py`. Add `safety_check.py` cases:
      - a leak → `create_ticket` with high urgency
      - gas smell → "call 911" first and an emergency ticket
@@ -79,6 +102,7 @@ Two customers, same engine; **no data link between them** (team decision). 911 m
 3. **911-mode intake agent.**
    - Rewrite `inbound`, `crisis`, `inbound_ko`, `inbound_zh` prompts to intake-only, in the order in section 1. Never deflect; always end in a human handoff or a priority callback.
    - Add fields as they're confirmed via an `update_incident` function, so the card fills live.
+   - Non-emergency police matters: offer the transfer to the incident jurisdiction's police non-emergency line (section 1).
    - Danger fast path and fixed-text critical lines.
    - Add `safety_check.py` cases:
      - misheard words: "someone with a kite is coming at me", "he has a gone"
