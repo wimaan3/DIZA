@@ -16,6 +16,7 @@
 | `INTAKE.md` | Forms engine (slot-filling with clarifying questions), case files attached to routed profiles, sandbox "service world" (clinic / 311 / utility) vs. real supporters, production adapters (FHIR, Open311) |
 | `EVALS.md` | Light eval flywheel: golden set from role cards, code checks first + calibrated LLM-as-judge, team as humans in the loop, one wheel spin per flood, scoreboard + publish gate |
 | `DEMO.md` | 5-min pitch beat sheet, 3-min demo-floor version, setup, backups, rehearsal, Q&A prep |
+| `OPS_WALL.md` | Real-time big-screen visualization (panels, data sources, Supabase realtime, replay mode, privacy masking) + live audience-call demo script and safeguards (concurrency, room noise, cell signal, planted calls, simulator top-up) |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
@@ -45,6 +46,7 @@
 16. **Intake:** real structured intake via form schemas + clarifying questions; real for our supporters (Google Calendar); third parties (clinics, 311, utility) are a sandbox we control. No submitting into real external systems.
 17. **Caching:** answer cache (KB + semantic cache in `lookup_info`, zone-tagged expiry) + function TTL caches + static prompts; Anthropic prompt caching only for our own backend LLM calls.
 18. **Evals:** light flywheel, not full AI-eng stack. Code checks first, LLM-as-judge for fuzzy criteria (calibrated vs. 40 human labels), P0 recall + safety = 100% hard gates, one wheel spin per flood (v1→v3).
+19. **Live audience calls in the pitch** + an **Ops Wall** real-time dashboard; planted P0 call; simulator top-up stated honestly; replay mode as backup.
 13. **Keyword triage:** 3 layers (live lexicon + LLM context + cross-call counts by distinct callers per zone).
 
 ## Key facts verified
