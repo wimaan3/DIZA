@@ -18,6 +18,8 @@
 | `DEMO.md` | 5-min pitch beat sheet, 3-min demo-floor version, setup, backups, rehearsal, Q&A prep |
 | `OPS_WALL.md` | Real-time big-screen visualization (panels, data sources, Supabase realtime, replay mode, privacy masking) + live audience-call demo script and safeguards (concurrency, room noise, cell signal, planted calls, simulator top-up) |
 | `REACH.md` | Who existing solutions miss (prior-art table), the gaps we own, 9 design rules for reach, reach metrics, honest limits |
+| `REQUIREMENTS_TRACE.md` | Every pasted hackathon requirement → where we handle it, status, and gaps or actions |
+| `TWISTS_TEMPLATE.md` | Template for twist responses (what changed, why, proof) |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
@@ -70,6 +72,9 @@
   - wireless alerts only in EN/ES; 12k+ Asian Americans couldn't understand them
 
 ## Open questions (not yet answered)
+- **Pick ONE headline second customer** (recommendation: a council district's senior-services line, Tuesdays 10 AM; USC campus line as the live pilot)
+- Get the **Harbor Night Extended Card**; keep geography as config so we can move to San Pedro/Wilmington
+- Confirm a USC student is on the team; decide whether to chase the IBM Bob prize
 - How and where twist responses are submitted; twist texts arrive via the app/WhatsApp
 - "Deck Rules" section in the hub is blank: slide limits?
 - Demo video length; does the repo need to be public?
