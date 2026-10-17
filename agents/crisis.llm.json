@@ -1,7 +1,8 @@
 {
   "_prompt_files": [
     "_shared_rules.md",
-    "crisis.md"
+    "crisis.md",
+    "finding_help.md"
   ],
   "_tools": [
     "flag_urgent",
@@ -14,6 +15,7 @@
     "swap_to_inbound",
     "send_link",
     "record_consent",
+    "transfer_to_resource",
     "end_call"
   ],
   "model": "gpt-4.1-mini",
@@ -42,7 +44,9 @@
     "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?",
     "lang_name": "",
     "lang_code": "",
-    "lang_911": ""
+    "lang_911": "",
+    "resource_name": "",
+    "resource_transfer_number": ""
   },
   "_knowledge_bases": [
     "line-policy",
