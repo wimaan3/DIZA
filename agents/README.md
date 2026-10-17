@@ -18,6 +18,7 @@ Git is the source of truth. Retell is a deploy target. Don't edit agents in the 
 | `remote/` | Snapshot of what's live, written by `pull.py`, for diffs |
 | `CHANGELOG.md` | One line per prod publish |
 | `safety_check.py` | Text-only safety regression (real person?, no false dispatch, 988, Spanish P0, prompt injection) |
+| `contract_check.py` | Signs Retell-shaped requests for the inbound webhook + every function and checks a running backend answers them (free, no Retell) |
 
 ## Agents
 | Name | Retell name | Role | Swaps to |
@@ -41,6 +42,7 @@ python agents/push.py --env prod                # update + publish + CHANGELOG l
 python agents/pull.py                           # mirror live config into remote/
 python agents/kb_sync.py                        # create/refresh knowledge bases from kb/*.md
 python agents/safety_check.py                   # text safety tests on the drafts (a few cents); run before prod
+python agents/contract_check.py --base-url http://localhost:8000 --key <webhook key>   # signed fake Retell calls against a backend (free)
 ```
 Optional env vars: `RETELL_FROM_NUMBER` (bind the number: inbound → `inbound`, outbound → `checkin`, inbound webhook → `${BASE_URL}/retell/inbound`), `RETELL_FALLBACK_NUMBER` (CS#2's Twilio voicemail line), `PROD_CRISIS_LINE_NUMBER`.
 
