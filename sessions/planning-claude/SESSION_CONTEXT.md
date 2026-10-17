@@ -13,6 +13,7 @@
 | `WORKFLOW.md` | End-to-end flows (inbound, outbound, escalation, supporter, learning loop) + team process (branches, stand-ups, twist protocol) |
 | `RETELL_GUIDE.md` | Retell MCP server, CLI/SDK, agents-in-git push script, agent swap between agents, knowledge base split, high-leverage settings, simulation testing |
 | `COMPLIANCE.md` | Laws and rules (recording consent, TCPA/AI voice, 988, no false dispatch, privacy, accessibility) and where each is enforced: prompt / backend / KB |
+| `INTAKE.md` | Forms engine (slot-filling with clarifying questions), case files attached to routed profiles, sandbox "service world" (clinic / 311 / utility) vs. real supporters, production adapters (FHIR, Open311) |
 | `CALL_SCHEDULE.md` | Open Line hours, flood drill windows, role cards, pre-flight checklist, announcement copy |
 
 ## Decisions made (with the user)
@@ -39,6 +40,8 @@
 12. **Call analytics loop:** baselines → Watch trigger; topic mining → knowledge base; triage calibration; routing stats; failure mining → prompt fixes; weekly "Community Pulse" digest.
 14. **Branches:** one per person or agent; `main` = real app only (via PR).
 15. **Retell structure:** per-language everyday agents + a crisis agent connected by Agent Transfer; 3 knowledge bases (campus-faq, la-resources, line-policy); live data via functions, not the KB; agents versioned in git and pushed by script; coding agents use the Retell MCP with manual approval.
+16. **Intake:** real structured intake via form schemas + clarifying questions; real for our supporters (Google Calendar); third parties (clinics, 311, utility) are a sandbox we control. No submitting into real external systems.
+17. **Caching:** answer cache (KB + semantic cache in `lookup_info`, zone-tagged expiry) + function TTL caches + static prompts; Anthropic prompt caching only for our own backend LLM calls.
 13. **Keyword triage:** 3 layers (live lexicon + LLM context + cross-call counts by distinct callers per zone).
 
 ## Key facts verified
