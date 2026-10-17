@@ -178,6 +178,38 @@ A single "crisis mode" button is a mini version of the blunt move: one switch fo
 
 **Demo moment:** a dashboard banner reads "West Altadena: WATCH → ASK · 9 reports / 6 min · 3 corroborated · **[Declare crisis]** · auto welfare calls in 4:59" with a live countdown.
 
+### Skills-based handoff: match each call to the right human (biomech's idea)
+
+The agent's intake already extracts language, need type, medical flags and urgency. Use that to pick **which** human gets the warm transfer, not just *whether* one does.
+
+**Responder profiles (dashboard + SMS sign-in):**
+- name, phone
+- languages
+- skills: `medical/nurse`, `mental-health/crisis`, `mobility/evac-logistics`, `utilities/tech`, `general`
+- certifications (EMT, CERT, interpreter)
+- status: available / busy / off
+- calls handled this shift
+
+Responders text `IN` or `OUT` to the line to change status, so it works over weak networks with no app needed.
+
+**Matching (data science owns the algorithm, biomech owns the skill taxonomy and the medical triggers):**
+```
+score = skill_match + language_match − current_load − fatigue  (only available responders)
+```
+- Highest-priority callers are matched first, so the queue is ordered by priority score, not arrival time.
+- **Never wait for a specialist on a critical call.** If no match answers within ~20 s, the call goes to *any* available human. Retell's agentic warm transfer returns the call to the AI if nobody picks up, so we retry the next person.
+- **No language match:** the AI keeps talking with the caller in their language. The human gets an English whisper and summary, and a bilingual responder gets a priority callback task.
+- **Fatigue and load:** cap concurrent calls per responder and rotate the heavy medical and crisis calls. This is a good human-factors point for the biomech person to own.
+- The whisper brief names *why* this human got the call: "You're getting this because: Spanish + oxygen-dependent. Caller: 81, smoke in the house, address confirmed."
+
+**Dual-use:**
+- **Tuesday:** the home-care agency's nurses get the check-in calls that flag a health change; social workers get the loneliness and food-insecurity ones.
+- **Crisis night:** the same roster expands with on-call volunteers (CERT, bilingual staff, retired nurses) who text `IN`.
+
+**Pitch line:** *"Not the next free human. The right one."*
+
+**Check with Retell early:** whether the transfer number can be set dynamically from our backend at transfer time (via a function result or dynamic variable). If not, use one transfer number per skill group.
+
 ## 6. Architecture (keep it boring)
 
 ```
