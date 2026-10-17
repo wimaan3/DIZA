@@ -33,6 +33,9 @@ def init_fns():
         for r in json.loads(os.getenv('DIZA_RESPONDERS', '[]')):
             c.execute('INSERT OR REPLACE INTO responders VALUES(?,?,?,?)', (r['id'], r['name'], r.get('skills', 'general'), 'available'))
             c.execute('INSERT OR REPLACE INTO responder_phones VALUES(?,?)', (r['id'], r['phone']))
+        # A real team is configured: drop the local placeholder people so the dashboard shows only real responders.
+        if c.execute('SELECT COUNT(*) FROM responder_phones').fetchone()[0]:
+            c.execute('DELETE FROM responders WHERE id NOT IN (SELECT responder_id FROM responder_phones)')
 
 
 def release_call(call_id):

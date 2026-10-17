@@ -1,4 +1,4 @@
-import asyncio, hashlib, json, os, sqlite3, time, uuid
+import asyncio, hashlib, json, os, re, sqlite3, time, uuid
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -34,7 +34,10 @@ def init():
         CREATE TABLE IF NOT EXISTS attempts(id TEXT PRIMARY KEY,request_id TEXT,responder_id TEXT,status TEXT,expires REAL);
         CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY,request_id TEXT,ts REAL,message TEXT);
         CREATE TABLE IF NOT EXISTS webhook_events(id TEXT PRIMARY KEY,created REAL);
+        CREATE TABLE IF NOT EXISTS calls(call_id TEXT PRIMARY KEY,direction TEXT,agent TEXT,caller_last4 TEXT,status TEXT,started REAL,ended REAL,
+          duration_s INTEGER,disconnection_reason TEXT,summary TEXT,sentiment TEXT,updated REAL);
         ''')
+        # Placeholder team for local runs only; init_fns() replaces it with DIZA_RESPONDERS when that is set.
         for row in [('alex','Alex Chen','facilities,logistics','available'),('sam','Sam Rivera','facilities,logistics,medical,safety','available'),('maya','Maya Patel','medical,safety','available')]:
             c.execute('INSERT OR IGNORE INTO responders VALUES(?,?,?,?)', row)
 
@@ -102,7 +105,7 @@ def offer(c,qid):
     if q['status'] in ('accepted','in_progress','done','offered'): return
     if q['severity']=='P0':
         c.execute("UPDATE requests SET status='escalated',updated=? WHERE id=?",(time.time(),qid))
-        event(c,qid,'Urgent supervisor review required · not routed to general helpers; emergency services not contacted by this demo')
+        event(c,qid,'Urgent supervisor review required · not routed to general helpers; DIZA never contacts emergency services')
         return
     skill={'power':'facilities','infrastructure':'facilities','medical':'medical','safety_crime':'safety'}.get(q['category'],'logistics')
     rows=c.execute("SELECT * FROM responders WHERE status='available' AND id NOT IN (SELECT responder_id FROM attempts WHERE request_id=?) ORDER BY id",(qid,)).fetchall()
@@ -150,19 +153,24 @@ async def guard(request,call_next):
         return JSONResponse({'detail':'Operator token required'},status_code=401)
     return await call_next(request)
 
+LIVE = bool(os.getenv('RETELL_API_KEY'))
+
 @app.get('/api/state')
 def state():
     with connect() as c:
-        return {'demo':DEMO,'timeout':TIMEOUT,'reports':[dict(r) for r in c.execute('SELECT * FROM reports ORDER BY created DESC')],
+        return {'demo':DEMO,'live':LIVE,'line_number':os.getenv('RETELL_FROM_NUMBER',''),'timeout':TIMEOUT,'reports':[dict(r) for r in c.execute('SELECT * FROM reports ORDER BY created DESC')],
           'requests':[dict(r) for r in c.execute('SELECT * FROM requests ORDER BY created')],
           'responders':[dict(r) for r in c.execute('SELECT * FROM responders')],
           'attempts':[dict(r) for r in c.execute('SELECT * FROM attempts ORDER BY expires')],
           'events':[dict(r) for r in c.execute('SELECT * FROM events ORDER BY ts DESC LIMIT 100')],
-          'cases':[dict(r) for r in c.execute('SELECT code,type,status,pool,created,updated FROM cases ORDER BY created DESC LIMIT 200')]}
+          'cases':[dict(r) for r in c.execute('SELECT code,type,status,pool,created,updated FROM cases ORDER BY created DESC LIMIT 200')],
+          'calls':[dict(r) for r in c.execute('SELECT * FROM calls ORDER BY started DESC LIMIT 100')],
+          'kb_gaps':[dict(r) for r in c.execute('SELECT id,question,created FROM kb_gaps ORDER BY created DESC LIMIT 50')],
+          'alerts':list_alerts()['alerts']}
 
 @app.post('/api/reports')
 def submit(r:Report):
-    if not DEMO: raise HTTPException(403,'Manual simulation disabled')
+    if not DEMO or LIVE: raise HTTPException(403,'Manual simulation is off while the line is live')
     r.source='simulated'
     return save_report(r)
 
@@ -201,7 +209,7 @@ def decide(qid:str,d:Decision):
 
 @app.post('/api/demo/surge')
 def surge():
-    if not DEMO: raise HTTPException(403)
+    if not DEMO or LIVE: raise HTTPException(403,'Simulated surges are off while the line is live')
     batch=str(uuid.uuid4())
     for i in range(12):
         save_report(Report(idempotency_key=f'{batch}-{i}',location_text='Building A',hazard='power',summary='Power outage reported at the event.' if i<10 else 'I need assistance reaching the accessible exit.',evidence='The lights went out.' if i<10 else 'I cannot use the stairs.',needs_assistance=i>=10,unknowns=['Cause of outage'],language='es' if i%3==0 else 'en'))
@@ -211,7 +219,7 @@ def surge():
 def reset():
     if not DEMO: raise HTTPException(403)
     with connect() as c:
-        for table in ('attempts','requests','reports','events','webhook_events','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents'): c.execute(f'DELETE FROM {table}')
+        for table in ('attempts','requests','reports','events','webhook_events','calls','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents'): c.execute(f'DELETE FROM {table}')
         c.execute("UPDATE responders SET status='available'")
     return {'ok':True}
 
@@ -243,12 +251,47 @@ def retell_submit(data=Depends(signed)):
     args['immediate_danger']=bool(args.get('immediate_danger') or args.get('injured_or_trapped'))
     if args.get('vulnerability') and not args.get('evidence'):
         args['evidence']='Vulnerability: '+', '.join(args['vulnerability'])
-    r=save_report(Report(**args))
+    r=merge_into_p0(call_id,Report(**args)) or save_report(Report(**args))
     with connect() as c:
         others=c.execute('SELECT COUNT(*) FROM reports WHERE cluster_id=? AND id!=?',(r['cluster_id'],r['id'])).fetchone()[0]
     # Read aloud by the agent, so only say something when other callers reported the same thing.
     match=f"We already have {others+1} reports of {r['category'].replace('_',' ')} near {r['location']}, and we're tracking it." if others else ''
     return {'report_id':r['id'],'severity':r['severity'],'priority':{'P0':100,'P1':80,'P2':50,'P3':10}[r['severity']],'reason':r['reason'],'cluster_match':match}
+
+def merge_into_p0(call_id,r):
+    # flag_urgent already opened a P0 report for this call; the full report fills it in instead of adding a second row.
+    with connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        p0=c.execute('SELECT * FROM reports WHERE substr(dedupe,1,?)=? ORDER BY created LIMIT 1',(len(call_id)+4,call_id+':p0:')).fetchone()
+        if not p0: return None
+        prev=c.execute('SELECT cluster_id FROM reports WHERE lower(trim(location))=? AND category=? AND created>? AND id!=? ORDER BY created DESC LIMIT 1',
+                       (r.location_text.strip().lower(),r.hazard,time.time()-600,p0['id'])).fetchone()
+        summary=r.summary if r.summary.startswith(p0['summary']) else f"{r.summary} · {p0['summary']}"
+        evidence=' · '.join(x for x in (p0['evidence'],r.evidence) if x)
+        c.execute('UPDATE reports SET location=?,category=?,summary=?,evidence=?,unknowns=?,language=?,cluster_id=? WHERE id=?',
+                  (r.location_text,r.hazard,summary[:2000],evidence[:2000],json.dumps(r.unknowns),r.language,prev['cluster_id'] if prev else p0['cluster_id'],p0['id']))
+        q=c.execute('SELECT id FROM requests WHERE report_id=?',(p0['id'],)).fetchone()
+        if q: event(c,q['id'],f'Caller details added: {r.location_text}')
+        return dict(c.execute('SELECT * FROM reports WHERE id=?',(p0['id'],)).fetchone())
+
+def log_call(data):
+    # Every call the agents handle, from Retell's call_started / call_ended / call_analyzed webhooks. Last 4 digits only.
+    call=data.get('call') or {}
+    cid=call.get('call_id')
+    if not cid: return
+    from .retell_fns import person_number
+    analysis=call.get('call_analysis') or {}
+    ended=(call.get('end_timestamp') or 0)/1000 or None
+    started=(call.get('start_timestamp') or 0)/1000 or time.time()
+    status={'call_started':'live','call_ended':'ended','call_analyzed':'ended'}.get(data.get('event'),'live')
+    with connect() as c:
+        c.execute('''INSERT INTO calls VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(call_id) DO UPDATE SET
+            status=CASE WHEN excluded.status='ended' THEN 'ended' ELSE calls.status END,
+            ended=COALESCE(excluded.ended,calls.ended),duration_s=COALESCE(excluded.duration_s,calls.duration_s),
+            disconnection_reason=COALESCE(excluded.disconnection_reason,calls.disconnection_reason),
+            summary=COALESCE(excluded.summary,calls.summary),sentiment=COALESCE(excluded.sentiment,calls.sentiment),updated=excluded.updated''',
+            (cid,call.get('direction') or '',call.get('agent_name') or call.get('agent_id') or '',re.sub(r'\D','',person_number(call))[-4:],status,started,ended,
+             int(ended-started) if ended else None,call.get('disconnection_reason'),analysis.get('call_summary'),analysis.get('user_sentiment'),time.time()))
 
 @app.post('/retell/webhook',status_code=204)
 def webhook(data=Depends(signed)):
@@ -258,6 +301,7 @@ def webhook(data=Depends(signed)):
         fresh=c.execute('INSERT OR IGNORE INTO webhook_events VALUES(?,?)',(key,time.time())).rowcount
     if not fresh:
         return  # retry or duplicate (Retell retries; agent swaps with both_agents send twice)
+    log_call(data)
     # Report submission happens during the call; call_ended frees whoever we routed it to.
     if data.get('event')=='call_ended':
         release_call(call_id)
@@ -265,7 +309,7 @@ def webhook(data=Depends(signed)):
 
 from .retell_fns import router as retell_fn_router, init_fns, release_call
 app.include_router(retell_fn_router)
-from .alerts import init_alerts, on_alert_call_event
+from .alerts import init_alerts, on_alert_call_event, list_alerts
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():
