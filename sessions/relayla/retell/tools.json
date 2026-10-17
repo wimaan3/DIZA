@@ -1,0 +1,309 @@
+{
+  "general_tools": [
+    {
+      "type": "custom",
+      "name": "submit_report",
+      "description": "Save or update structured intake for the case bound to this call. Preserve an existing upstream priority; report facts without diagnosis. A saved report does not verify an incident or notify responders.",
+      "url": "BASE_URL/retell/functions/submit_report",
+      "method": "POST",
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 5000,
+      "max_retry": 1,
+      "speak_during_execution": false,
+      "speak_after_execution": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Stable identifier for this intended mutation within this call, for example report-1 or readback-v2-1. Reuse the same identifier and identical arguments only when retrying that mutation. Use a new identifier for a new intended action.",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "description": "A short factual summary based on caller-confirmed details. Distinguish a caller report from verified information. Preserve relevant previously saved needs.",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "resident_name": {
+            "type": "string",
+            "description": "Only a name the caller supplied or the supplied resident_name; omit when it is already saved. Do not collect identifiers unnecessarily.",
+            "maxLength": 200
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "es"
+            ],
+            "description": "The caller's selected language: en for English or es for Spanish."
+          },
+          "zone": {
+            "type": "string",
+            "description": "Only a zone or location label supplied by the caller or operator context. Omit if unknown.",
+            "maxLength": 200
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "fire",
+              "smoke",
+              "gas",
+              "flood",
+              "power",
+              "medical",
+              "mental_health",
+              "safety_crime",
+              "infrastructure",
+              "info",
+              "logistics",
+              "other"
+            ],
+            "description": "The supplied upstream category or a plain topic label from the caller's report. This does not diagnose or verify the incident."
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "P0",
+              "P1",
+              "P2",
+              "P3"
+            ],
+            "description": "Copy the supplied upstream priority only. Never lower it or invent a new classification. If urgency is unclear or new danger is reported, request human review promptly while preserving the supplied label."
+          },
+          "triage_source": {
+            "type": "string",
+            "description": "Copy the actual supplied classification source when known. Omit when unknown. Do not invent a model, agency, reviewer, or voice-side classification source.",
+            "maxLength": 500
+          },
+          "skills_needed": {
+            "type": "array",
+            "description": "Only relevant support skills from the supplied case or caller's confirmed needs, such as mobility, logistics, medical, or safety.",
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 10
+          },
+          "needs_assistance": {
+            "type": "boolean",
+            "description": "True when the caller requests help or a human. A false answer does not close an already active help request."
+          },
+          "assistance_details": {
+            "type": "string",
+            "description": "Caller-confirmed help needed, preserving useful context already saved. Do not invent dispatch, assignment, or completion.",
+            "maxLength": 2000
+          },
+          "location": {
+            "type": "string",
+            "description": "Only location details voluntarily supplied and needed for the request. Do not guess an address or coordinates.",
+            "maxLength": 500
+          },
+          "hazard_here_now": {
+            "type": "boolean",
+            "description": "Only an explicit caller statement about whether the reported hazard is present at their location now. This is reported, not independently verified."
+          },
+          "people_at_risk": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000,
+            "description": "Only an explicit count reported by the caller. Omit if unknown."
+          },
+          "vulnerability": {
+            "type": "array",
+            "description": "Only explicitly reported support needs, such as mobility. Do not infer a diagnosis from speech.",
+            "items": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "event_id",
+          "summary"
+        ]
+      }
+    },
+    {
+      "type": "custom",
+      "name": "lookup_guidance",
+      "description": "Look up the current operator-approved notice and its exact version for the case bound to this call. Use it before reading an instruction. If none is available, request operator help; do not invent guidance.",
+      "url": "BASE_URL/retell/functions/lookup_guidance",
+      "method": "POST",
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 5000,
+      "max_retry": 1,
+      "speak_during_execution": false,
+      "speak_after_execution": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "es"
+            ],
+            "description": "The caller's selected language, matching the configured en or es call."
+          }
+        },
+        "required": [
+          "language"
+        ]
+      }
+    },
+    {
+      "type": "custom",
+      "name": "save_checkin",
+      "description": "Save an explicit caller read-back against the notice version actually read. This records communication and any assistance need independently; it does not prove safety or complete a request.",
+      "url": "BASE_URL/retell/functions/save_checkin",
+      "method": "POST",
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 5000,
+      "max_retry": 1,
+      "speak_during_execution": false,
+      "speak_after_execution": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Stable identifier for this intended mutation within this call, for example report-1 or readback-v2-1. Reuse the same identifier and identical arguments only when retrying that mutation. Use a new identifier for a new intended action.",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "notice_version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Exact version returned by lookup_guidance for the instruction the caller actually heard. Never substitute a newly revised version for the old instruction."
+          },
+          "action_key": {
+            "type": "string",
+            "description": "Use the returned notice action_key only if the caller explicitly read back that action correctly. For a wrong, missing, or ambiguous answer, use unconfirmed so the backend requires clarification. Never guess confirmation.",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "readback_text": {
+            "type": "string",
+            "description": "The caller's actual relevant answer in their language. Do not replace it with a generated affirmation or the notice text.",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "needs_assistance": {
+            "type": "boolean",
+            "description": "Whether the caller explicitly requested assistance. Omit when unanswered; never treat it as permission to close active assistance."
+          },
+          "assistance_details": {
+            "type": "string",
+            "description": "Caller-confirmed assistance details. Preserve the nature of any saved help need.",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "event_id",
+          "notice_version",
+          "action_key",
+          "readback_text"
+        ]
+      }
+    },
+    {
+      "type": "custom",
+      "name": "check_status",
+      "description": "Read the recorded communication, help, and follow-up status of this call's bound case only. Do not treat requested, assigned, or accepted as completed or dispatched.",
+      "url": "BASE_URL/retell/functions/check_status",
+      "method": "POST",
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 5000,
+      "max_retry": 1,
+      "speak_during_execution": false,
+      "speak_after_execution": true,
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "type": "custom",
+      "name": "route_to_human",
+      "description": "Record a request for human follow-up and return a responder recommendation for this call's case. It does not transfer or dial a phone, guarantee acceptance, or dispatch help.",
+      "url": "BASE_URL/retell/functions/route_to_human",
+      "method": "POST",
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 5000,
+      "max_retry": 1,
+      "speak_during_execution": false,
+      "speak_after_execution": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Stable identifier for this intended mutation within this call, for example report-1 or readback-v2-1. Reuse the same identifier and identical arguments only when retrying that mutation. Use a new identifier for a new intended action.",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "reason": {
+            "type": "string",
+            "description": "Concise reason the caller needs a person, including language and relevant confirmed support needs. Do not invent an urgent finding.",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "event_id",
+          "reason"
+        ]
+      }
+    },
+    {
+      "type": "custom",
+      "name": "schedule_callback",
+      "description": "Record pending callback work requested by the caller for a non-P0 case. No call is scheduled with a provider and no response time is guaranteed. Never use this to defer an immediate danger or P0 case.",
+      "url": "BASE_URL/retell/functions/schedule_callback",
+      "method": "POST",
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 5000,
+      "max_retry": 1,
+      "speak_during_execution": false,
+      "speak_after_execution": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "description": "Stable identifier for this intended mutation within this call, for example report-1 or readback-v2-1. Reuse the same identifier and identical arguments only when retrying that mutation. Use a new identifier for a new intended action.",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60,
+            "description": "The caller's requested follow-up interval in minutes, from 1 to 60. This is a requested work-queue target, not a promise."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Caller-confirmed reason for follow-up, with any relevant unmet need.",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "event_id",
+          "minutes",
+          "reason"
+        ]
+      }
+    }
+  ]
+}

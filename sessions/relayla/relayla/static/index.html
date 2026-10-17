@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142b37">
+  <meta name="description" content="DIZA RelayLA: a synthetic demonstration of multilingual intake, accountable handoffs, and versioned confirmation.">
+  <title>DIZA · RelayLA response desk</title>
+  <link rel="stylesheet" href="./static/styles.css">
+  <script src="./static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to response desk</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Workspace navigation">
+      <a class="brand" href="./" aria-label="DIZA RelayLA home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M8 7h8a9 9 0 0 1 0 18H8V7Z" stroke="currentColor" stroke-width="3"/><path d="M16 11v10M11 16h10" stroke="currentColor" stroke-width="2.5"/></svg></span>
+        <span><strong>DIZA</strong><span class="brand-sub">RelayLA</span></span>
+      </a>
+      <div class="workspace-label">OPERATIONS</div>
+      <nav class="side-nav">
+        <button class="nav-item active" id="nav-desk" type="button"><span aria-hidden="true">▦</span> Response desk</button>
+        <button class="nav-item" id="nav-notices" type="button"><span aria-hidden="true">▤</span> Approved notices</button>
+        <button class="nav-item" id="nav-outbox" type="button"><span aria-hidden="true">↗</span> Local outbox <span class="nav-count" id="nav-outbox-count">0</span></button>
+      </nav>
+      <div class="sidebar-note"><span class="little-rule"></span><p>Every request deserves<br><strong>a confirmed next step.</strong></p></div>
+      <div class="sidebar-bottom">
+        <div class="workspace-label">THIS WORKSPACE</div>
+        <div class="workspace-meta"><span class="status-dot amber"></span><span>Synthetic exercise</span></div>
+        <div class="integration-status" id="integration-status">Checking connections…</div>
+        <button class="connection-button" id="connection-settings" type="button">Connection settings <span aria-hidden="true">↗</span></button>
+        <div class="sidebar-footer">InnovateLA 2026 <span>RESILIENCE COMMS</span></div>
+      </div>
+    </aside>
+
+    <main id="main" class="main-content">
+      <header class="page-header">
+        <div><div class="eyebrow"><span class="status-dot teal"></span> HUMAN RESPONSE · CONFIRMED FOLLOW-THROUGH</div><h1>Response desk</h1><p class="header-description">Keep people informed. Keep someone responsible.</p></div>
+        <div class="header-actions"><div class="sync-status" id="sync-status" role="status"><span class="status-dot"></span><span>Connecting</span></div><button class="button button-quiet icon-button" id="refresh-button" type="button" aria-label="Refresh dashboard">↻</button><button class="button button-primary" id="new-intake-button" type="button"><span aria-hidden="true">+</span> New intake</button></div>
+      </header>
+
+      <div class="exercise-banner"><span class="exercise-label">DEMO WORKSPACE</span><span>All people and incidents are synthetic. Demo controls record state; they do not place calls or send messages.</span><button type="button" id="help-toggle" aria-expanded="false" aria-controls="demo-help">Demo guide <span aria-hidden="true">↓</span></button></div>
+      <div class="demo-help" id="demo-help" hidden><div><strong>01 · Listen &amp; route</strong><p>Select a request. Inspect its priority and assign an eligible responder.</p></div><div><strong>02 · Confirm the action</strong><p>Record an English or Spanish read-back. Connection alone is not confirmation.</p></div><div><strong>03 · Change the instructions</strong><p>Revise a notice. Previous confirmations need an update; handoffs keep their own state.</p></div><button class="text-button" id="try-demo" type="button">Open a demo request →</button></div>
+      <div class="error-banner" id="global-error" role="alert" hidden></div>
+      <div class="outbox-banner" id="outbox-banner" hidden><span class="outbox-banner-text" id="outbox-banner-text"></span><div><button class="text-button" id="view-drafts" type="button">View drafts</button><button class="button button-small" id="sync-drafts" type="button">Sync now</button></div></div>
+
+      <section class="metrics-grid" id="metrics-grid" aria-label="Response overview">
+        <div class="metric-card skeleton-card"></div><div class="metric-card skeleton-card"></div><div class="metric-card skeleton-card"></div><div class="metric-card skeleton-card"></div>
+      </section>
+
+      <section class="operations-grid" aria-label="Active response workspace">
+        <section class="queue-panel panel" aria-labelledby="queue-heading">
+          <div class="queue-top"><div><div class="eyebrow muted">LIVE QUEUE</div><h2 id="queue-heading">Incoming requests <span id="queue-count" class="count-label">—</span></h2></div><span class="tiny-label">Priority first</span></div>
+          <label class="search-field"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.5"/></svg><input type="search" id="queue-search" placeholder="Find a person or request" autocomplete="off" aria-label="Search requests"><kbd>/</kbd></label>
+          <div class="filter-row" id="queue-filters" aria-label="Filter requests"></div>
+          <div class="queue-list" id="queue-list" aria-live="polite"><div class="empty-state"><span class="loading-spinner"></span><p>Loading the response queue…</p></div></div>
+          <div class="queue-footer"><span class="status-dot teal"></span><span>Priority is supplied by DIZA or the operator.</span></div>
+        </section>
+
+        <section class="case-panel panel" id="case-panel" aria-label="Selected request"><div class="empty-state large"><div class="empty-mark" aria-hidden="true">↗</div><h2>A clear next step starts here</h2><p>Select a request to review its notice, contact history, and human handoff.</p></div></section>
+      </section>
+      <footer class="page-footer"><span>DIZA + RelayLA <span class="footer-separator">/</span> Multilingual intake, accountable follow-through.</span><span>Confirmation and assistance are tracked separately.</span></footer>
+    </main>
+  </div>
+
+  <dialog id="intake-dialog" class="modal modal-wide" aria-labelledby="intake-title"><div class="modal-header"><div><div class="eyebrow muted">TEXT FALLBACK</div><h2 id="intake-title">Record a new request</h2></div><button class="close-button" type="button" data-close="intake-dialog" aria-label="Close intake">×</button></div><form id="intake-form" class="modal-body"><p class="muted-text">This form uses the same intake workflow as voice. Disconnected drafts stay in this browser until you explicitly sync them.</p><div class="form-grid"><label class="field">Resident name<input name="resident_name" required maxlength="120" placeholder="Demo resident"></label><label class="field">Resident reference<input name="resident_id" required maxlength="80" placeholder="demo-resident-09"></label><label class="field">Language<select name="language"><option value="en">English</option><option value="es">Español</option></select></label><label class="field">Zone<select name="zone" id="intake-zone"></select></label><label class="field">Intake category<select name="category"><option value="logistics">Logistics &amp; access</option><option value="medical">Medical support request</option><option value="safety">Safety concern</option><option value="information">Information</option><option value="welfare">Welfare check</option></select></label><label class="field">Upstream priority<select name="severity"><option value="P2">P2 · Needs coordination</option><option value="P0">P0 · Immediate human response</option><option value="P1">P1 · Urgent human review</option><option value="P3">P3 · Routine</option></select></label></div><label class="field">What does the person need?<textarea name="summary" required maxlength="1200" rows="3" placeholder="Describe the request in the person's own words."></textarea></label><label class="field">Approved notice<select name="notice_id" id="intake-notice"></select></label><label class="check-field"><input name="needs_assistance" type="checkbox" checked><span>This person needs a human handoff</span></label><div class="form-grid"><label class="field">Assistance details<input name="assistance_details" maxlength="800" placeholder="For example, help reaching the pickup point"></label><label class="field">Required skills <span class="field-hint">Optional; comma separated</span><input name="skills_needed" maxlength="160" placeholder="mobility, logistics"></label></div><label class="check-field simulated-option"><input name="save_offline" type="checkbox"><span><strong>Test disconnected intake</strong><small>Save a local draft only. Nothing is marked received until sync succeeds.</small></span></label><div class="form-error" id="intake-error" role="alert" hidden></div><div class="modal-footer"><span class="field-hint">Use synthetic data for this demo.</span><button class="button button-primary" type="submit">Submit request</button></div></form></dialog>
+
+  <dialog id="notice-dialog" class="modal modal-wide" aria-labelledby="notice-title"><div class="modal-header"><div><div class="eyebrow muted">OPERATOR APPROVAL</div><h2 id="notice-title">Revise the approved notice</h2></div><button class="close-button" type="button" data-close="notice-dialog" aria-label="Close notice editor">×</button></div><form id="notice-form" class="modal-body"><div class="notice-change-callout" id="notice-change-callout"></div><div class="form-grid"><label class="field">Approved text · English<textarea name="body_en" rows="4" required maxlength="2000"></textarea></label><label class="field">Texto aprobado · Español<textarea name="body_es" rows="4" required maxlength="2000"></textarea></label><label class="field">Required action · English<input name="action_label_en" required maxlength="160"></label><label class="field">Acción requerida · Español<input name="action_label_es" required maxlength="160"></label><label class="field">Action reference<input name="action_key" required maxlength="80" pattern="[a-z0-9_-]+"></label><label class="field">Source<input name="source_label" required maxlength="160"></label></div><label class="field">Approved by<input name="approved_by" required maxlength="120" placeholder="Demo supervisor"></label><div class="form-error" id="notice-error" role="alert" hidden></div><div class="modal-footer"><span class="field-hint">A revision requires fresh confirmation.</span><button class="button button-primary" type="submit">Publish revised notice</button></div></form></dialog>
+
+  <dialog id="notices-dialog" class="modal" aria-labelledby="notices-title"><div class="modal-header"><div><div class="eyebrow muted">APPROVED INFORMATION</div><h2 id="notices-title">Current notices</h2></div><button class="close-button" type="button" data-close="notices-dialog" aria-label="Close notices">×</button></div><div class="modal-body" id="notices-list"></div></dialog>
+
+  <dialog id="outbox-dialog" class="modal" aria-labelledby="outbox-title"><div class="modal-header"><div><div class="eyebrow muted">SAVED ON THIS DEVICE</div><h2 id="outbox-title">Local outbox</h2></div><button class="close-button" type="button" data-close="outbox-dialog" aria-label="Close outbox">×</button></div><div class="modal-body"><p class="muted-text">These are unsent drafts, not received requests. Sync retries use the same event reference to avoid creating duplicates.</p><div id="outbox-list"></div><div class="modal-footer"><span class="field-hint" id="outbox-sync-label"></span><button class="button button-primary" id="outbox-sync-button" type="button">Sync saved drafts</button></div></div></dialog>
+
+  <dialog id="settings-dialog" class="modal modal-small" aria-labelledby="settings-title"><div class="modal-header"><div><div class="eyebrow muted">CONNECTION</div><h2 id="settings-title">Operator access</h2></div><button class="close-button" type="button" data-close="settings-dialog" aria-label="Close settings">×</button></div><form id="settings-form" class="modal-body"><p class="muted-text">If this workspace requires an operator token, enter it here. It is kept only for this browser tab's session.</p><label class="field">Operator token<input name="token" type="password" autocomplete="off" placeholder="Optional for a local demo"></label><div id="connection-detail" class="connection-detail"></div><div class="form-error" id="settings-error" role="alert" hidden></div><div class="modal-footer"><button class="button button-quiet" id="clear-token" type="button">Clear token</button><button class="button button-primary" type="submit">Connect</button></div></form></dialog>
+  <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>
