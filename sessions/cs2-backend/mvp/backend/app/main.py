@@ -138,9 +138,16 @@ async def lifespan(app):
         while True:
             expire()
             await asyncio.sleep(1)
+    async def call_sync():
+        while True:
+            try: await asyncio.to_thread(sync_calls)
+            except Exception as e: print('call sync failed:',e)
+            await asyncio.sleep(60)
     task=asyncio.create_task(worker())
+    sync=asyncio.create_task(call_sync()) if os.getenv('RETELL_API_KEY') else None
     yield
     task.cancel()
+    if sync: sync.cancel()
 
 app=FastAPI(title='DIZA MVP',lifespan=lifespan)
 
@@ -280,7 +287,7 @@ def log_call(data):
     cid=call.get('call_id')
     if not cid: return
     from .retell_fns import person_number
-    analysis=call.get('call_analysis') or {}
+    analysis=call.get('call_analysis') or call.get('scrubbed_call_analysis') or {}  # PII-scrubbed storage sends the scrubbed copy
     ended=(call.get('end_timestamp') or 0)/1000 or None
     started=(call.get('start_timestamp') or 0)/1000 or time.time()
     status={'call_started':'live','call_ended':'ended','call_analyzed':'ended'}.get(data.get('event'),'live')
@@ -292,6 +299,16 @@ def log_call(data):
             summary=COALESCE(excluded.summary,calls.summary),sentiment=COALESCE(excluded.sentiment,calls.sentiment),updated=excluded.updated''',
             (cid,call.get('direction') or '',call.get('agent_name') or call.get('agent_id') or '',re.sub(r'\D','',person_number(call))[-4:],status,started,ended,
              int(ended-started) if ended else None,call.get('disconnection_reason'),analysis.get('call_summary'),analysis.get('user_sentiment'),time.time()))
+
+def sync_calls():
+    # Backfill from Retell's API so calls made before a deploy, or a missed webhook, still show up.
+    import urllib.request
+    req=urllib.request.Request('https://api.retellai.com/v2/list-calls',method='POST',data=json.dumps({'limit':50,'sort_order':'descending'}).encode(),
+                               headers={'Authorization':'Bearer '+os.environ['RETELL_API_KEY'],'Content-Type':'application/json'})
+    with urllib.request.urlopen(req,timeout=20) as r:
+        calls=json.loads(r.read())
+    for call in calls if isinstance(calls,list) else calls.get('items',[]):
+        log_call({'event':'call_ended' if call.get('call_status') in ('ended','error','not_connected') else 'call_started','call':call})
 
 @app.post('/retell/webhook',status_code=204)
 def webhook(data=Depends(signed)):
