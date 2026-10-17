@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>DIZA | Analytics</title>
+  <link rel="stylesheet" href="/analytics/assets/style.css">
+  <script src="/analytics/assets/app.js" defer></script>
+</head>
+<body>
+  <aside>
+    <a class="brand" href="/ops"><span class="brand-icon" aria-hidden="true">◉</span>DIZA<span>.</span></a>
+    <p class="workspace">RESILIENCE COMMUNICATIONS</p>
+    <nav aria-label="Main navigation">
+      <a href="/ops">Operations</a>
+      <a href="/supporter">Supporter inbox</a>
+      <a class="active" href="/analytics" aria-current="page">Analytics</a>
+    </nav>
+    <div class="sidebar-note"><strong>Evidence behind every decision.</strong><p>Measure what is known.<br>Keep the gaps visible.</p></div>
+    <p class="connection"><span id="connection-dot"></span><span id="connection-label">Connecting</span></p>
+  </aside>
+  <main>
+    <header><span>Workspace <span class="separator">/</span> Analytics</span><span class="badge">OPERATOR ACCESS</span></header>
+    <div class="content">
+      <div class="title-row"><div><p class="eyebrow">THE COMMUNITY SIGNAL</p><h1>From conversations to evidence.</h1><p class="subtitle">Live call metrics, with consent and measurement coverage in view.</p></div><button id="refresh" type="button">Refresh data</button></div>
+      <form id="login" class="login" hidden>
+        <div><h2>Unlock analytics</h2><p>Use the same operator token as the Operations dashboard.</p></div>
+        <label for="token">Operator token</label><input id="token" name="token" type="password" autocomplete="current-password" required>
+        <button class="primary" type="submit">Unlock</button>
+      </form>
+      <p id="message" class="notice" role="status" aria-live="polite">Connecting to live analytics…</p>
+      <section id="dashboard" hidden>
+        <div class="stats" aria-label="Key metrics">
+          <article class="stat"><p>Calls in analytics</p><strong id="calls">-</strong><small>Calls with recorded analytics consent</small></article>
+          <article class="stat"><p>Peak concurrent calls</p><strong id="peak">-</strong><small>From observed call intervals</small></article>
+          <article class="stat"><p>Beyond English / Spanish</p><strong id="reach">-</strong><small id="reach-detail">Language coverage</small></article>
+          <article class="stat warm"><p>P0 recall</p><strong id="recall">Unmeasured</strong><small>Requires human or role-card labels</small></article>
+        </div>
+        <section class="panel coverage-panel">
+          <div class="panel-title"><h2>The measurement picture</h2><small id="updated"></small></div>
+          <div class="coverage"><div><strong id="recorded">-</strong><span>Operational calls recorded</span></div><div><strong id="included">-</strong><span>Included with consent</span></div><div><strong id="unknown">-</strong><span>Awaiting a consent link</span></div><div><strong id="opted-out">-</strong><span>Excluded by opt-out</span></div></div>
+        </section>
+        <div class="columns">
+          <section class="panel"><div class="panel-title"><h2>What callers report</h2><small>Recorded report categories</small></div><div id="categories" class="bars"></div></section>
+          <section class="panel"><div class="panel-title"><h2>Languages served</h2><small>Consented calls only</small></div><div id="languages" class="bars"></div></section>
+        </div>
+        <div class="columns">
+          <section class="panel"><div class="panel-title"><h2>Triage signals</h2><small>Analysis predictions</small></div><div id="predictions" class="bars"></div><p class="panel-note">These signals support review and are separate from operational severity and ground truth.</p></section>
+          <section class="panel"><div class="panel-title"><h2>Quality and handoff</h2><small>Measured when recorded</small></div><dl class="quality"><div><dt>AI resolution rate</dt><dd id="resolved">Unmeasured</dd></div><div><dt>Responder skill match</dt><dd id="routing">Unmeasured</dd></div><div><dt>Safety compliance</dt><dd id="safety">Unmeasured</dd></div><div><dt>Time to human, P1</dt><dd id="human-time">Unmeasured</dd></div></dl></section>
+        </div>
+        <p class="footnote">Internal operator analytics. This page contains aggregate measurements, with no caller identities, transcripts, or exact locations.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
