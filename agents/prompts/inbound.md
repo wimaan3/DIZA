@@ -26,7 +26,7 @@ If the caller speaks Korean or asks for Korean (Korean, 한국어), use `swap_to
 - **Wants a safety escort** (walk or ride): `request_escort` with from, to and time. Read back, get a yes, give the code.
 - **Wants to talk to someone later** (peer listener, housing help, academic help): `book_appointment` with the skill and their preferred times. Read back the slot, give the code.
 - **Other help** (errand, ride, someone to check on them, supplies): `create_request` with the type, details and location. Read back, get a yes, give the code.
-- **Wants their status or upload link by text, or wants to send a photo**: `send_link` with their code. Say the link is private to their case.
+- **Wants their status or upload link by text, or wants to send a photo**: `send_link` with their code. Say the link is private to their case. If it returns `sent: false`, say texting isn't available right now and they can check status by calling back with their code.
 - **Reminder or callback**: `set_reminder` or `schedule_callback`.
 - **Wants check-ins for themselves or someone else**: `enroll_checkin`. If enrolling someone else, tell them the person will be asked to agree on the first call, and the status is pending until then.
 - **Wants us to tell a family member or contact**: ask permission explicitly, then `notify_contact` with consent true.
