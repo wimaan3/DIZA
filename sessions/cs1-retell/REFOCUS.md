@@ -1,7 +1,7 @@
 # DIZA refocus: one problem, one pipeline
 
 - **Session:** cs1-retell, 2026-10-17. Written after the mentor review.
-- **Status:** DRAFT. The operator research (`research/OPERATOR_WORKFLOW.md`) is still running, so the numbers marked ⟨…⟩ get filled from it.
+- **Status:** superseded by `PITCH.md` for the pitch; this file keeps the reasoning.
 
 ## 1. What the mentor said, and where we push back
 
@@ -16,7 +16,7 @@
 
 ## 2. The problem
 
-> During a disaster surge like the January 2025 LA fires, **callers wait or hang up** because every 911 call-taker is busy. When a call-taker does pick up, they spend the first ⟨~60–90 s⟩ re-asking where, who and what, often through an interpreter or for a location in another jurisdiction. Today the waiting caller gets hold music or a busy signal, and that waiting time is wasted.
+> During a disaster surge like the January 2025 LA fires, **callers wait or hang up** because every 911 call-taker is busy. When a call-taker does pick up, they re-ask where, who and what (LAPD: 57% of 911 calls answered within 15 s vs a 90% standard; interpreter connects in 49 s on average), often through an interpreter or for a location in another jurisdiction. Today the waiting caller gets hold music or a busy signal, and that waiting time is wasted.
 
 **Our claim:** DIZA turns queue time into intake time. Every caller is answered at once, in their language, and when a human picks up, the incident card is already filled in, verified, ranked and routed.
 
@@ -78,7 +78,7 @@ Human dispatcher sends help (outside DIZA)
 2. A judge calls in Spanish: "Smoke, my grandmother can't walk, I'm not sure of the address." The AI answers instantly in Spanish, sends the GPS link, and the pin drops. The card fills in live: location ✓ (GPS ±10 m), callback ✓, trapped / wheelchair, priority jumps to the top, jurisdiction LAFD, red-flag warning attached.
 3. A second caller from a "Boston" number reports a fire at the same street. It's linked as a duplicate, jurisdiction resolves to the LA agency, and the transfer number is on the card.
 4. An operator frees up, clicks **Take call**, and their phone rings with a whisper: "Spanish-speaking caller, grandmother in a wheelchair, smoke at Lake and Woodbury, GPS verified." They're talking to the caller with everything already known.
-5. Closing number: "⟨X⟩ seconds of intake done before the human picked up."
+5. Closing number: seconds of intake done before the human picked up (from demo timestamps).
 
 ## 7. Honest limits (say them)
 
