@@ -1,0 +1,44 @@
+{
+  "_prompt_files": [
+    "_shared_rules.md",
+    "checkin.md"
+  ],
+  "_tools": [
+    "flag_urgent",
+    "swap_to_crisis",
+    "route_to_human",
+    "transfer_to_human",
+    "transfer_to_crisis_line",
+    "opt_out",
+    "schedule_callback",
+    "set_reminder",
+    "notify_contact",
+    "lookup_info",
+    "end_call"
+  ],
+  "model": "gpt-4.1-mini",
+  "model_temperature": 0.1,
+  "tool_call_strict_mode": true,
+  "start_speaker": "agent",
+  "begin_message": null,
+  "default_dynamic_variables": {
+    "caller_name": "",
+    "language": "en",
+    "zone_id": "",
+    "zone_level": "normal",
+    "known_incidents": "",
+    "is_registered": "false",
+    "drill_mode": "false",
+    "line_name": "${LINE_NAME}",
+    "recording_notice": "${RECORDING_NOTICE}",
+    "crisis_line_number": "${CRISIS_LINE_NUMBER}",
+    "oncall_number": "",
+    "responder_name": "",
+    "brief": "",
+    "match_reason": "",
+    "needs": "",
+    "reason": "",
+    "consent_status": "active"
+  },
+  "knowledge_base_ids": []
+}

@@ -1,0 +1,534 @@
+{
+  "submit_report": {
+    "type": "custom",
+    "name": "submit_report",
+    "description": "Submit a structured report of a hazard or welfare check. Call as soon as you know what and where; don't wait for perfect answers.",
+    "url": "${BASE_URL}/retell/fn/submit_report",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "hazard": {
+          "type": "string",
+          "description": "What is happening: fire, smoke, gas, flood, power, medical, collapse, welfare_check, other, plus a few words."
+        },
+        "location_text": {
+          "type": "string",
+          "description": "Address, cross streets or landmark, as confirmed with the caller."
+        },
+        "people_at_risk": {
+          "type": "integer",
+          "description": "Number of people at risk, 0 if none or unknown."
+        },
+        "injured_or_trapped": {
+          "type": "boolean",
+          "description": "True if anyone is injured or trapped."
+        },
+        "vulnerability": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Vulnerability flags, e.g. wheelchair, oxygen, dialysis, elderly_alone, baby, no_car, pets, deaf, blind."
+        },
+        "language": {
+          "type": "string",
+          "description": "Caller's language code, e.g. en, es."
+        },
+        "drill_code": {
+          "type": "string",
+          "description": "Drill code if the caller gave one, else empty."
+        }
+      },
+      "required": [
+        "hazard",
+        "location_text",
+        "people_at_risk",
+        "injured_or_trapped",
+        "vulnerability",
+        "language"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": true,
+    "execution_message_description": "Okay, I'm logging that now.",
+    "execution_message_type": "static_text"
+  },
+  "flag_urgent": {
+    "type": "custom",
+    "name": "flag_urgent",
+    "description": "Flag this call as life-safety urgent (P0) or self-harm. Call IMMEDIATELY when you hear a P0 phrase, before anything else.",
+    "url": "${BASE_URL}/retell/fn/flag_urgent",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "Short reason, e.g. trapped, not_breathing, chest_pain, overdose, weapon, self_harm, fire_cannot_exit."
+        },
+        "keyword": {
+          "type": "string",
+          "description": "The caller's exact words that triggered this."
+        }
+      },
+      "required": [
+        "reason",
+        "keyword"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "route_to_human": {
+    "type": "custom",
+    "name": "route_to_human",
+    "description": "Find the best available person on our team for this caller. Returns oncall_number (may be empty), responder_name, brief and match_reason.",
+    "url": "${BASE_URL}/retell/fn/route_to_human",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Skills needed, e.g. medical, mental_health, evac_logistics, safety_escort, housing, facilities, listener, general."
+        },
+        "language": {
+          "type": "string",
+          "description": "Caller's language code, e.g. en, es."
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "description": "Severity: P0 life in danger now, P1 active hazard, P2 needs a person soon, P3 routine."
+        },
+        "summary": {
+          "type": "string",
+          "description": "One-sentence summary of the caller's situation for the person taking over."
+        }
+      },
+      "required": [
+        "needs",
+        "language",
+        "severity",
+        "summary"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": true,
+    "execution_message_description": "Let me find someone for you.",
+    "execution_message_type": "static_text",
+    "response_variables": {
+      "oncall_number": "oncall_number",
+      "responder_name": "responder_name",
+      "brief": "brief",
+      "match_reason": "match_reason"
+    }
+  },
+  "schedule_callback": {
+    "type": "custom",
+    "name": "schedule_callback",
+    "description": "Queue a callback from a person when no one is available now or the caller prefers a call back.",
+    "url": "${BASE_URL}/retell/fn/schedule_callback",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "description": "Why they need a callback, e.g. no_responder_available, silent_caller, distress, request_followup."
+        },
+        "preferred_time": {
+          "type": "string",
+          "description": "When they prefer, in their words, or empty for as soon as possible."
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "lookup_info": {
+    "type": "custom",
+    "name": "lookup_info",
+    "description": "Look up approved, current information: shelters, evacuation orders, road closures, resources, hotlines, campus info. Never guess instead of calling this.",
+    "url": "${BASE_URL}/retell/fn/lookup_info",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "The caller's question, in their words."
+        },
+        "zone_id": {
+          "type": "string",
+          "description": "Zone id if known, else empty."
+        }
+      },
+      "required": [
+        "question"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": true,
+    "execution_message_description": "Let me check that.",
+    "execution_message_type": "static_text"
+  },
+  "create_request": {
+    "type": "custom",
+    "name": "create_request",
+    "description": "Create a help request (escort, errand, maintenance, ride, check on someone, supplies). Read back and get a yes first.",
+    "url": "${BASE_URL}/retell/fn/create_request",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Request type, e.g. escort, errand, maintenance, ride, check_on_person, supplies, other."
+        },
+        "details": {
+          "type": "string",
+          "description": "What they need, in a sentence."
+        },
+        "location_text": {
+          "type": "string",
+          "description": "Where, as confirmed."
+        }
+      },
+      "required": [
+        "type",
+        "details",
+        "location_text"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "set_reminder": {
+    "type": "custom",
+    "name": "set_reminder",
+    "description": "Set a reminder call for the caller. Read back and get a yes first.",
+    "url": "${BASE_URL}/retell/fn/set_reminder",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "when": {
+          "type": "string",
+          "description": "When, in the caller's words, e.g. tomorrow 9 AM."
+        },
+        "message": {
+          "type": "string",
+          "description": "What to remind them about."
+        }
+      },
+      "required": [
+        "when",
+        "message"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "enroll_checkin": {
+    "type": "custom",
+    "name": "enroll_checkin",
+    "description": "Enroll a person in wellness check-in calls. Status stays pending_consent until that person agrees on the first call.",
+    "url": "${BASE_URL}/retell/fn/enroll_checkin",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "person_name": {
+          "type": "string",
+          "description": "Name of the person to call."
+        },
+        "person_phone": {
+          "type": "string",
+          "description": "Their phone number, digits only."
+        },
+        "language": {
+          "type": "string",
+          "description": "Caller's language code, e.g. en, es."
+        },
+        "needs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Needs, e.g. mobility, oxygen, medication, lives_alone."
+        },
+        "frequency": {
+          "type": "string",
+          "description": "How often, e.g. daily, weekly_tuesday."
+        },
+        "enrolled_by": {
+          "type": "string",
+          "description": "self, or the caller's name and relationship."
+        }
+      },
+      "required": [
+        "person_name",
+        "person_phone",
+        "language",
+        "needs",
+        "frequency",
+        "enrolled_by"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "notify_contact": {
+    "type": "custom",
+    "name": "notify_contact",
+    "description": "Send a message to the caller's contact. Only after the caller explicitly gave permission.",
+    "url": "${BASE_URL}/retell/fn/notify_contact",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "contact_name": {
+          "type": "string",
+          "description": "Contact's name."
+        },
+        "contact_phone": {
+          "type": "string",
+          "description": "Contact's phone, digits only."
+        },
+        "message": {
+          "type": "string",
+          "description": "Short message to pass on."
+        },
+        "consent": {
+          "type": "boolean",
+          "description": "Must be true: the caller explicitly agreed."
+        }
+      },
+      "required": [
+        "contact_name",
+        "contact_phone",
+        "message",
+        "consent"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "check_status": {
+    "type": "custom",
+    "name": "check_status",
+    "description": "Check the status of a request by its code. Requires the last 4 digits of the caller's phone.",
+    "url": "${BASE_URL}/retell/fn/check_status",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Request code, e.g. D-417."
+        },
+        "phone_last4": {
+          "type": "string",
+          "description": "Last 4 digits of the phone used for the request."
+        }
+      },
+      "required": [
+        "code",
+        "phone_last4"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "opt_out": {
+    "type": "custom",
+    "name": "opt_out",
+    "description": "Opt the caller out. Use when they say stop calling, don't call me, or delete my data.",
+    "url": "${BASE_URL}/retell/fn/opt_out",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "calls",
+            "analytics",
+            "all"
+          ],
+          "description": "calls = no more calls; analytics = don't use my call in stats; all = both + delete my data."
+        }
+      },
+      "required": [
+        "scope"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "register_volunteer": {
+    "type": "custom",
+    "name": "register_volunteer",
+    "description": "Register a caller as a volunteer. They stay pending until a coordinator verifies them.",
+    "url": "${BASE_URL}/retell/fn/register_volunteer",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Volunteer's name."
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Skills, e.g. medical, driver, translation, general."
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Languages spoken."
+        },
+        "availability": {
+          "type": "string",
+          "description": "When they're available."
+        },
+        "area": {
+          "type": "string",
+          "description": "Their area or neighbourhood."
+        }
+      },
+      "required": [
+        "name",
+        "skills",
+        "languages",
+        "availability",
+        "area"
+      ]
+    },
+    "args_at_root": true,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
+  "transfer_to_human": {
+    "type": "transfer_call",
+    "name": "transfer_to_human",
+    "description": "Warm-transfer the caller to the person found by route_to_human. Only call after route_to_human returned a non-empty oncall_number.",
+    "transfer_destination": {
+      "type": "predefined",
+      "number": "{{oncall_number}}"
+    },
+    "transfer_option": {
+      "type": "warm_transfer",
+      "show_transferee_as_caller": false,
+      "transfer_ring_duration_ms": 20000,
+      "on_hold_music": "ringtone",
+      "private_handoff_option": {
+        "type": "static_message",
+        "message": "DIZA line transfer. Caller {{caller_name}}, language {{language}}. {{brief}}. You got this because {{match_reason}}."
+      }
+    },
+    "speak_during_execution": true,
+    "execution_message_type": "static_text",
+    "execution_message_description": "Connecting you now. Please stay on the line."
+  },
+  "transfer_to_crisis_line": {
+    "type": "transfer_call",
+    "name": "transfer_to_crisis_line",
+    "description": "Transfer to the 988 Suicide and Crisis Lifeline. Use for self-harm or suicidal callers who agree to be connected. Never use transfer_to_human for them.",
+    "transfer_destination": {
+      "type": "predefined",
+      "number": "{{crisis_line_number}}"
+    },
+    "transfer_option": {
+      "type": "cold_transfer",
+      "show_transferee_as_caller": false,
+      "transfer_ring_duration_ms": 30000
+    },
+    "speak_during_execution": true,
+    "execution_message_type": "static_text",
+    "execution_message_description": "I'm connecting you now. Please stay on the line."
+  },
+  "swap_to_crisis": {
+    "type": "agent_swap",
+    "name": "swap_to_crisis",
+    "description": "Hand the call to the crisis intake agent when the caller reports a hazard or emergency happening now (smoke, fire, gas, flooding, lines down, someone missing).",
+    "agent_id": "@agent:crisis",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": true,
+    "keep_current_voice": true,
+    "speak_during_execution": true,
+    "execution_message_type": "static_text",
+    "execution_message_description": "Okay, stay with me."
+  },
+  "swap_to_inbound": {
+    "type": "agent_swap",
+    "name": "swap_to_inbound",
+    "description": "Hand the call back to the everyday line when it turned out not to be an emergency. Never use if any P0 sign was mentioned.",
+    "agent_id": "@agent:inbound",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": true,
+    "keep_current_voice": true
+  },
+  "end_call": {
+    "type": "end_call",
+    "name": "end_call",
+    "description": "End the call after the caller has a clear next step and has said goodbye."
+  }
+}
