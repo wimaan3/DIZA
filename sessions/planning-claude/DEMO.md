@@ -55,3 +55,23 @@ Run a **mini flood at :00 and :30** each hour on the demo floor (CALL_SCHEDULE.m
   - CS#1 runs the phones.
   - CS#2 runs the dashboard and simulator.
   - DS covers the metrics in Q&A.
+
+## Instagram callers in the demo video
+**Idea:** post a Story ("Call our AI line, help us stress-test it at 3:30") and record real Instagram followers calling. It's great social proof, and it feeds People's Choice.
+
+**How to do it without consent problems:**
+1. **Recording is already noticed.** The campus/test line greeting says the call is recorded (CA all-party consent).
+2. **Featuring someone publicly needs separate consent.** It's their voice in a published video.
+   - At the end of drill calls the agent asks: "Can we use a clip of this call in our public demo video? Yes or no." This is stored as the `feature_consent` post-call field.
+   - **Only `feature_consent = yes` clips get used.** People can also DM "feature me".
+3. **Keep personal data out:**
+   - Callers play **role cards** (made-up addresses and situations), so nothing real about them is in the clip.
+   - Blur or crop any real phone numbers on the dashboard. Show initials only.
+4. **No minors.** The Story says 18+.
+5. **What to film:**
+   - screen recording (dashboard + call audio)
+   - optional: friends filming themselves calling, on their own phones, with permission
+   - a 15-second montage of the flood hitting the map
+6. Tag @innovateLA.usc, link the line for Sunday's People's Choice, and repost the clips in Stories during the demo floor.
+
+**Owner:** biomech (Story, consent tracking, clip selection). CS#1 adds the `feature_consent` question and field to the drill agent.

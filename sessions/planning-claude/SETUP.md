@@ -85,6 +85,7 @@ On every inbound call, Retell asks our backend for dynamic variables. It times o
 - `mobility_or_medical` (text)
 - `caller_language`
 - `sentiment`
+- `feature_consent` (drill calls only: may we use a clip publicly?)
 
 ### Recordings, for the acoustic layer
 - After `call_ended`, Get Call returns:
