@@ -260,7 +260,7 @@ The agent's intake already extracts language, need type, medical flags and urgen
 - status: available / busy / off
 - calls handled this shift
 
-Responders text `IN` or `OUT` to the line to change status, so it works over weak networks with no app needed.
+This weekend, responders change status in the supporter web app. In production they text `IN` or `OUT`, which works over weak networks with no app (SMS needs A2P registration, 2–3 weeks).
 
 **Matching (data science owns the algorithm, biomech owns the skill taxonomy and the medical triggers):**
 ```
@@ -386,6 +386,39 @@ Goal: **no busy signals, short calls, and humans only see the top slice.**
 **Priority:**
 - **P1:** logging + labels + ops metrics + topic clustering + baseline trigger
 - **P2:** knowledge-base auto-update, re-weighting, personal voice baselines, digest
+
+### Agent actions: it does things, not just answers
+
+Every action is a Retell custom function → our backend.
+- The agent **reads back** what it's about to do and gets a "yes" first.
+- It returns a short **confirmation code** ("Your request is D-417").
+- Every action shows up on the dashboard and in the supporter app with a status.
+
+| Action (function) | Everyday example | Crisis example | Real this weekend? |
+|---|---|---|---|
+| `create_request` | Broken heater in a dorm, lost ID, "need help moving a couch" → ticket routed to the right supporter by skill; caller gets a code | "Need help evacuating, I use a wheelchair" → top-priority ticket to an evacuation-skilled supporter | ✅ Our own ticket system |
+| `request_escort` | Walking escort from Leavey Library at 11 PM → offered to on-duty supporters, first to accept gets it | Escort to a shelter or pickup point | ✅ (supporters accept in the supporter app) |
+| `schedule_callback` / `set_reminder` | "Call me at 7 AM to remind me about my appointment" → **real outbound call** at 7 AM | "Call me back in 20 min if the smoke gets closer" | ✅ Retell outbound + our scheduler |
+| `book_appointment` | 15-min slot with a supporter (tutoring, housing, peer listener) → **Google Calendar event** for both | Book a slot at a resource/aid center | ✅ Google Calendar API (team account) |
+| `enroll_checkin` | "Can you check on my grandma every morning?" → she's added to the registry with language, needs and emergency contact; **daily check-in calls start** (with her consent on the first call) | Same list = welfare call-down | ✅ **This is the dual-use loop: Tuesday enrollment builds the crisis registry.** |
+| `notify_contact` | "Tell my roommate I'll be late" | "Tell my daughter I'm safe at the Pasadena shelter" → **real outbound call** to the contact, which plays the message (no SMS needed) | ✅ Retell outbound |
+| `check_status` | "What's happening with my request D-417?" | "Has my mom checked in safe?" (only if the mom opted to share) | ✅ |
+| `lookup_info` | Dining hours, building directions, where to print, office hours | Open shelters, evacuation zone for an address, cooling centers, road closures | ✅ Retell **knowledge base** (campus + LA County public info) |
+| `send_summary` | Email recap with the code, links and directions | Email list of shelter address + what to bring | ✅ Email via the team Gmail (SMS only to verified phones; see below) |
+
+**Guardrails:**
+- Confirm before acting. Never claim a real agency was contacted.
+  - "I've created your request and a volunteer will call you", **not** "the fire department is coming".
+- **We don't submit into real USC or LA systems** (FMS, DPS, 311) without permission. Requests land in *our* queue, and a supporter follows up. In the pitch: "Production: integrate with the customer's ticketing (e.g., 311 / Salesforce / ServiceNow API)."
+- Contacting a third party requires the caller's consent. Enrolling someone else needs **that person's** consent on their first check-in call.
+- Idempotent: the same request on a repeat call doesn't create duplicates. This also helps under flood.
+- No payments, no medical advice beyond "call 911/988", no sharing someone's status without their opt-in.
+
+**Messaging limits this weekend:**
+- The Twilio trial can only text **verified numbers (max 5)**. So callers get confirmations by **voice + confirmation code + optional email**.
+- **Supporters use a mobile web app** (Supabase realtime), not SMS: accept, decline, go on or off duty, rate the call. SMS `IN`/`OUT` becomes the production version.
+
+**Demo moment:** a judge calls, says "check on my grandma every morning, she speaks Korean." Ten seconds later the judge's own phone rings with the first check-in call, in Korean.
 
 ## 6. Architecture (keep it boring)
 
