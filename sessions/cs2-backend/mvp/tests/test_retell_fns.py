@@ -57,7 +57,7 @@ class RetellFunctions(unittest.TestCase):
   self.hook('call_started',call)
   self.assertEqual(self.state()['calls'][0]['status'],'live')
   self.hook('call_ended',{**call,'end_timestamp':1700000095000,'disconnection_reason':'user_hangup'})
-  self.hook('call_analyzed',{**call,'call_analysis':{'call_summary':'Caller reported smoke.','user_sentiment':'Neutral'}})
+  self.hook('call_analyzed',{**call,'scrubbed_call_analysis':{'call_summary':'Caller reported smoke.','user_sentiment':'Neutral'}})
   c=self.state()['calls'][0]
   self.assertEqual((c['status'],c['duration_s'],c['caller_last4'],c['summary']),('ended',95,'0100','Caller reported smoke.'))
   self.assertNotIn('5555550100',json.dumps(self.state()['calls']))

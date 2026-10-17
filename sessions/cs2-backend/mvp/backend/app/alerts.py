@@ -192,7 +192,7 @@ def on_alert_call_event(data):
         else:
             status = 'reached'
     elif ev == 'call_analyzed':
-        analysis = call.get('call_analysis') or {}
+        analysis = call.get('call_analysis') or call.get('scrubbed_call_analysis') or {}  # PII-scrubbed storage sends the scrubbed copy
         a = analysis.get('custom_analysis_data') or {}
         status = ('voicemail' if analysis.get('in_voicemail') else 'opted_out' if a.get('opted_out')
                   else {'needs_help': 'needs_help', 'safe_and_able': 'safe'}.get(a.get('safe_status')))
