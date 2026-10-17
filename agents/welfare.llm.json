@@ -48,6 +48,7 @@
   },
   "_knowledge_bases": [
     "line-policy",
-    "la-resources"
+    "la-resources",
+    "guides"
   ]
 }

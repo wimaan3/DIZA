@@ -15,3 +15,9 @@ USC Student Health has one number for both campuses, 24 hours a day: 213-740-935
 
 ## Trojans Alert
 Trojans Alert is USC's official emergency text and email notification system. Students are registered automatically. Follow its instructions during a campus emergency. Source: dps.usc.edu.
+
+## USC Engemann Student Health Center location
+Engemann Student Health Center is at 1031 W 34th St, Los Angeles 90089. Clinic hours vary by semester (typically closing 7 PM Monday to Thursday in fall and spring, earlier Friday and Saturday); the phone line 213-740-9355 is staffed 24/7 with an advice nurse, a mental health counselor and a confidential advocate. For life-threatening emergencies call 911. Source: studenthealth.usc.edu.
+
+## Trojan Food Pantry
+The Trojan Food Pantry is in King Hall (KOH) Suite 103, 1025 W 34th St, for enrolled USC students experiencing food insecurity without an active dining meal plan. In fall and spring it's typically open Tuesday to Thursday 10 AM to 2 PM; bring your USCard and fill out the semester intake form. Confirm dates at basicneeds@usc.edu. Source: studentbasicneeds.usc.edu.
