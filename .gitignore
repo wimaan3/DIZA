@@ -3,3 +3,7 @@
 !.env.example
 __pycache__/
 *.pyc
+
+# Alert contact lists hold real phone numbers: never commit
+agents/alerts/*.csv
+!agents/alerts/contacts.example.csv

@@ -46,7 +46,12 @@
     "lang_code": "",
     "lang_911": "",
     "resource_name": "",
-    "resource_transfer_number": ""
+    "resource_transfer_number": "",
+    "zone_name": "",
+    "alert_message": "",
+    "alert_action": "",
+    "alert_source": "",
+    "alert_id": ""
   },
   "_knowledge_bases": [
     "line-policy",
