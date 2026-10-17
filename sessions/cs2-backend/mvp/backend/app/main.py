@@ -1,7 +1,7 @@
 import asyncio, hashlib, json, os, sqlite3, time, uuid
 from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -224,14 +224,15 @@ async def verified_body(req):
         raise HTTPException(401,'Invalid Retell signature')
     return json.loads(raw)
 
+async def signed(req:Request):
+    return await verified_body(req)
+
 @app.post('/retell/inbound')
-async def inbound(req:Request):
-    await verified_body(req)
+def inbound(data=Depends(signed)):
     return {'call_inbound':{'dynamic_variables':{'drill_mode':str(DEMO).lower(),'zone_level':'normal','known_incidents':'Use verified information only'}}}
 
 @app.post('/retell/fn/submit_report')
-async def retell_submit(req:Request):
-    data=await verified_body(req)
+def retell_submit(data=Depends(signed)):
     args=data.get('args',{})
     call_id=data.get('call',{}).get('call_id','')
     if not call_id: raise HTTPException(422,'call.call_id required')
@@ -250,8 +251,7 @@ async def retell_submit(req:Request):
     return {'report_id':r['id'],'severity':r['severity'],'priority':{'P0':100,'P1':80,'P2':50,'P3':10}[r['severity']],'reason':r['reason'],'cluster_match':match}
 
 @app.post('/retell/webhook',status_code=204)
-async def webhook(req:Request):
-    data=await verified_body(req)
+def webhook(data=Depends(signed)):
     call_id=(data.get('call') or {}).get('call_id','')
     key=f"{data.get('event','')}:{call_id}" if call_id else hashlib.sha256(json.dumps(data,sort_keys=True).encode()).hexdigest()
     with connect() as c:
