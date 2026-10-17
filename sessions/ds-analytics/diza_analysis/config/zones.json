@@ -1,0 +1,5 @@
+[
+  {"id":"altadena","name":"Altadena demo area","center":[34.19,-118.13],"polygon":[[-118.17,34.17],[-118.09,34.17],[-118.09,34.23],[-118.17,34.23],[-118.17,34.17]],"provenance":"Hand-drawn demo rectangle, not an official evacuation boundary"},
+  {"id":"usc_campus","name":"USC campus demo area","center":[34.022,-118.285],"polygon":[[-118.295,34.015],[-118.275,34.015],[-118.275,34.03],[-118.295,34.03],[-118.295,34.015]],"provenance":"Hand-drawn demo rectangle, not an official campus boundary"},
+  {"id":"san_pedro_wilmington","name":"San Pedro / Wilmington demo area","center":[33.76,-118.27],"polygon":[[-118.31,33.70],[-118.23,33.70],[-118.23,33.81],[-118.31,33.81],[-118.31,33.70]],"provenance":"Hand-drawn demo rectangle, not an official evacuation boundary"}
+]
