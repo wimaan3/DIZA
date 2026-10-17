@@ -330,7 +330,7 @@ Goal: **no busy signals, short calls, and humans only see the top slice.**
    - Mix in ~10% hoax and duplicate cards to show corroboration working.
 3. **Supporters:** teammates plus 4–8 recruited friends.
    - Each has a profile: languages; skills such as `housing`, `academics`, `safety/escort`, `medical-first-aid`, `mental-health-listener`, `tech`, `general`.
-   - They text `IN` or `OUT` to change status. Transfers ring their real phones.
+   - They go on or off duty in the supporter web app. Transfers ring their real phones.
 4. **What we put on the pitch slide:**
    - calls handled
    - peak concurrent calls
