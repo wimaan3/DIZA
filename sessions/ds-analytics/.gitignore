@@ -1,0 +1,4 @@
+artifacts/
+*.egg-info/
+build/
+.ruff_cache/

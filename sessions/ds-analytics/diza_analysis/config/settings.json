@@ -1,0 +1,12 @@
+{
+  "watch_distinct_callers": 3,
+  "ask_distinct_callers": 6,
+  "window_min": 10,
+  "cluster_radius_m": 500,
+  "cluster_time_s": 300,
+  "cluster_min_callers": 3,
+  "watch_z_score": 3.0,
+  "max_active_calls": 2,
+  "k_anon": 5,
+  "public_delay_min": 10
+}
