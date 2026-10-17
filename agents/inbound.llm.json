@@ -26,7 +26,7 @@
   "model_temperature": 0.1,
   "tool_call_strict_mode": true,
   "start_speaker": "agent",
-  "begin_message": null,
+  "begin_message": "{{recording_notice}} {{opening_line}}",
   "default_dynamic_variables": {
     "caller_name": "",
     "language": "en",
@@ -44,7 +44,8 @@
     "match_reason": "",
     "needs": "",
     "reason": "",
-    "consent_status": "active"
+    "consent_status": "active",
+    "opening_line": "Thanks for calling the ${LINE_NAME}. How can I help?"
   },
   "knowledge_base_ids": []
 }

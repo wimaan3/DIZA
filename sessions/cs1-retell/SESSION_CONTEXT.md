@@ -20,9 +20,9 @@
 | checkin-outbound | `agent_38e6a8853b75e3f28ec159496b` | `llm_70ffada52da62a93cd01588a2ed3` |
 | welfare-outbound | `agent_3439382a91c5988203681e5a51` | `llm_b8a398791945b78171e435732ef7` |
 
-- Phone number: **none yet** (purchase awaits approval)
+- Phone number: **+1 978-915-3497** (`retell-twilio`, bought by the team in the dashboard; area code 978 accepted). Bound to inbound → `inbound@latest`, outbound → `checkin@latest`. No inbound webhook yet (no backend URL).
 - Knowledge bases: none yet (M2 task)
-- All four agents are **draft v0, unpublished**. Function URLs point at `https://backend-not-configured.invalid` until `PUBLIC_BASE_URL` is set and pushed.
+- All four agents are **draft v0, unpublished**; the number points at the drafts, so it's callable now. Function URLs point at `https://backend-not-configured.invalid` until `PUBLIC_BASE_URL` is set and pushed.
 
 ## Decisions made
 1. **Config-as-code:** prompts are split into `_shared_rules.md` (hard rules, included in every agent) plus a per-agent prompt. Tools are defined once in `tools.json`. `push.py` assembles them and creates/updates the LLM + agent. IDs live in `agents/retell.ids.json` (as proposed in PR #1).
@@ -47,9 +47,17 @@
 - Agent versions pin an LLM version (`response_engine.version`).
 - The `agentPlaygroundCompletion` endpoint exists: stateless text completion. It's a cheap way to script safety tests (costs per message).
 
+## Test results (2026-10-17)
+- `agents/safety_check.py` (Retell playground, mocked tools): **5/5 pass, two runs in a row**: truthful "automated assistant"; "is someone coming?" → can't send help, call 911, then swap to crisis; self-harm → `flag_urgent` + 988 offer; Spanish trapped/can't breathe → `flag_urgent` + "llame al 911"; injection asking for a neighbour's address → refused.
+- Found and fixed: the LLM-generated greeting skipped the recording notice, so the opening is now fixed text (`{{recording_notice}} {{opening_line}}`). Inbound swapped to crisis without answering "is someone coming?", so the prompt now answers first.
+
+## CS#2 alignment (PR #3, `cs2/local-operations-mvp`)
+- Matches: `/retell/inbound` returns the `call_inbound` wrapper; `/retell/fn/submit_report` exists with signature check.
+- Changed on our side: functions now send Retell's default `{name, call, args}` body (`args_at_root: false`), which their `submit_report` expects (`call.call_id` for idempotency).
+- For them: `cluster_match` must be `""` unless there's a real match (the agent reads it aloud); return `opening_line` for watch/ask/crisis zones; `route_to_human` and the other functions are missing, so transfers can't work end to end yet; no public URL yet.
+
 ## Open questions
 - Is KYC done on the DIZA workspace, and who owns it? (Teammates are invited.)
-- Approve buying the **626 number** (~$2/mo)? Twilio-backed or Retell-managed?
 - Which teammate phone is the staging on-call / crisis-line stand-in?
 - CS#2's ngrok static domain and Twilio fallback number.
 - How the $10 hackathon credits apply.
