@@ -1,0 +1,133 @@
+{
+  "agent_name": "diza-alert-outbound",
+  "voice_id": "cartesia-Cleo",
+  "voice_model": "sonic-3",
+  "language": [
+    "en-US",
+    "es-419"
+  ],
+  "webhook_url": "${BASE_URL}/retell/webhook",
+  "webhook_events": [
+    "call_started",
+    "call_ended",
+    "call_analyzed",
+    "transcript_updated",
+    "transfer_started",
+    "transfer_bridged",
+    "transfer_cancelled",
+    "transfer_ended"
+  ],
+  "webhook_timeout_ms": 10000,
+  "interruption_sensitivity": 0.75,
+  "responsiveness": 1,
+  "enable_backchannel": true,
+  "reminder_trigger_ms": 8000,
+  "reminder_max_count": 2,
+  "denoising_mode": "noise-cancellation",
+  "boosted_keywords": [
+    "humo",
+    "fuego",
+    "incendio",
+    "atrapado",
+    "atrapada",
+    "oxígeno",
+    "inundación",
+    "huele a gas",
+    "no puedo respirar",
+    "inconsciente",
+    "Altadena",
+    "Lake Avenue",
+    "Pasadena",
+    "Eaton",
+    "USC",
+    "Leavey",
+    "Doheny",
+    "Tommy Trojan",
+    "988",
+    "911"
+  ],
+  "allow_user_dtmf": true,
+  "data_storage_setting": "everything",
+  "data_storage_retention_days": 7,
+  "pii_config": {
+    "mode": "post_call",
+    "categories": [
+      "ssn",
+      "credit_card",
+      "bank_account",
+      "password",
+      "pin",
+      "passport",
+      "driver_license"
+    ]
+  },
+  "post_call_analysis_model": "gpt-4.1-mini",
+  "max_call_duration_ms": 600000,
+  "end_call_after_silence_ms": 30000,
+  "voicemail_option": {
+    "action": {
+      "type": "prompt",
+      "text": "Leave a short voicemail in the person's language: say you are the ${LINE_NAME} with an urgent safety message for {{zone_name}}, read this approved alert word for word: \"{{alert_message}} {{alert_action}}\", then say they can verify on {{alert_source}} or call 2-1-1, and call this number back if they need help. If drill mode is \"true\", start by saying it is a drill. Under 30 seconds."
+    }
+  },
+  "post_call_analysis_data": [
+    {
+      "type": "boolean",
+      "name": "alert_heard",
+      "description": "True if the person heard the full alert live (not voicemail)."
+    },
+    {
+      "type": "enum",
+      "name": "safe_status",
+      "description": "Did the person say they are safe and able to follow the action?",
+      "choices": [
+        "safe_and_able",
+        "needs_help",
+        "unsure",
+        "not_answered"
+      ]
+    },
+    {
+      "type": "string",
+      "name": "needs",
+      "description": "Needs the person mentioned (wheelchair, oxygen, no car, pets, other), or empty."
+    },
+    {
+      "type": "boolean",
+      "name": "needs_followup",
+      "description": "True if a person on our team should follow up."
+    },
+    {
+      "type": "boolean",
+      "name": "opted_out",
+      "description": "True if they asked to stop alert calls."
+    },
+    {
+      "type": "enum",
+      "name": "language",
+      "description": "Language the person used.",
+      "choices": [
+        "en",
+        "es",
+        "ko",
+        "zh",
+        "hy",
+        "tl",
+        "other"
+      ]
+    },
+    {
+      "type": "enum",
+      "name": "outcome",
+      "description": "How the call ended.",
+      "choices": [
+        "ai_resolved",
+        "human_transferred",
+        "callback_queued",
+        "safety_911_988",
+        "abandoned",
+        "voicemail"
+      ]
+    }
+  ]
+}

@@ -28,5 +28,9 @@
   "inbound_zh": {
     "agent_id": "agent_e17c7e01cb451d54f383e0fb4b",
     "llm_id": "llm_e4c6313c4152518aac784f24db70"
+  },
+  "alert": {
+    "agent_id": "agent_84c4ab107b9f4ad840d790eda8",
+    "llm_id": "llm_0d873218ba5ad13bae6939fefad3"
   }
 }

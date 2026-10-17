@@ -15,7 +15,7 @@ REPO_ROOT = AGENTS_DIR.parent
 IDS_FILE = AGENTS_DIR / "retell.ids.json"
 
 # Order matters: agents that others swap to are created first.
-AGENT_NAMES = ["crisis", "inbound", "inbound_ko", "inbound_zh", "checkin", "welfare"]
+AGENT_NAMES = ["crisis", "inbound", "inbound_ko", "inbound_zh", "checkin", "welfare", "alert"]
 
 
 def load_dotenv():

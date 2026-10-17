@@ -1,0 +1,147 @@
+{
+  "agent_id": "agent_84c4ab107b9f4ad840d790eda8",
+  "agent_name": "diza-alert-outbound",
+  "allow_user_dtmf": true,
+  "assigned_tags": [],
+  "boosted_keywords": [
+    "humo",
+    "fuego",
+    "incendio",
+    "atrapado",
+    "atrapada",
+    "oxígeno",
+    "inundación",
+    "huele a gas",
+    "no puedo respirar",
+    "inconsciente",
+    "Altadena",
+    "Lake Avenue",
+    "Pasadena",
+    "Eaton",
+    "USC",
+    "Leavey",
+    "Doheny",
+    "Tommy Trojan",
+    "988",
+    "911"
+  ],
+  "channel": "voice",
+  "contact_memory_config": {
+    "enable_read": true,
+    "enable_update": false
+  },
+  "data_storage_retention_days": 7,
+  "data_storage_setting": "everything",
+  "denoising_mode": "noise-cancellation",
+  "enable_backchannel": true,
+  "end_call_after_silence_ms": 30000,
+  "interruption_sensitivity": 0.75,
+  "language": [
+    "en-US",
+    "es-419"
+  ],
+  "max_call_duration_ms": 600000,
+  "opt_in_signed_url": false,
+  "pii_config": {
+    "categories": [
+      "ssn",
+      "credit_card",
+      "bank_account",
+      "password",
+      "pin",
+      "passport",
+      "driver_license"
+    ],
+    "mode": "post_call"
+  },
+  "post_call_analysis_data": [
+    {
+      "description": "True if the person heard the full alert live (not voicemail).",
+      "name": "alert_heard",
+      "type": "boolean"
+    },
+    {
+      "choices": [
+        "safe_and_able",
+        "needs_help",
+        "unsure",
+        "not_answered"
+      ],
+      "description": "Did the person say they are safe and able to follow the action?",
+      "name": "safe_status",
+      "type": "enum"
+    },
+    {
+      "description": "Needs the person mentioned (wheelchair, oxygen, no car, pets, other), or empty.",
+      "name": "needs",
+      "type": "string"
+    },
+    {
+      "description": "True if a person on our team should follow up.",
+      "name": "needs_followup",
+      "type": "boolean"
+    },
+    {
+      "description": "True if they asked to stop alert calls.",
+      "name": "opted_out",
+      "type": "boolean"
+    },
+    {
+      "choices": [
+        "en",
+        "es",
+        "ko",
+        "zh",
+        "hy",
+        "tl",
+        "other"
+      ],
+      "description": "Language the person used.",
+      "name": "language",
+      "type": "enum"
+    },
+    {
+      "choices": [
+        "ai_resolved",
+        "human_transferred",
+        "callback_queued",
+        "safety_911_988",
+        "abandoned",
+        "voicemail"
+      ],
+      "description": "How the call ended.",
+      "name": "outcome",
+      "type": "enum"
+    }
+  ],
+  "post_call_analysis_model": "gpt-4.1-mini",
+  "reminder_max_count": 2,
+  "reminder_trigger_ms": 8000,
+  "response_engine": {
+    "llm_id": "llm_0d873218ba5ad13bae6939fefad3",
+    "type": "retell-llm",
+    "version": 0
+  },
+  "responsiveness": 1,
+  "user_dtmf_options": {},
+  "voice_id": "cartesia-Cleo",
+  "voice_model": "sonic-3",
+  "voicemail_option": {
+    "action": {
+      "text": "Leave a short voicemail in the person's language: say you are the DIZA Community Line with an urgent safety message for {{zone_name}}, read this approved alert word for word: \"{{alert_message}} {{alert_action}}\", then say they can verify on {{alert_source}} or call 2-1-1, and call this number back if they need help. If drill mode is \"true\", start by saying it is a drill. Under 30 seconds.",
+      "type": "prompt"
+    }
+  },
+  "webhook_events": [
+    "call_started",
+    "call_ended",
+    "call_analyzed",
+    "transcript_updated",
+    "transfer_started",
+    "transfer_bridged",
+    "transfer_cancelled",
+    "transfer_ended"
+  ],
+  "webhook_timeout_ms": 10000,
+  "webhook_url": "https://backend-not-configured.invalid/retell/webhook"
+}
