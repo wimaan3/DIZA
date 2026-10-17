@@ -152,6 +152,32 @@ Residents *were* the sensor; nobody was listening. And the blunt tool, alerting 
   - **Fallback B:** run full acoustic analysis on the recording right after the call (post-call webhook). It feeds the callback and priority queue.
   - The Tuesday check-ins also give a **personal baseline**. "Mrs. Kim sounds more breathless than her last 6 calls" is far stronger than a population model, and it's a great dual-use line.
 
+### Mode switching: no global on/off switch. Each zone moves up a ladder.
+
+A single "crisis mode" button is a mini version of the blunt move: one switch for everyone. Instead, each **zone** (neighbourhood or evacuation zone) carries its own level:
+
+| Level | How it's entered | What the system does | Who decides |
+|---|---|---|---|
+| **Normal** | default | Tuesday check-ins, non-emergency line | — |
+| **Watch** | **Automatic.** Call volume in the zone spikes vs. its Tuesday baseline, OR N independent reports cluster, OR an official feed fires (NWS, CAL FIRE, USGS, utility outage) | Tags duplicate callers ("we already know about X"); shortens intake; pages the supervisor | Machine |
+| **Ask** | **Automatic** from Watch if the cluster keeps growing | Corroboration calls and texts to a few registry neighbours; pre-stages the call-down list; drafts an alert | Machine |
+| **Crisis** | **Human taps "Declare"** on the dashboard | Full outbound call-down to the zone's registry, callback ladder, public-alert draft sent for approval | Human |
+| **Stand-down** | **Human only**, never automatic | Back to Normal; "all clear" check-in calls | Human |
+
+**Rules:**
+- **Automation may only escalate the gentle, private, reversible rungs** (watch, ask). Anything public or wide (alerts, mass call-downs, standing down) needs a human.
+- **Dead-man's switch (the 3 AM, "staff are gone" test):**
+  - Trigger: the zone is at Ask with strong evidence, and nobody acknowledges the page within ~5 min.
+  - Action: the system starts **welfare calls to the highest-risk registry residents only** (mobility or oxygen-dependent, etc.).
+  - It still never sends a public alert.
+  - Why this is safe: a false positive costs one extra check-in call, the same call they get every Tuesday. Waiting is what cost west Altadena.
+- **Per caller, the agent always adapts on its own.** If someone on a Tuesday check-in says "I smell smoke," that call goes to the emergency script and to the human queue immediately, whatever the zone level.
+- Every automatic transition is logged with its evidence and shown on the dashboard, so the human can always override.
+
+**Pitch line:** *"The crisis action is the Tuesday action. That's why we can let the machine start it, and why it's safe when it's wrong."*
+
+**Demo moment:** a dashboard banner reads "West Altadena: WATCH → ASK · 9 reports / 6 min · 3 corroborated · **[Declare crisis]** · auto welfare calls in 4:59" with a live countdown.
+
 ## 6. Architecture (keep it boring)
 
 ```
