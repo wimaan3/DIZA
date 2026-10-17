@@ -44,6 +44,26 @@ class RetellFunctions(unittest.TestCase):
   raw=json.dumps({'event':'call_ended','call':{'call_id':'call_abc123'}})
   self.assertEqual(self.c.post('/retell/webhook',content=raw,headers={'x-retell-signature':symmetric['sign'](raw,'test-key')}).status_code,204)
   self.assertEqual(self.fn('route_to_human',{'needs':['evac_logistics'],'language':'es','severity':'P1','summary':'y'},{**CALL,'call_id':'c4'})['oncall_number'],'+15555550001')
+ def hook(self,event,call):
+  raw=json.dumps({'event':event,'call':call})
+  self.assertEqual(self.c.post('/retell/webhook',content=raw,headers={'x-retell-signature':symmetric['sign'](raw,'test-key')}).status_code,204)
+ def test_p0_and_full_report_are_one_row(self):
+  self.fn('flag_urgent',{'reason':'trapped','keyword':'mi abuela está atrapada'},{**CALL,'call_id':'c7'})
+  out=self.report('c7');self.assertEqual(out['severity'],'P0')
+  s=self.state();self.assertEqual(len(s['reports']),1);r=s['reports'][0]
+  self.assertEqual(r['location'],'Lake Ave and Altadena Dr');self.assertIn('atrapada',r['evidence']);self.assertEqual(len(s['requests']),1)
+ def test_calls_logged_from_webhooks_last4_only(self):
+  call={**CALL,'call_id':'c8','direction':'inbound','agent_name':'DIZA inbound','start_timestamp':1700000000000}
+  self.hook('call_started',call)
+  self.assertEqual(self.state()['calls'][0]['status'],'live')
+  self.hook('call_ended',{**call,'end_timestamp':1700000095000,'disconnection_reason':'user_hangup'})
+  self.hook('call_analyzed',{**call,'call_analysis':{'call_summary':'Caller reported smoke.','user_sentiment':'Neutral'}})
+  c=self.state()['calls'][0]
+  self.assertEqual((c['status'],c['duration_s'],c['caller_last4'],c['summary']),('ended',95,'0100','Caller reported smoke.'))
+  self.assertNotIn('5555550100',json.dumps(self.state()['calls']))
+ def test_only_real_responders_and_live_flag(self):
+  s=self.state();self.assertEqual({r['id'] for r in s['responders']},{'t1','t2'});self.assertTrue(s['live'])
+  self.assertEqual(self.c.post('/api/demo/surge').status_code,403)
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])

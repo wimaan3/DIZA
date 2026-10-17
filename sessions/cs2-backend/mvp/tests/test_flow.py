@@ -1,6 +1,7 @@
 import os,tempfile,time,unittest
 from concurrent.futures import ThreadPoolExecutor
 os.environ['DIZA_DB']=tempfile.mktemp(suffix='.sqlite3')
+os.environ.pop('RETELL_API_KEY',None);os.environ.pop('DIZA_RESPONDERS',None)  # simulation mode: no phone line, placeholder team
 from backend.app.main import app,connect,expire
 from fastapi.testclient import TestClient
 class Flows(unittest.TestCase):
