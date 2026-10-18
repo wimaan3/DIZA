@@ -146,6 +146,7 @@ async def lifespan(app):
     init_locate()
     init_building()
     init_ops()
+    init_security()
     async def worker():
         while True:
             expire()
@@ -470,7 +471,7 @@ from .textline import router as text_router
 app.include_router(text_router)
 from .building import router as building_router, init_building
 app.include_router(building_router)
-from .security import router as security_router
+from .security import router as security_router, init_security
 app.include_router(security_router)
 from .ops import init_ops
 
