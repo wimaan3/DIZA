@@ -56,4 +56,40 @@ class Api(unittest.TestCase):
     if any("aren't set up" in m for m in msgs):break
     time.sleep(0.05)
   self.assertTrue(any("aren't set up" in m for m in msgs));self.assertEqual(PLACED,[])
+class TicketCalls(unittest.TestCase):
+ setUp=Api.setUp;tearDown=Api.tearDown;wait_calls=Api.wait_calls;answer=Api.answer
+ def ticket(self):
+  self.c.post('/api/demo/seed?mode=building')
+  t=[x for x in self.c.get('/api/building').json()['tickets'] if x['status']=='new'][0];return t['code'],t['unit']
+ def test_assigning_a_ticket_calls_the_person_and_yes_starts_it(self):
+  code,unit=self.ticket();self.assertEqual(self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'plumb'}).status_code,200);self.wait_calls(1)
+  v=PLACED[0]['retell_llm_dynamic_variables'];self.assertEqual((v['assignment_id'],PLACED[0]['to_number']),(code,'+15555550001'))  # demo vendor: a teammate stands in
+  self.assertIn(f'unit {unit}',v['briefing'])
+  self.assertEqual(self.answer(code,'accept','+15555550001'),{'ok':True})
+  t=[x for x in self.c.get('/api/building').json()['tickets'] if x['code']==code][0];self.assertEqual(t['status'],'in_progress')
+  self.assertTrue(any('stand-in for Westside Plumbing' in e['message'] for e in t['timeline']))
+ def test_no_puts_the_ticket_back(self):
+  code,_=self.ticket();self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'plumb'});self.wait_calls(1)
+  self.assertFalse(self.answer(code,'decline','+15555550002')['ok'])  # someone else's phone can't answer
+  self.assertEqual(self.answer(code,'decline','+15555550001'),{'ok':True})
+  t=[x for x in self.c.get('/api/building').json()['tickets'] if x['code']==code][0];self.assertEqual((t['status'],t['assignee']),('new',None))
+class Callbacks(unittest.TestCase):
+ setUp=Api.setUp;tearDown=Api.tearDown;wait_calls=Api.wait_calls;answer=Api.answer
+ def report(self,cid):
+  r=save_report(Report(idempotency_key=f'{cid}:h',location_text='6th Street and Broadway, Santa Monica',hazard='fire',summary='fire',source='retell'))
+  with connect() as c:c.execute("INSERT OR REPLACE INTO calls(call_id,direction,caller_last4,status,started) VALUES(?,?,?,?,?)",(cid,'inbound','0123','ended',time.time()))
+  return r['id']
+ def test_callback_calls_the_teammate_with_the_callers_number(self):
+  rid=self.report('cb1')
+  with patch.object(A,'caller_number',lambda cid:'+13105550123'):
+   code=self.c.post(f'/api/reports/{rid}/callback',json={'responder_id':'ben'}).json()['code'];self.wait_calls(1)
+  b=PLACED[0];v=b['retell_llm_dynamic_variables']
+  self.assertEqual((b['to_number'],v['assignment_id']),('+15555550002',code));self.assertIn('3 1 0, 5 5 5, 0 1 2 3',v['briefing'])
+  self.assertEqual(self.answer(code,'accept','+15555550002'),{'ok':True})
+  with connect() as c:self.assertEqual(c.execute('SELECT status FROM cases WHERE code=?',(code,)).fetchone()[0],'in_progress')
+ def test_take_on_an_ended_call_calls_the_operator(self):
+  rid=self.report('cb2')
+  with patch.object(A,'caller_number',lambda cid:'+13105550123'):
+   self.assertEqual(self.c.post(f'/api/reports/{rid}/take',json={'responder_id':'ana'}).status_code,200);self.wait_calls(1)
+  self.assertEqual(PLACED[0]['to_number'],'+15555550001')
 if __name__=='__main__':unittest.main()
