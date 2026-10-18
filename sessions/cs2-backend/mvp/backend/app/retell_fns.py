@@ -381,6 +381,11 @@ def submit_form(p=Depends(parse)):
         if row['status'] == 'draft':
             c.execute("UPDATE cases SET status='new',updated=? WHERE code=?", (time.time(), code))
             event(c, code, f"Form {form['id']} submitted by phone agent · waiting for a person in {row['pool']}")
+            if form['id'] == 'maintenance_request':  # a tenant's maintenance call shows up on /building as a ticket
+                from .building import ticket_from_form
+                t = ticket_from_form(c, call, json.loads(row['payload']), code)
+                if t:
+                    event(c, code, f"Filed on /building as {t['code']} (unit {t['unit']})")
     return {'code': code, 'pool': row['pool'], 'status': 'new', 'next_step_text': form.get('next_step_text', 'A person on our team will follow up.')}
 
 

@@ -556,6 +556,39 @@
     "keep_current_language": true,
     "keep_current_voice": true
   },
+  "respond_assignment": {
+    "type": "custom",
+    "name": "respond_assignment",
+    "description": "Record whether the teammate takes the request they were called about.",
+    "url": "${BASE_URL}/retell/fn/respond_assignment",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "assignment_id": {
+          "type": "string",
+          "description": "The assignment_id from your instructions."
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "accept",
+            "decline"
+          ],
+          "description": "accept if they take it, decline if they can't."
+        }
+      },
+      "required": [
+        "assignment_id",
+        "decision"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 5000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": false
+  },
   "end_call": {
     "type": "end_call",
     "name": "end_call",

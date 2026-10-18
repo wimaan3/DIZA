@@ -161,6 +161,47 @@ def norm_unit(text):
     return t.upper()
 
 
+UNIT_IN_TEXT = re.compile(r"\b(?:unit|apt|apartment|room|rm|suite|ste|number|no)\.?\s*#?\s*(\d{1,4}\s*-?\s*[a-z]?)\b|#\s*(\d{1,4}\s*-?\s*[a-z]?)\b|\b(\d{1,4}\s*-?\s*[a-z])\b", re.I)
+
+
+def unit_from_text(c, building_id, text):
+    """'Larchmont Court, building F4, room 4A' -> '4A' ("F4" is a floor label, not a unit). Prefers a unit the building has."""
+    found = [norm_unit(next(g for g in m if g)) for m in UNIT_IN_TEXT.findall(text or '')]
+    known = {r['unit'] for r in c.execute('SELECT unit FROM units WHERE building_id=?', (building_id,))}
+    return next((u for u in found if u in known), found[0] if found else '')
+
+
+def ticket_from_form(c, call, payload, case_code, caller_last4=None):
+    """A maintenance request filled on a call becomes a /building ticket (same urgency, merge and cross-reference rules).
+    The building comes from the number called or the name the caller gave; the unit from what they said. Idempotent per case."""
+    c.execute('CREATE TABLE IF NOT EXISTS form_tickets(case_code TEXT PRIMARY KEY,ticket_code TEXT)')
+    done = c.execute('SELECT ticket_code FROM form_tickets WHERE case_code=?', (case_code,)).fetchone()
+    if done:
+        return c.execute('SELECT * FROM tickets WHERE code=?', (done['ticket_code'],)).fetchone()
+    where, issue = str(payload.get('location') or ''), str(payload.get('issue') or '')
+    b = building_for(c, call, where)
+    if not b:
+        return None
+    unit = unit_from_text(c, b['id'], where)
+    t, _ = file_ticket(c, b, unit or where, category_of(issue), f'{issue} ({where})'[:300], quote=issue, call_id=call.get('call_id', ''),
+                       caller_last4=last4(call) if caller_last4 is None else caller_last4, source='retell')
+    tlog(c, t['code'], 'note', f'From maintenance request {case_code} on a call')
+    c.execute('INSERT OR IGNORE INTO form_tickets VALUES(?,?)', (case_code, t['code']))
+    return t
+
+
+def tickets_from_recent_forms():
+    """Maintenance requests submitted before this was wired in (e.g. a test call today) appear on /building too."""
+    with connect() as c:
+        c.execute('CREATE TABLE IF NOT EXISTS form_tickets(case_code TEXT PRIMARY KEY,ticket_code TEXT)')
+        rows = c.execute("SELECT * FROM cases WHERE type='form:maintenance_request' AND status!='draft' AND created>? "
+                         "AND code NOT IN (SELECT case_code FROM form_tickets)", (time.time() - 2 * 86400,)).fetchall()
+        for r in rows:
+            t = ticket_from_form(c, {'call_id': r['call_id'] or ''}, json.loads(r['payload'] or '{}'), r['code'], caller_last4=r['caller_last4'] or '')
+            if t:
+                event(c, r['code'], f"Filed on /building as {t['code']} (unit {t['unit']})")
+
+
 # --- Storage ---
 
 def init_building():
