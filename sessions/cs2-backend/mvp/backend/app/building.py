@@ -625,6 +625,8 @@ def assign_ticket(code: str, a: Assign):
             raise HTTPException(400, 'Unknown staff member or vendor')
         c.execute("UPDATE tickets SET assignee=?,status=CASE WHEN status='new' THEN 'assigned' ELSE status END WHERE code=?", (s['id'], code))
         touch(c, t, now, a.actor, 'assign', f"Assigned to {s['name']} ({s['role']})")
+    from .assign import start_ticket_call  # the person assigned gets a phone call about it
+    start_ticket_call(code, s['id'])
     return {'ok': True}
 
 

@@ -56,5 +56,9 @@
   "security_brief": {
     "agent_id": "agent_49bc7a7e9e4f23405a83ec5d07",
     "llm_id": "llm_2c7f85b204c262f37b0e2a6da806"
+  },
+  "assignment_brief": {
+    "agent_id": "agent_940d2514af62f28cdfadeb5360",
+    "llm_id": "llm_3c137e2e23c129173a0f5d5992ed"
   }
 }

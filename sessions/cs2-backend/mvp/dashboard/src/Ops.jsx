@@ -43,7 +43,7 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
  function review(i){const reason=prompt(t('Mark reviewed: what did you check? (logged on the card)'));if(reason)run(`/api/reports/${i.id}/reviewed`,{reason,by:nameOf(operator)})}
  const nameOf=id=>state.responders.find(r=>r.id===id)?.name||'operator';
  const take=i=>operator&&run(`/api/reports/${i.id}/take`,{responder_id:operator});
- const callback=i=>run(`/api/reports/${i.id}/callback`);
+ const callback=i=>run(`/api/reports/${i.id}/callback`,{responder_id:operator});  // the selected teammate gets a call with the caller's number
  // Keyboard: J/K move, T take call, M merge, 1–4 set priority, C callback, R reviewed.
  useEffect(()=>{function key(e){
   if(e.target.closest('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey||!cur)return;
