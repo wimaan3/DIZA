@@ -36,6 +36,11 @@ COUNTRIES = {
     'RU': ('Russia', '112', {'all': '112', 'fire': '101', 'police': '102', 'ambulance': '103'}, 'ru', (55.76, 37.62), 'Москва', None),
     'BR': ('Brazil', '193 for fire, 192 for an ambulance, 190 for police', {'fire': '193', 'ambulance': '192', 'police': '190'}, 'pt', (-23.55, -46.63), 'São Paulo', None),
 }
+# Local time for shift hours (DIZA_TZ overrides).
+TZ = {'US': 'America/Los_Angeles', 'CA': 'America/Toronto', 'MX': 'America/Mexico_City', 'GB': 'Europe/London', 'IE': 'Europe/Dublin',
+      'FR': 'Europe/Paris', 'DE': 'Europe/Berlin', 'ES': 'Europe/Madrid', 'IT': 'Europe/Rome', 'CN': 'Asia/Shanghai', 'HK': 'Asia/Hong_Kong',
+      'TW': 'Asia/Taipei', 'JP': 'Asia/Tokyo', 'KR': 'Asia/Seoul', 'VN': 'Asia/Ho_Chi_Minh', 'PH': 'Asia/Manila', 'IN': 'Asia/Kolkata',
+      'AU': 'Australia/Sydney', 'NZ': 'Pacific/Auckland', 'AM': 'Asia/Yerevan', 'IR': 'Asia/Tehran', 'RU': 'Europe/Moscow', 'BR': 'America/Sao_Paulo'}
 # Longest calling code first, so +852 (Hong Kong) wins over +85x and +1 is the last resort.
 CALLING_CODES = sorted({'1': 'US', '52': 'MX', '44': 'GB', '353': 'IE', '33': 'FR', '49': 'DE', '34': 'ES', '39': 'IT', '86': 'CN', '852': 'HK',
                         '886': 'TW', '81': 'JP', '82': 'KR', '84': 'VN', '63': 'PH', '91': 'IN', '61': 'AU', '64': 'NZ', '374': 'AM', '98': 'IR',
@@ -53,7 +58,7 @@ def region():
     c = code()
     name, spoken, numbers, lang, centre, area, crisis = COUNTRIES[c]
     return {'country': c, 'name': name, 'emergency_spoken': spoken, 'numbers': numbers, 'ui_language': os.getenv('DIZA_UI_LANGUAGE', lang),
-            'center': centre, 'area': os.getenv('DIZA_AREA', area), 'crisis_line': crisis[0] if crisis else ''}
+            'center': centre, 'area': os.getenv('DIZA_AREA', area), 'crisis_line': crisis[0] if crisis else '', 'tz': os.getenv('DIZA_TZ', TZ[c])}
 
 
 def caller_country(number):

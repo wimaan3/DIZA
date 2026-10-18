@@ -64,10 +64,20 @@
 - Retell has no live web search during calls. Knowledge-base URLs auto-refresh every 24 h, with up to 500 URLs per KB plus auto-crawl ([docs](https://docs.retellai.com/build/knowledge-base), read 2026-10-18).
 - Live check of the geocoder: Kansas City → 39.10, −94.58; Wichita → 37.69, −97.34; Tulsa → 36.16, −95.99; Venice and Altadena still resolve in LA.
 
+10. **Responders (`team.py`):** `DIZA_RESPONDERS` entries can also have:
+    - `languages`, `areas`, `home` with `radius_km`
+    - `hours` (e.g. "Mon-Fri 08:00-20:00", overnight OK, region time zone)
+    - `backup`, `note`
+    - `skills` as a list (`logistics` and `evac_logistics` count as the same)
+
+    The pick is on duty only, volunteers never get P0/P1, and it scores language +3, each skill +2, area +2. The reason is spoken in the handoff ("speaks Spanish, medical, covers Altadena").
+    A failed transfer goes to that person's backup, then the next best untried person. Dashboard offers that are declined or time out also go to the backup first.
+
 ## Requests to phone-agent session
 1. **Wire `update_incident`** (`{field, value}`, field in location, callback, relationship, what, people, hazards, access_needs). It returns `{ok, missing:[…]}`; ask next for the first item in `missing`. Call it as each fact comes in, so the operator's card fills live.
 2. **When a caller names several places,** pass them all in `location_text` ("Kansas City, Wichita, and Tulsa"). The backend splits them into one card per place.
-3. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
+3. **Push the agents** (`python agents/push.py --env prod`): this adds `transfer_failed` and `location_text` to `route_to_human` in `agents/tools.json`, plus one rule in `_shared_rules.md` (retry once with `transfer_failed: true`, then `schedule_callback`). The backend already accepts both; until the push, a failed transfer still falls back to a callback.
+4. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
 
 ## Open questions
 - Web search beyond the knowledge base: which provider (needs a key on Railway), or not at all?

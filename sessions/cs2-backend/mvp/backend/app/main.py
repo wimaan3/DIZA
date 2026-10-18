@@ -102,7 +102,7 @@ def save_report(r):
             event(c,qid,'Request saved · no person has accepted responsibility')
         return dict(c.execute('SELECT * FROM reports WHERE id=?',(rid,)).fetchone())
 
-def offer(c,qid):
+def offer(c,qid,prefer=''):
     q=c.execute('SELECT q.*,r.category,r.severity FROM requests q JOIN reports r ON r.id=q.report_id WHERE q.id=?',(qid,)).fetchone()
     if not q: raise HTTPException(404,'Request not found')
     if q['status'] in ('accepted','in_progress','done','offered'): return
@@ -113,7 +113,13 @@ def offer(c,qid):
         return
     skill={'power':'facilities','infrastructure':'facilities','medical':'medical','safety_crime':'safety'}.get(q['category'],'logistics')
     rows=c.execute("SELECT * FROM responders WHERE status='available' AND id NOT IN (SELECT responder_id FROM attempts WHERE request_id=?) ORDER BY id",(qid,)).fetchall()
-    candidate=next((r for r in rows if skill in r['skills'].split(',')),None)
+    # On duty only; after a decline or timeout the declining person's backup first, then whoever covers the report's area.
+    from .team import profiles, on_duty, area_match
+    profs=profiles(c);rep=c.execute('SELECT location,lat,lon FROM reports WHERE id=?',(q['report_id'],)).fetchone()
+    point=(rep['lat'],rep['lon']) if rep['lat'] is not None else None
+    eligible=[r for r in rows if skill in r['skills'].split(',') and on_duty(profs.get(r['id'],{}).get('hours'))]
+    eligible.sort(key=lambda r:(r['id']!=prefer,not area_match(profs.get(r['id'],{}),rep['location'],point)))
+    candidate=eligible[0] if eligible else None
     if not candidate:
         c.execute("UPDATE requests SET status='escalated',assignee=NULL,updated=? WHERE id=?",(time.time(),qid))
         event(c,qid,'No eligible responder available · supervisor action required')
@@ -121,7 +127,12 @@ def offer(c,qid):
     c.execute("UPDATE responders SET status='reserved' WHERE id=?",(candidate['id'],))
     c.execute("UPDATE requests SET status='offered',assignee=?,updated=? WHERE id=?",(candidate['id'],time.time(),qid))
     c.execute('INSERT INTO attempts VALUES(?,?,?,?,?)',(str(uuid.uuid4()),qid,candidate['id'],'offered',time.time()+TIMEOUT))
-    event(c,qid,f"Offer visible in supporter inbox: {candidate['name']} · awaiting acceptance (no phone notification sent)")
+    why=' (backup)' if prefer and candidate['id']==prefer else (lambda w:f' ({w})' if w else '')(area_match(profs.get(candidate['id'],{}),rep['location'],point))
+    event(c,qid,f"Offer visible in supporter inbox: {candidate['name']}{why} · awaiting acceptance (no phone notification sent)")
+
+def backup_of(c,rid):
+    from .team import profiles
+    return profiles(c).get(rid,{}).get('backup','')
 
 ROUTE_HOLD=int(os.getenv('ROUTE_HOLD_SECONDS','900'))
 
@@ -137,7 +148,7 @@ def expire():
             c.execute("UPDATE responders SET status='available' WHERE id=?",(a['responder_id'],))
             c.execute("UPDATE requests SET status='new',assignee=NULL WHERE id=?",(a['request_id'],))
             event(c,a['request_id'],'Acceptance timeout · trying the next eligible responder')
-            offer(c,a['request_id'])
+            offer(c,a['request_id'],prefer=backup_of(c,a['responder_id']))
 
 @asynccontextmanager
 async def lifespan(app):
@@ -182,12 +193,18 @@ async def guard(request,call_next):
 
 LIVE = bool(os.getenv('RETELL_API_KEY'))
 
+def team_view(c):
+    from .team import profiles, on_duty
+    profs=profiles(c)
+    return [{**dict(r),**{k:v for k,v in profs.get(r['id'],{}).items() if k!='home'},'covers_radius':bool(profs.get(r['id'],{}).get('home')),
+             'on_duty':on_duty(profs.get(r['id'],{}).get('hours'))} for r in c.execute('SELECT * FROM responders')]
+
 @app.get('/api/state')
 def state():
     with connect() as c:
         return {'demo':DEMO,'live':LIVE,'line_number':os.getenv('RETELL_FROM_NUMBER',''),'timeout':TIMEOUT,'reports':[dict(r) for r in c.execute('SELECT * FROM reports ORDER BY created DESC')],
           'requests':[dict(r) for r in c.execute('SELECT * FROM requests ORDER BY created')],
-          'responders':[dict(r) for r in c.execute('SELECT * FROM responders')],
+          'responders':team_view(c),
           'attempts':[dict(r) for r in c.execute('SELECT * FROM attempts ORDER BY expires')],
           'events':[dict(r) for r in c.execute('SELECT * FROM events ORDER BY ts DESC LIMIT 100')],
           'cases':[dict(r) for r in c.execute('SELECT code,type,status,pool,created,updated FROM cases ORDER BY created DESC LIMIT 200')],
@@ -256,7 +273,7 @@ def decide(qid:str,d:Decision):
             c.execute('UPDATE responders SET status=? WHERE id=?',('busy' if accepted else 'available',d.responder_id))
             c.execute('UPDATE requests SET status=?,assignee=?,updated=? WHERE id=?',('accepted' if accepted else 'new',d.responder_id if accepted else None,time.time(),qid))
             event(c,qid,'Responder explicitly accepted responsibility' if accepted else 'Responder declined · trying backup')
-            if not accepted: offer(c,qid)
+            if not accepted: offer(c,qid,prefer=backup_of(c,d.responder_id))
     return {'ok':True}
 
 @app.post('/api/demo/surge')
