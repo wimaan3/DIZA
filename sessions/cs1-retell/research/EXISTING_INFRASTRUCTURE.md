@@ -332,3 +332,5 @@ Also cheap and worth doing (under 30 minutes each):
 - California CMIA applicability.
 - The Prepared/Axon acquisition date (secondary source only).
 - Whether a non-PSAP could become a RapidSOS data partner.
+
+> **Correction (2026-10-17, from research/WELFARE_CHECKS.md):** Alert LA County is not an AFN registry. LA County ended its SNAP disability registry around 2016; the outcome of a 2025 feasibility study is unverified. Treat the AFN-registry statements above as superseded.
