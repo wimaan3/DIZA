@@ -1,5 +1,8 @@
 # DIZA data analysis
 
+The local hotel service demo is documented in [HOTEL_DEMO.md](HOTEL_DEMO.md).
+Run `sessions/ds-analytics/.venv/bin/python sessions/ds-analytics/scripts/serve_hotel.py --demo` from the repository root and open http://127.0.0.1:18772/hotel.
+
 An installable Python package for triage, responder ranking, corroboration, evaluation, and call metrics.
 Python 3.11 or newer is required; runtime dependencies are all from the standard library.
 The package stays in this session's folder to honor the repository's session isolation rule.

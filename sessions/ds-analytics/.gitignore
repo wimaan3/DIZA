@@ -2,3 +2,5 @@ artifacts/
 *.egg-info/
 build/
 .ruff_cache/
+hotel_client/test-results/
+hotel_client/playwright-report/
