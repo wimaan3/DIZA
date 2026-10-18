@@ -46,6 +46,8 @@
 - Responsive layouts, visible original quotes, browser workflow, and accessibility: this session's browser tests and rendered screenshots.
 - The existing 60 backend tests pass when run one file per process in an isolated checkout.
 Their combined discovery runner has pre-existing environment-state collisions between modules.
+- Rebased onto `425b6db`, which added security briefing support, and verified its 6 additional tests in an isolated process.
+The integrated container was rebuilt and checked against that revision.
 - Final care validation: 17 backend tests and 9 Chromium browser tests pass, including axe checks with zero violations on the tested screens and dialog.
 - The integrated Docker image builds successfully and serves the care workspace, original operations/supporter/text screens, original APIs, and signed voice endpoints.
 
