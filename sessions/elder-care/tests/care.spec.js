@@ -226,6 +226,15 @@ test("mobile roster and request dialog fit the viewport and are accessible", asy
     path: "test-results/residents-mobile.png",
     fullPage: true,
   });
+  expect(
+    await page.locator(".nav-item > span").evaluateAll((labels) =>
+      labels.every((label) => {
+        const text = label.getBoundingClientRect();
+        const button = label.parentElement.getBoundingClientRect();
+        return text.left >= button.left && text.right <= button.right;
+      }),
+    ),
+  ).toBeTruthy();
   const roster = await new AxeBuilder({ page }).analyze();
   expect(violations(roster)).toEqual([]);
   await page

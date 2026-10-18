@@ -1931,6 +1931,28 @@ footer {
   .card-bottom {
     row-gap: 7px;
   }
+  .sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .nav-item {
+    min-width: 0;
+    white-space: normal;
+    text-align: center;
+  }
+  .nav-item > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    min-height: 30px;
+    line-height: 1.5;
+  }
+}
+
+.residents-panel .panel-heading > .tag {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .topbar,
