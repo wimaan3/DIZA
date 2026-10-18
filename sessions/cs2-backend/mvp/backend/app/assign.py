@@ -20,6 +20,8 @@ LANG = {'en': 'English', 'es': 'Spanish', 'ko': 'Korean', 'zh': 'Chinese', 'vi':
 def init_assign():
     with connect() as c:
         c.execute('CREATE TABLE IF NOT EXISTS assignment_calls(attempt_id TEXT PRIMARY KEY,request_id TEXT,responder_id TEXT,status TEXT,created REAL)')
+        try: c.execute('ALTER TABLE assignment_calls ADD COLUMN phone TEXT')  # the number dialled: only it may answer
+        except Exception: pass
 
 
 def agent_id():
@@ -61,9 +63,10 @@ def _call_when_committed(qid, who):
 
 def call_assignee(qid, attempt, who):
     with connect() as c:
-        if not c.execute("INSERT OR IGNORE INTO assignment_calls VALUES(?,?,?,?,?)", (attempt, qid, who, 'claimed', time.time())).rowcount:
-            return  # this offer was already called
         person = c.execute('SELECT r.name,p.phone FROM responders r LEFT JOIN responder_phones p ON p.responder_id=r.id WHERE r.id=?', (who,)).fetchone()
+        if not c.execute("INSERT OR IGNORE INTO assignment_calls(attempt_id,request_id,responder_id,status,created,phone) VALUES(?,?,?,?,?,?)",
+                         (attempt, qid, who, 'claimed', time.time(), person['phone'] if person else None)).rowcount:
+            return  # this offer was already called
         rep = c.execute('SELECT r.* FROM reports r JOIN requests q ON q.report_id=r.id WHERE q.id=?', (qid,)).fetchone()
         if not person or not person['phone']:
             return  # local placeholder teammates have no phone: the inbox is enough
@@ -89,6 +92,154 @@ def call_assignee(qid, attempt, who):
         event(c, qid, f"DIZA is calling {person['name']} about this request" + (f" (call {placed.get('call_id', '')[-6:]})" if placed.get('call_id') else ''))
 
 
+# --- Building tickets: assigning a ticket to staff phones them -------------------------------------------------
+def start_ticket_call(code, staff_id):
+    threading.Thread(target=_ticket_call, args=(code, staff_id), daemon=True).start()
+
+
+def _ticket_call(code, staff_id):
+    try:
+        call_for_ticket(code, staff_id)
+    except Exception as e:
+        print('ticket call failed:', e, flush=True)
+
+
+def stand_in(c):
+    """Drill mode: demo vendors have no real phone, so an available teammate takes the call as their stand-in."""
+    from .team import on_duty, profiles
+    profs = profiles(c)
+    for r in c.execute("SELECT r.id,r.name,p.phone FROM responders r JOIN responder_phones p ON p.responder_id=r.id WHERE r.status='available' ORDER BY r.id"):
+        if on_duty(profs.get(r['id'], {}).get('hours')):
+            return r
+    return None
+
+
+def call_for_ticket(code, staff_id):
+    from .building import tlog
+    with connect() as c:
+        t = c.execute('SELECT t.*,b.name building FROM tickets t JOIN buildings b ON b.id=t.building_id WHERE t.code=?', (code,)).fetchone()
+        s = c.execute('SELECT * FROM staff_vendors WHERE id=?', (staff_id,)).fetchone()
+        if not t or not s:
+            return
+        phone, name, why = s['phone'], s['name'].split(' (')[0], ''
+        if not phone and DEMO:
+            mate = stand_in(c)
+            if mate:
+                phone, name, why = mate['phone'], mate['name'].split(' ')[0], f" (drill stand-in for {s['name']})"
+        if not phone:
+            tlog(c, code, 'call', f"{s['name']} has no phone on file (DIZA_STAFF): not called")
+            return
+        agent = agent_id()
+        if not (os.getenv('RETELL_API_KEY') and os.getenv('RETELL_FROM_NUMBER') and agent):
+            tlog(c, code, 'call', f"Not calling {s['name']}: assignment calls aren't set up yet")
+            return
+        key = f'{code}:{staff_id}:{int(time.time())}'
+        c.execute('INSERT OR IGNORE INTO assignment_calls(attempt_id,request_id,responder_id,status,created,phone) VALUES(?,?,?,?,?,?)',
+                  (key, code, staff_id, 'calling', time.time(), phone))
+    where = t['unit'] if t['unit'].startswith('(') else f"unit {t['unit']}"
+    brief = (f"{t['urgency'].capitalize()} ticket {' '.join(t['code'])}: {t['category'].replace('_', ' ')} in {where} at {t['building'].replace(' (demo)', '')}. "
+             f"{(t['summary'] or '')[:160].rstrip('.')}.")
+    try:
+        retell_post('/v2/create-phone-call', {
+            'from_number': os.environ['RETELL_FROM_NUMBER'], 'to_number': phone, 'override_agent_id': agent,
+            'retell_llm_dynamic_variables': {'responder_name': name, 'briefing': brief, 'severity': 'P1' if t['urgency'] == 'emergency' else 'P2',
+                                             'assignment_id': code, 'drill_prefix': 'This is a drill. ' if DEMO else ''},
+            'metadata': {'purpose': 'ticket_assignment', 'ticket': code}})
+    except Exception as e:
+        with connect() as c:
+            tlog(c, code, 'call', f"Call to {s['name']}{why} failed ({type(e).__name__})")
+        return
+    with connect() as c:
+        tlog(c, code, 'call', f"DIZA is calling {name}{why} about this ticket")
+
+
+def respond_ticket(c, code, decision, dialled):
+    from .building import tlog
+    row = c.execute("SELECT * FROM assignment_calls WHERE request_id=? ORDER BY created DESC LIMIT 1", (code,)).fetchone()
+    t = c.execute('SELECT * FROM tickets WHERE code=?', (code,)).fetchone()
+    if not row or not t or e164(row['phone'] or '') != e164(dialled):
+        return {'ok': False, 'message': 'This ticket is no longer assigned to you.'}
+    if t['assignee'] != row['responder_id'] or t['status'] == 'closed':
+        return {'ok': False, 'message': 'This ticket was already handled.'}
+    who = c.execute('SELECT name FROM staff_vendors WHERE id=?', (row['responder_id'],)).fetchone()['name']
+    if decision == 'accept':
+        c.execute("UPDATE tickets SET status='in_progress',updated=?,first_human_action_at=COALESCE(first_human_action_at,?) WHERE code=?", (time.time(), time.time(), code))
+        tlog(c, code, 'status', f'{who} accepted by phone: in progress')
+    else:
+        c.execute("UPDATE tickets SET status='new',assignee=NULL,updated=? WHERE code=?", (time.time(), code))
+        tlog(c, code, 'assign', f'{who} declined by phone: needs someone else')
+    c.execute("UPDATE assignment_calls SET status=? WHERE attempt_id=?", ('accepted' if decision == 'accept' else 'declined', row['attempt_id']))
+    return {'ok': True}
+
+
+# --- Callbacks: the teammate gets a call with the caller's number ------------------------------------------------
+def caller_number(call_id):
+    """The caller's full number, fetched from Retell when needed. The dashboard keeps only the last 4 digits."""
+    import urllib.request
+    from .retell_fns import person_number
+    req = urllib.request.Request(f'https://api.retellai.com/v2/get-call/{call_id}', headers={'Authorization': 'Bearer ' + os.environ['RETELL_API_KEY']})
+    with urllib.request.urlopen(req, timeout=10) as r:
+        return person_number(json.loads(r.read()))
+
+
+def spoken_number(n):
+    d = ''.join(ch for ch in n if ch.isdigit())[-10:]
+    return f"{' '.join(d[:3])}, {' '.join(d[3:6])}, {' '.join(d[6:])}" if len(d) == 10 else ' '.join(d)
+
+
+def start_callback(code, rid, who):
+    threading.Thread(target=_callback, args=(code, rid, who), daemon=True).start()
+
+
+def _callback(code, rid, who):
+    try:
+        call_for_callback(code, rid, who)
+    except Exception as e:
+        print('callback call failed:', e, flush=True)
+
+
+def call_for_callback(code, rid, who):
+    with connect() as c:
+        r = c.execute('SELECT * FROM reports WHERE id=?', (rid,)).fetchone()
+        person = c.execute('SELECT r.name,p.phone FROM responders r LEFT JOIN responder_phones p ON p.responder_id=r.id WHERE r.id=?', (who,)).fetchone()
+        q = c.execute('SELECT id FROM requests WHERE report_id=?', (rid,)).fetchone()
+        key = q['id'] if q else rid
+        if not r or not person or not person['phone']:
+            event(c, key, f"Callback {code}: {person['name'] if person else 'that teammate'} has no phone on file, so it stays queued")
+            return
+        agent = agent_id()
+        if not (os.getenv('RETELL_API_KEY') and os.getenv('RETELL_FROM_NUMBER') and agent):
+            event(c, key, f"Callback {code}: calls aren't set up yet, so it stays queued")
+            return
+    cid = r['dedupe'].split(':')[0]
+    try:
+        number = caller_number(cid)
+    except Exception:
+        number = ''
+    if not number:
+        with connect() as c:
+            event(c, key, f"Callback {code}: the caller's number isn't available from Retell, so it stays queued")
+        return
+    where = 'location not given yet' if (r['location'] or '').startswith('(') else r['location']
+    brief = (f"Please call back a caller about a {URGENCY.get(r['severity'], '').lower()} {r['category'].replace('_', ' ')} report at {where}. "
+             f"Their number is {spoken_number(number)}. Again: {spoken_number(number)}.")
+    with connect() as c:
+        c.execute('INSERT OR IGNORE INTO assignment_calls(attempt_id,request_id,responder_id,status,created,phone) VALUES(?,?,?,?,?,?)',
+                  (f'{code}:{who}', code, who, 'calling', time.time(), person['phone']))
+    try:
+        retell_post('/v2/create-phone-call', {
+            'from_number': os.environ['RETELL_FROM_NUMBER'], 'to_number': person['phone'], 'override_agent_id': agent,
+            'retell_llm_dynamic_variables': {'responder_name': person['name'].split(' ')[0], 'briefing': brief, 'severity': r['severity'],
+                                             'assignment_id': code, 'drill_prefix': 'This is a drill. ' if DEMO else ''},
+            'metadata': {'purpose': 'callback', 'case': code}})
+    except Exception as e:
+        with connect() as c:
+            event(c, key, f"Callback {code}: call to {person['name']} failed ({type(e).__name__})")
+        return
+    with connect() as c:
+        event(c, key, f"DIZA is calling {person['name']} with the caller's number for callback {code}")
+
+
 @router.post('/retell/fn/respond_assignment')
 def respond_assignment(p=Depends(parse)):
     call, args = p
@@ -97,6 +248,16 @@ def respond_assignment(p=Depends(parse)):
     def make():
         with connect() as c:
             c.execute('BEGIN IMMEDIATE')
+            if qid.startswith('T-') and decision in ('accept', 'decline'):  # a building ticket assigned to staff
+                return respond_ticket(c, qid, decision, call.get('to_number', ''))
+            if qid.startswith('D-') and decision in ('accept', 'decline'):  # a callback: the teammate calls the caller back
+                row = c.execute('SELECT * FROM assignment_calls WHERE request_id=? ORDER BY created DESC LIMIT 1', (qid,)).fetchone()
+                if not row or e164(row['phone'] or '') != e164(call.get('to_number', '')):
+                    return {'ok': False, 'message': 'This callback is no longer assigned to you.'}
+                who = c.execute('SELECT name FROM responders WHERE id=?', (row['responder_id'],)).fetchone()['name']
+                c.execute('UPDATE cases SET status=?,updated=? WHERE code=?', ('in_progress' if decision == 'accept' else 'queued', time.time(), qid))
+                event(c, qid, f"{who} {'is calling the caller back' if decision == 'accept' else 'declined the callback; it stays queued'}")
+                return {'ok': True}
             q = c.execute('SELECT * FROM requests WHERE id=?', (qid,)).fetchone()
             if not q or decision not in ('accept', 'decline'):
                 return {'ok': False, 'message': "I couldn't find that request; it's on the DIZA dashboard."}
