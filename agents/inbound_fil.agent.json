@@ -15,12 +15,12 @@
     "transfer_ended"
   ],
   "webhook_timeout_ms": 10000,
-  "interruption_sensitivity": 0.75,
+  "interruption_sensitivity": 0.5,
   "responsiveness": 1,
   "enable_backchannel": true,
   "reminder_trigger_ms": 8000,
   "reminder_max_count": 2,
-  "denoising_mode": "noise-cancellation",
+  "denoising_mode": "noise-and-background-speech-cancellation",
   "boosted_keywords": [
     "sunog",
     "usok",
