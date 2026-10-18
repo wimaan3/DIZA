@@ -193,9 +193,12 @@ def flag_urgent(p=Depends(parse)):
 
 
 def urgent_instruction(reason):
+    from .regions import region
+    r = region()
     if reason == 'self_harm':
-        return {'instruction': 'Offer the 988 Suicide and Crisis Lifeline transfer now. If there is immediate danger, tell them to call 911. Never route to a volunteer.'}
-    return {'instruction': 'Tell the caller to hang up and call 911 now. If they cannot, offer a person on our team. A supervisor has been alerted.'}
+        crisis = r['crisis_line'] or f"emergency services on {r['emergency_spoken']}"
+        return {'instruction': f"Offer {crisis} now. If there is immediate danger, tell them to call {r['emergency_spoken']}. Never route to a volunteer."}
+    return {'instruction': f"Tell the caller to hang up and call {r['emergency_spoken']} now. If they cannot, offer a person on our team. A supervisor has been alerted."}
 
 
 @router.post('/route_to_human')

@@ -7,6 +7,7 @@ hard time budget so the agent's 5 s function timeout is never hit. Never claims 
 """
 import json, math, os, re, threading, time, urllib.parse, urllib.request
 from pathlib import Path
+from .regions import code as country_code, region
 
 GEOCODE_BUDGET_S = 3.0
 UA = 'DIZA-hackathon-line/0.1 (USC student project; demo use)'
@@ -100,14 +101,16 @@ def geocode(text, deadline):
         return None
     if text in _geo_cache:
         return _geo_cache[text]
-    q = text if re.search(r'\b(ca|california)\b', text, re.I) else f'{text}, Los Angeles County, CA'
+    area = region()['area']
+    named = area.split(',')[0].lower() in text.lower() or (country_code() == 'US' and re.search(r'\b(ca|california)\b', text, re.I))
+    q = text if named else f'{text}, {area}'
     attempts = []
-    if re.match(r'^\s*\d+\s+\w', text):  # looks like a street address
+    if re.match(r'^\s*\d+\s+\w', text) and country_code() == 'US':  # a US street address (the Census geocoder is US-only)
         attempts.append(('census', q))
     attempts.append(('osm', q))
     city = re.split(r'\b(?:and|&|y|at)\b|,', text)[-1].strip()  # "Lake and Woodbury, Altadena" -> "Altadena"
     if city and city.lower() != text.lower():
-        attempts.append(('osm', f'{city}, Los Angeles County, CA'))
+        attempts.append(('osm', f'{city}, {area}'))
     # Not in LA County ("Tulsa", "Wichita", "Madrid"): search everywhere, after the local tries so LA landmarks win.
     attempts.append(('osm_any', text))
     result, road = None, False
@@ -123,7 +126,7 @@ def geocode(text, deadline):
                     result = (m[0]['coordinates']['y'], m[0]['coordinates']['x'])
             else:
                 d = _get_json('https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode(
-                    {'q': query, 'format': 'json', 'limit': 1, **({'countrycodes': 'us'} if kind == 'osm' else {})}), deadline)
+                    {'q': query, 'format': 'json', 'limit': 1, **({'countrycodes': country_code().lower()} if kind == 'osm' else {})}), deadline)
                 if d:
                     result = (float(d[0]['lat']), float(d[0]['lon']))
                     road = d[0].get('class') == 'highway'
@@ -181,7 +184,7 @@ def match_hotline(question):
 def describe(r, dist=None):
     parts = []
     if r.get('type') == 'hospital_er':
-        parts.append('If this is an emergency, call 911 instead of driving.')
+        parts.append(f"If this is an emergency, call {region()['emergency_spoken']} instead of driving.")
     where = ', '.join(x for x in (r.get('address'), r.get('city')) if x)
     parts.append(f"{r['name']}" + (f", {where}" if where else '') + (f", about {dist:.1f} miles away" if dist is not None else '') + '.')
     if r.get('phone'):
