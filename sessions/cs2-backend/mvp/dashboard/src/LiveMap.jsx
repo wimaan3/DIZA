@@ -8,11 +8,15 @@ const PLACE={shelter_site:'Shelter site',library_cooling_charging:'Cooling / cha
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // Live map of reports (pins by severity, P0 pulsing), incident rings for linked reports, and verified places.
-export default function LiveMap({reports,places,selected,onSelect}){
- const el=useRef(null),map=useRef(null),layers=useRef(null),seen=useRef(new Set());
+export default function LiveMap({reports,places,selected,onSelect,onPlace}){
+ const el=useRef(null),map=useRef(null),layers=useRef(null),seen=useRef(new Set()),placing=useRef(null);
+ const chosen=reports.find(r=>r.id===selected);
+ // A selected report with no position yet: the next map click places it (operator knows the landmark, the geocoder didn't).
+ placing.current=chosen&&chosen.lat==null?chosen.id:null;
  useEffect(()=>{
   const m=L.map(el.current,{scrollWheelZoom:false}).setView([34.1,-118.2],11);
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',className:'osm-tiles'}).addTo(m);
+  m.on('click',e=>{if(placing.current)onPlace(placing.current,e.latlng.lat,e.latlng.lng)});
   map.current=m;layers.current={places:L.layerGroup().addTo(m),rings:L.layerGroup().addTo(m),pins:L.layerGroup().addTo(m)};
   return()=>m.remove();
  },[]);
@@ -33,9 +37,9 @@ export default function LiveMap({reports,places,selected,onSelect}){
   });
   located.forEach(r=>{
    const isNew=!seen.current.has(r.id);seen.current.add(r.id);
-   L.marker([r.lat,r.lon],{icon:L.divIcon({className:`report-pin ${r.severity}${r.gps_accuracy!=null?' gps':''}${r.id===selected?' chosen':''}${isNew?' fresh':''}`,iconSize:[16,16]}),zIndexOffset:r.severity==='P0'?1000:0})
+   L.marker([r.lat,r.lon],{draggable:true,autoPan:true,icon:L.divIcon({className:`report-pin ${r.severity}${r.gps_accuracy!=null?' gps':''}${r.id===selected?' chosen':''}${isNew?' fresh':''}`,iconSize:[16,16]}),zIndexOffset:r.severity==='P0'?1000:0})
     .bindTooltip(`<b>${esc(r.severity)} · ${esc(r.category.replaceAll('_',' '))}</b><br>${esc(r.location)}${r.gps_accuracy!=null?`<br>📍 GPS from caller ±${Math.round(r.gps_accuracy)} m`:''}<br>${esc(r.summary).slice(0,120)}`)
-    .on('click',()=>onSelect(r.id)).addTo(pins);
+    .on('click',()=>onSelect(r.id)).on('dragend',e=>{const p=e.target.getLatLng();onPlace(r.id,p.lat,p.lng)}).addTo(pins);
   });
  },[sig]);
  // Follow the action: frame all pins whenever a new located report arrives.
@@ -43,5 +47,6 @@ export default function LiveMap({reports,places,selected,onSelect}){
  useEffect(()=>{if(count)map.current.fitBounds(L.latLngBounds(located.map(r=>[r.lat,r.lon])).pad(.4),{maxZoom:15})},[count]);
  const pending=reports.length-count;
  return <section className="panel mapcard"><div className="panel-title"><h2>Live map <span>{count}</span></h2><div className="legend">{['P0','P1','P2','P3'].map(s=><span key={s}><i style={{background:COLOR[s]}}/>{s}</span>)}<span><i className="sq"/>Verified place</span></div></div>
-  <div className="map" ref={el}/>{pending>0&&<p className="map-note"><MapPin size={12}/>{pending} report{pending!==1?'s':''} without a map position yet (location still being placed, or not given)</p>}</section>;
+  {chosen&&chosen.lat==null&&<p className="map-place">Click the map to place this report: <b>{chosen.location}</b></p>}
+  <div className={'map'+(chosen&&chosen.lat==null?' placing':'')} ref={el}/>{pending>0&&<p className="map-note"><MapPin size={12}/>{pending} report{pending!==1?'s':''} without a map position yet. Select one and click the map to place it; drag any pin to correct it</p>}</section>;
 }
