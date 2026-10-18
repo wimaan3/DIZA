@@ -134,6 +134,10 @@ class Api(unittest.TestCase):
   self.c.post('/api/units',json={'unit':'4B','rename_to':'4B-1'})
   s=self.c.get('/api/building').json();units={u['unit']:u for u in s['units']}
   self.assertIn('5A',units);self.assertIn('4B1',units);self.assertEqual(self.tickets()[code]['unit'],'4B1')
+ def test_building_page_served(self):
+  r=self.c.get('/building')
+  if r.status_code==404:self.skipTest('dashboard/dist not built')
+  self.assertIn('<div id="root"></div>',r.text)
  def test_seed_and_insights(self):
   out=self.c.post('/api/demo/seed?mode=building').json();self.assertEqual(out['created'],11)
   s=self.c.get('/api/building').json();i=s['insights']
