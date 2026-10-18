@@ -1,0 +1,4 @@
+test-results/
+workspace-test-results/
+playwright-report/
+.venv/
