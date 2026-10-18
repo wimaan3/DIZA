@@ -433,7 +433,7 @@ def _geocode_report(rid):
         if len(found)>1:
             split_report(r['id'],loc,found)
             continue
-        pos=None if loc.startswith('(') else resources.geocode(loc,time.monotonic()+4)
+        pos=None if loc.startswith('(') else resources.geocode(loc,time.monotonic()+12)  # background: a verified corner takes a few lookups
         if not pos and found:
             loc,pos=found[0][0],found[0][1]
             with connect() as c:

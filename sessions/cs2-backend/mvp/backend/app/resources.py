@@ -106,6 +106,85 @@ def said_in(text, hit):
     return bool(words) and any(w in place for w in words)
 
 
+CROSS = re.compile(r'^\s*(?:near|at|on|by)?\s*(.+?)\s+(?:and|&|at|y|/)\s+(.+?)\s*(?:,\s*(.+?))?\s*$', re.I)
+
+
+def _street_lines(street, place, deadline, box=None):
+    """OSM segments of one street in a city or county (or inside a box), as lists of (lat, lon) points."""
+    q = {'street': street, 'format': 'json', 'limit': 50, 'dedupe': 0, 'polygon_geojson': 1, 'countrycodes': country_code().lower()}
+    if box:  # (south, west, north, east): only the part near the other street; plain text also finds "East Colorado Boulevard"
+        q.pop('street'); q.update(q=street, viewbox=f'{box[1]},{box[2]},{box[3]},{box[0]}', bounded=1)
+    else:
+        q['county' if 'county' in place.lower() else 'city'] = place.split(',')[0].strip()
+    lines = []
+    for hit in _get_json('https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode(q), deadline) or []:
+        g = hit.get('geojson') or {}
+        parts = [g['coordinates']] if g.get('type') == 'LineString' else g.get('coordinates', []) if g.get('type') == 'MultiLineString' else []
+        lines += [[(p[1], p[0]) for p in part] for part in parts]
+    return lines
+
+
+def _crossing(a_lines, b_lines):
+    """Where two streets meet: a segment-segment intersection, else their closest points if under ~80 m."""
+    best = None
+    for la in a_lines:
+        for lb in b_lines:
+            for (p1, p2) in zip(la, la[1:]):
+                for (q1, q2) in zip(lb, lb[1:]):
+                    d = (p2[0] - p1[0]) * (q2[1] - q1[1]) - (p2[1] - p1[1]) * (q2[0] - q1[0])
+                    if d:
+                        t = ((q1[0] - p1[0]) * (q2[1] - q1[1]) - (q1[1] - p1[1]) * (q2[0] - q1[0])) / d
+                        u = ((q1[0] - p1[0]) * (p2[1] - p1[1]) - (q1[1] - p1[1]) * (p2[0] - p1[0])) / d
+                        if 0 <= t <= 1 and 0 <= u <= 1:
+                            return (round(p1[0] + t * (p2[0] - p1[0]), 6), round(p1[1] + t * (p2[1] - p1[1]), 6))
+            for p in la:
+                for q in lb:
+                    gap = math.hypot(p[0] - q[0], (p[1] - q[1]) * math.cos(math.radians(p[0]))) * 111_000
+                    if gap < 80 and (best is None or gap < best[0]):
+                        best = (gap, (round((p[0] + q[0]) / 2, 6), round((p[1] + q[1]) / 2, 6)))
+    return best[1] if best else None
+
+
+def _inside(point, place, deadline):
+    """The corner must be in the city the caller named: "Los Angeles" street searches also return Downey's Western/6th."""
+    d = _get_json('https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode(
+        {'q': f"{place}, {region()['area']}", 'format': 'json', 'limit': 1, 'countrycodes': country_code().lower()}), deadline)
+    if not d or 'boundingbox' not in d[0]:
+        return False
+    south, north, west, east = map(float, d[0]['boundingbox'])
+    return south <= point[0] <= north and west <= point[1] <= east
+
+
+def intersection(text, deadline):
+    """'11th St and Broadway, Santa Monica' -> where those two streets cross. OSM search alone can't find corners:
+    it returns a point somewhere on one of the streets (a live call landed blocks away near Lincoln Blvd)."""
+    m = CROSS.match(text or '')
+    # Only with a city or neighborhood: LA County has many "Western Ave and 6th St" corners (one is in Downey), so
+    # guessing one would be a confident wrong pin. Without it, the street-level answer below stays.
+    if not m or not m.group(3) or not (STREET.search(m.group(1)) or STREET.search(m.group(2))):
+        return None
+    place = m.group(3)
+    try:
+        a, b = _street_lines(m.group(1), place, deadline), _street_lines(m.group(2), place, deadline)
+        hit = _crossing(a, b)
+        if hit or not a or not b:
+            return hit if hit and _inside(hit, place, deadline) else None
+        # A city search can miss the right piece: long streets hit the 50-result cap, and "Colorado Blvd" misses
+        # "East Colorado Boulevard". Look for each street again, by plain text, only around the other one.
+        def box(lines):
+            pts = [p for line in lines for p in line]
+            return (min(p[0] for p in pts) - .003, min(p[1] for p in pts) - .003, max(p[0] for p in pts) + .003, max(p[1] for p in pts) + .003)
+        for near, name, other in sorted(((a, m.group(2), b), (b, m.group(1), a)), key=lambda x: len(x[0])):
+            if time.monotonic() > deadline:
+                break
+            hit = _crossing(near, _street_lines(name, place, deadline, box(near)) + other)
+            if hit and _inside(hit, place, deadline):
+                return hit
+        return None
+    except Exception:
+        return None
+
+
 def geocode(text, deadline):
     """(lat, lon) for an address, landmark or neighborhood (LA County first, then anywhere), or None."""
     # Callers say "near Venice Beach" or "by the USC Village": geocode the place, not the preposition.
@@ -114,6 +193,13 @@ def geocode(text, deadline):
         return None
     if text in _geo_cache:
         return _geo_cache[text]
+    corner = intersection(text, deadline)
+    m = CROSS.match(text)
+    if corner or (m and STREET.search(m.group(1)) and STREET.search(m.group(2))):
+        # Two cross streets: the verified corner or no pin at all. A street-level guess lands blocks or cities away
+        # (City Hall for "Western and 6th, Los Angeles"); the operator places it from the unlocated list instead.
+        _geo_cache[text] = corner
+        return corner
     area = region()['area']
     named = area.split(',')[0].lower() in text.lower() or (country_code() == 'US' and re.search(r'\b(ca|california)\b', text, re.I))
     q = text if named else f'{text}, {area}'
