@@ -100,7 +100,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Skills, e.g. medical, mental_health, evac_logistics, listener, lang:ko."
+          "description": "Skills, e.g. medical, mental_health, evac_logistics, listener, security (break-ins, threats, suspicious person), lang:ko."
         },
         "language": {
           "type": "string",
@@ -903,5 +903,49 @@
     "keep_current_language": false,
     "keep_current_voice": false,
     "speak_during_execution": false
+  },
+  "brief_security": {
+    "type": "custom",
+    "name": "brief_security",
+    "description": "DIZA phones the on-duty security person with a short spoken briefing about a break-in, theft, vandalism, threat or suspicious person. Returns status (calling, no_security_on_duty, failed) and security_name. Never replaces 911.",
+    "url": "${BASE_URL}/retell/fn/brief_security",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "incident": {
+          "type": "string",
+          "description": "One sentence: what happened, e.g. 'Apartment door forced open, laptop missing'."
+        },
+        "location_text": {
+          "type": "string",
+          "description": "Where, as the caller confirmed it (address, unit, cross streets or landmark)."
+        },
+        "caller_quote": {
+          "type": "string",
+          "description": "The caller's own words about it."
+        },
+        "in_progress": {
+          "type": "boolean",
+          "description": "True if it is happening now or the person may still be there."
+        }
+      },
+      "required": [
+        "incident",
+        "location_text",
+        "caller_quote",
+        "in_progress"
+      ]
+    },
+    "args_at_root": false,
+    "timeout_ms": 8000,
+    "max_retry": 1,
+    "speak_after_execution": true,
+    "speak_during_execution": true,
+    "execution_message_description": "In the caller's language, say a very short line like: \"One moment, I'm letting security know.\"",
+    "execution_message_type": "prompt",
+    "response_variables": {
+      "security_name": "security_name"
+    }
   }
 }

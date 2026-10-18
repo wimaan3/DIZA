@@ -1,12 +1,14 @@
 {
   "_prompt_files": [
     "_shared_rules.md",
+    "security.md",
     "language_line.md",
     "finding_help.md"
   ],
   "_tools": [
     "flag_urgent",
     "route_to_human",
+    "brief_security",
     "transfer_to_human",
     "transfer_to_crisis_line",
     "submit_report",
@@ -63,7 +65,8 @@
     "info_line": "2-1-1",
     "region": "US-CA",
     "service_area": "Los Angeles",
-    "crisis_line_note": "It's free and open 24 hours."
+    "crisis_line_note": "It's free and open 24 hours.",
+    "security_name": ""
   },
   "_knowledge_bases": [
     "line-policy",
