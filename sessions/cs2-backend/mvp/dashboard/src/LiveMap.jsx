@@ -58,11 +58,11 @@ export default function LiveMap({reports=[],places=[],zones=[],selected,onSelect
   setFailed(false);setMapError('');setReady(0);
   const view=lastView.current||initialView(center);
   try {
-   m=new GLMap({container:el.current,style:offline?offlineStyle:CITY_STYLE,center:view.center,zoom:offline?Math.min(view.zoom,11.5):view.zoom,bearing:view.bearing||0,pitch:offline?0:latest.current.threeD?57:0,maxPitch:70,canvasContextAttributes:{antialias:true}});
+   m=new GLMap({container:el.current,locale:{'NavigationControl.ZoomIn':t('Zoom in'),'NavigationControl.ZoomOut':t('Zoom out'),'NavigationControl.ResetBearing':t('Drag to rotate map, click to reset north'),'AttributionControl.ToggleAttribution':t('Toggle attribution'),'Popup.Close':t('Close popup')},style:offline?offlineStyle:CITY_STYLE,center:view.center,zoom:offline?Math.min(view.zoom,11.5):view.zoom,bearing:view.bearing||0,pitch:offline?0:latest.current.threeD?57:0,maxPitch:70,canvasContextAttributes:{antialias:true}});
    map.current=m;m.scrollZoom.disable();m.doubleClickZoom.disable();
    m.addControl(new NavigationControl({visualizePitch:true}),'top-right');m.addControl(new ScaleControl(),'bottom-left');
    m.getCanvas().setAttribute('aria-label',t('Live map'));
-   timer=setTimeout(()=>setMapError(t('Map loading slowly. Try Offline map.')),20000);
+   timer=setTimeout(()=>setMapError('Map loading slowly. Try Offline map.'),20000);
    m.on('load',()=>{
     clearTimeout(timer);configureBuildings(m,latest.current.threeD);
     for(const name of ['zones','rings','draft'])m.addSource(name,{type:'geojson',data:fc([])});
@@ -82,17 +82,17 @@ export default function LiveMap({reports=[],places=[],zones=[],selected,onSelect
     if(s.draw){setDraw(d=>d?[...d,[e.lngLat.lat,e.lngLat.lng]]:d);return;}
     if(s.chosen&&!position(s.chosen))s.onPlace?.(s.chosen.id,e.lngLat.lat,e.lngLat.lng);
    });
-   m.on('error',()=>setMapError(t('Map data unavailable. Try Offline map.')));
-   m.on('webglcontextlost',()=>{setFailed(true);setMapError(t('3D graphics unavailable. Event cards remain available below.'));});
+   m.on('error',()=>setMapError('Map data unavailable. Try Offline map.'));
+   m.on('webglcontextlost',()=>{setFailed(true);setMapError('3D graphics unavailable. Event cards remain available below.');});
    resize=new ResizeObserver(()=>m.resize());resize.observe(el.current);
-  }catch{setFailed(true);setMapError(t('3D graphics unavailable. Event cards remain available below.'));}
+  }catch{setFailed(true);setMapError('3D graphics unavailable. Event cards remain available below.');}
   return ()=>{
    clearTimeout(timer);resize?.disconnect();
    if(m)lastView.current={center:m.getCenter().toArray(),zoom:m.getZoom(),bearing:m.getBearing()};
    markers.current.forEach(x=>x.marker.remove());markers.current.clear();placeMarkers.current.forEach(x=>x.remove());placeMarkers.current=[];placePopups.current.forEach(x=>x.remove());placePopups.current=[];
    m?.remove();map.current=null;
   };
- },[offline]);
+ },[offline,language()]);
  useEffect(()=>{
   const m=map.current;if(!ready||!m)return;
   const ids=new Set(located.map(r=>r.id));
@@ -120,7 +120,7 @@ export default function LiveMap({reports=[],places=[],zones=[],selected,onSelect
    item.marker.setDraggable(!!onPlace&&!draw);
    item.dot.className=`report-pin ${r.effective||'P3'}${r.id===selected?' chosen':''}${r.gps_accuracy!=null?' gps':''}${r.flags?.length&&!r.reviewed_at?' flagged':''}`;
    item.button.setAttribute('aria-label',`${r.effective||''} · ${r.location||''}`);
-   item.button.title=`${r.effective||''} · ${(r.category||'').replaceAll('_',' ')}\n${r.location||''}\n${r.summary||''}${r.gps_accuracy!=null?'\n'+t('GPS from caller ±{m} m',{m:Math.round(r.gps_accuracy)}):''}${r.flags?.length?'\n'+r.flags[0].message:''}`;
+   item.button.title=`${r.effective||''} · ${t((r.category||'').replaceAll('_',' '))}\n${r.location||''}\n${r.summary||''}${r.gps_accuracy!=null?'\n'+t('GPS from caller ±{m} m',{m:Math.round(r.gps_accuracy)}):''}${r.flags?.length?'\n'+r.flags[0].message:''}`;
    item.button.style.zIndex=r.id===selected?'20':r.effective==='P0'?'10':'1';
   }
   m.getSource('rings').setData(linkedRings(located));
@@ -166,10 +166,10 @@ export default function LiveMap({reports=[],places=[],zones=[],selected,onSelect
   <div className="ops3d-regions"><span>{t('Jump to')}</span>{PRESETS.map(p=><button type="button" className="small" key={p.id} disabled={failed} onClick={()=>go(p)}>{p.name}</button>)}<button className="small" disabled={failed} onClick={()=>go(initialView(center))}>{t('Deployment area')}</button></div>
   {zoneForm&&<form className="zone-form" onSubmit={saveZone}><input name="name" required placeholder={t('Zone name, e.g. Evacuation warning north of the river')} autoFocus/><select name="kind" defaultValue="evacuation_warning">{Object.entries(ZONE).map(([k,v])=><option key={k} value={k}>{t(v.label)}</option>)}</select><button className="small primary" type="submit" disabled={saving}>{t('Save zone')}</button></form>}
   {chosen&&!position(chosen)&&!draw&&<p className="map-place">{t('Click the map to place this report:')} <b>{chosen.location}</b></p>}
-  {mapError&&<p className="map-note" role="status">{mapError}</p>}
+  {mapError&&<p className="map-note" role="status">{t(mapError)}</p>}
   <div className={'map'+(chosen&&!position(chosen)||draw?' placing':'')} ref={el}/>
   <p className="map-note">{t('3D buildings appear when zoomed in. Heights may be estimated.')}</p>
   {pending.length>0&&<div className="unlocated"><b><MapPin size={13}/>{t('{n} without a map position',{n:pending.length})}</b>{pending.slice(0,8).map(r=><button key={r.id} className={'small'+(r.id===selected?' on':'')} onClick={()=>onSelect(r.id)}><span className={'severity '+r.effective}>{r.effective}</span>{r.location?.startsWith('(')?t('Location not given yet'):r.location} · {t('place on map')}</button>)}</div>}
-  {zones.length>0&&onDeleteZone&&<div className="zone-list">{zones.map(z=><span key={z.id}><i style={{borderColor:(ZONE[z.kind]||ZONE.note).color}}/>{z.name}<button className="text-button" aria-label={`Remove zone ${z.name}`} onClick={()=>confirm(t('Remove zone “{n}”?',{n:z.name}))&&onDeleteZone(z.id)}><X size={12}/></button></span>)}</div>}
+  {zones.length>0&&onDeleteZone&&<div className="zone-list">{zones.map(z=><span key={z.id}><i style={{borderColor:(ZONE[z.kind]||ZONE.note).color}}/>{z.name}<button className="text-button" aria-label={t('Remove zone {name}',{name:z.name})} onClick={()=>confirm(t('Remove zone “{n}”?',{n:z.name}))&&onDeleteZone(z.id)}><X size={12}/></button></span>)}</div>}
  </section>;
 }

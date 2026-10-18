@@ -1,3 +1,4 @@
+import EXTRA from './i18n-extra.js';
 // Dashboard text in the operator's language. The English sentence is the key, so code stays readable and a missing
 // translation falls back to English. {name} placeholders are filled from vars. Caller quotes and transcripts are never
 // translated: operators need the exact words. zh and es are machine-quality drafts: have a native speaker review them.
@@ -5,11 +6,12 @@ export const LANGUAGES={en:'English',zh:'中文',es:'Español'};
 let current='en';
 export const setLanguage=l=>{current=LANGUAGES[l]?l:'en';document.documentElement.lang=current==='zh'?'zh-CN':current};
 export const language=()=>current;
+export const locale=()=>({en:'en-US',zh:'zh-CN',es:'es-ES'}[current]);
 // "119 fire / 120 ambulance / 110 police" in the operator's language, from the region's number table.
 export const emergencyText=r=>r?Object.entries(r.numbers).filter(([k])=>k!=='also').map(([k,v])=>k==='all'?v:`${v} ${t(k)}`).slice(0,3).join(' / '):'911';
 export function t(key,vars={}){
- const s=(DICT[current]&&DICT[current][key])||key;
- return s.replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'');
+ const s=EXTRA[current]?.[key]||DICT[current]?.[key]||key;
+ return s.replace(/\{(\w+)\}/g,(_,k)=>vars[k]??`{${k}}`);
 }
 const DICT={
  zh:{
@@ -163,3 +165,13 @@ const DICT={
   'linked reports':'reportes vinculados','GPS from caller ±{m} m':'GPS de la persona ±{m} m','Use the bundled outline map (works without map tiles)':'Usar el mapa integrado (funciona sin conexión)',
  },
 };
+
+// Only known system formats are translated; captured values remain verbatim.
+export function systemText(value){
+ const text=String(value??'');let m;
+ if((m=text.match(/^Approximate \(address lookup\): (.*)$/)))return t('Approximate (address lookup): {location}',{location:m[1]});
+ if((m=text.match(/^Caller ••(.*)$/)))return t('Caller ••{x}',{x:m[1]});
+ if((m=text.match(/^GPS from caller ±(.*) m$/)))return t('GPS from caller ±{m} m',{m:m[1]});
+ if((m=text.match(/^(\d+) people$/)))return t('{n} people',{n:m[1]});
+ return t(text);
+}
