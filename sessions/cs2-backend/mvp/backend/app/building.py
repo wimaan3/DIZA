@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from .main import DEMO, app, connect, event
+from .regions import region
 from .retell_fns import e164, last4, once, parse, responders_from_env
 
 router = APIRouter()
@@ -49,6 +50,10 @@ def danger_word(text):
 ELECTRICAL_HAZARD = re.compile(r"\b(exposed wires?|outlet (is )?(hot|melting)|shock(ed)?|buzzing|breaker|no power|power out|outage)\b", re.I)
 
 
+def emergency():
+    return region()['emergency_spoken']
+
+
 def cold_weather(now):
     # Heating season Oct 1 - Apr 30 (LA nights drop into the 40s-50s); DIZA_COLD_WEATHER=true|false overrides.
     env = os.getenv('DIZA_COLD_WEATHER', '').lower()
@@ -69,7 +74,7 @@ def urgency(category, text='', now=None, hint=''):
     word = danger_word(text)
     if category == 'gas_smell' or word:
         found = 'gas smell' if category == 'gas_smell' else f'caller said "{word}"'
-        level, reason = 'emergency', f'Possible fire, gas or injury ({found}): tell the caller to call 911 first'
+        level, reason = 'emergency', f'Possible fire, gas or injury ({found}): tell the caller to call {emergency()} first'
     elif category == 'water_leak' and (ACTIVE_WATER.search(text) or any(w in text for w in ACTIVE_WATER_CJK) or not INACTIVE_WATER.search(text)):
         level, reason = 'emergency', 'Water actively leaking (treated as active unless the caller says it stopped)'
     elif category == 'no_heat' and cold_weather(now):
@@ -349,7 +354,7 @@ def create_ticket(p=Depends(parse)):
         if related:
             out['related_reason'] = related[0]['reason']
         if t['urgency'] == 'emergency' and t['category'] != 'water_leak':
-            out['safety_text'] = 'If there is fire, smoke, a gas smell or someone is hurt, hang up and call 911 now, and leave the unit if it is safe to.'
+            out['safety_text'] = f'If there is fire, smoke, a gas smell or someone is hurt, hang up and call {emergency()} now, and leave the unit if it is safe to.'
         if not t['unit_verified']:
             out['ask'] = 'Which unit number is on your door?'
         return out
