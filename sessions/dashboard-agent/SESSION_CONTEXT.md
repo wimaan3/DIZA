@@ -9,6 +9,7 @@
 |---|---|
 | `sessions/cs2-backend/mvp/backend/app/building.py` | Step 1: building tables, urgency / merge / cross-reference / California-clock rules, Retell functions `lookup_unit`, `create_ticket`, `ticket_status`, `local_contact`, manager API, demo seed |
 | `sessions/cs2-backend/mvp/tests/test_building.py` | 18 tests: urgency, merge, cross-reference text, idempotent retry, unknown unit, CA clock, local_contact, manager actions |
+| `sessions/cs2-backend/mvp/dashboard/src/Building.jsx` | Step 2: `/building` manager dashboard (insights strip, urgency-grouped queue with age timers and badges, ticket card, SVG floor plan with edit mode) |
 | `sessions/dashboard-agent/SESSION_CONTEXT.md` | this file |
 
 ## Decisions
@@ -61,5 +62,12 @@
 ## Open questions
 - Heating season dates: Oct 1–Apr 30 is our choice (no LA statute sets one); override with `DIZA_COLD_WEATHER`.
 
+## Step 2 notes (/building)
+- `main.jsx` routes `/building` to `Building.jsx`. The sidebar and the header mode switch (Building | 911) reach every view; the supporter inbox and line activity are unchanged.
+- The page polls `/api/building` every 1.5 s. A new ticket or a new reporter is highlighted for 5 s (measured: it appears 0.86 s after the call is filed).
+- Colour is never the only signal: urgency marks (!! / ! / ·) and text labels sit next to every colour, and unit tiles have aria labels. J/K move through the queue, and units are reachable with Tab and Enter.
+- Layout: three columns above 1280 px. At 1280 px and below, the floor plan sits on top with the queue and card in two columns; on a phone, everything stacks into one column.
+- Merge permission: the auto-mode classifier blocked further self-merges ("Merge Without Review"). From PR 2 on, PRs are opened but left for a human to merge.
+
 ## Not done yet
-- Step 2 `/building` dashboard, Step 3 `/ops` upgrade + second reader + `update_incident` + zones, Step 4 shared call panel + crisis seed.
+- Step 3 `/ops` upgrade + second reader + `update_incident` + zones, Step 4 shared call panel + crisis seed.
