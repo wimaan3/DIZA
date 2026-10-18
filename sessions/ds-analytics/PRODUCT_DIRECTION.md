@@ -2,6 +2,7 @@
 
 **Status:** Proposed product direction for review, based on Deepanshu's clarification on October 17, 2026.
 This document describes intended behavior; it does not change or deploy the application.
+The subsequent local hotel text prototype is described in [HOTEL_DEMO.md](HOTEL_DEMO.md) on the hotel demo branch.
 
 ## Product definition
 
@@ -79,7 +80,8 @@ A caller already awaiting a 911 operator must remain in that workflow rather tha
 
 Further implementation must establish an operator-capacity-aware queue, visible priority reasons, preserved individual calls within incident groups, and confirmed handoff outcomes.
 Hotel mode needs approved service content and staff task handling before it can claim to resolve or fulfill particular requests.
-This PR records these requirements without changing prompts, routing, provider agents, or production settings.
+Documentation-only PR #21 introduced these requirements without changing prompts, routing, provider agents, or production settings.
+The hotel demo is a subsequent implementation using synthetic data and a separate local database; real hotel-system and emergency-line integration remain open.
 
 ## Demonstration and acceptance examples
 

@@ -1,15 +1,21 @@
 # Session context: ds-analytics
 
 - **Session:** Codex implementation of the DIZA data science work package, requested by Deepanshu.
-- **Current branch:** `ds/emergency-overflow-hotel-use-cases`, based on `origin/main` at `12c02a0`.
+- **Current branch:** `ds/hotel-service-demo`, based on the product-direction branch and rebased onto the latest `origin/main`.
+- **Product-direction branch:** `ds/emergency-overflow-hotel-use-cases`, opened as documentation-only PR #21.
 - **Earlier branch:** `ds/analysis-triage`, started from `da67553` and rebased onto `origin/main` at `5dff053`.
-- **Current scope:** Document the user's emergency overflow and hotel service product direction in a documentation-only PR.
+- **Current scope:** Activate a local hotel-service text demo with a guest assistant, persistent staff requests, ownership, status changes, and a responsive front-desk dashboard.
 - **Earlier implementation:** Installable deterministic triage and analysis package, synthetic data, evals, metric CLI, source loaders, and tests.
 
 ## Files in this folder
 
 | Path | Contents |
 |---|---|
+| `HOTEL_DEMO.md` | Hotel startup, guided demo, verification, and limits |
+| `diza_analysis/hotel/` | Isolated FastAPI service, validated inputs, scenario dialogue, transactional SQLite tasks and conversations |
+| `diza_analysis/hotel_web/` | Front-desk dashboard, room filters, guest text assistant, request readback, staff task actions |
+| `scripts/serve_hotel.py` | Localhost-only hotel launcher using a separate synthetic database |
+| `hotel_client/`, `tests_hotel/` | Browser checks, locked test dependencies, domain/API tests |
 | `PRODUCT_DIRECTION.md` | Emergency overflow and hotel service workflows, human/agent responsibilities, implementation gaps, demo examples, and open decisions |
 | `pyproject.toml` | Dependency-free package metadata and CLI entry point |
 | `diza_analysis/triage.py` | Lexicon hits, context guards, classification, priority, pools, responder ranking |
@@ -45,10 +51,23 @@
 12. Do not apply MyLA311 service-request volumes as if they measured voice-call traffic.
 13. Record the user's two operating modes: AI intake and prioritization support during emergency operator overflow, and direct handling of routine hotel service calls.
 14. Preserve individual emergency callers when grouping reports, and retain human responsibility for emergency response and dispatch.
-15. Keep this clarification documentation-only; application behavior, provider agents, and production settings are unchanged.
+15. Keep PR #21 documentation-only and put the later runnable hotel demo on a separate branch.
+16. Implement the hotel demo entirely inside this session, using a separate database without editing the shared backend or provider agents.
+17. Provide scenario answers directly, but require explicit guest confirmation before a normal service task is created.
+18. Treat entry permission, staff acceptance, work started, and completion as distinct recorded decisions.
+19. Label the active demo as synthetic text interaction; do not claim a live telephone or hotel-system integration.
 
 ## Key facts verified
 
+- Seventeen hotel API/domain tests pass, including task confirmation, entry permission, session isolation, retries, competing staff updates, Spanish dialogue, related reports, safety flags, and restart persistence.
+- Three Chromium browser tests pass for guest questions, request confirmation, staff acceptance and completion, handover notes, Spanish mobile layout, reload recovery, and a lost confirmation response.
+- All 54 original analysis tests still pass; Ruff and client formatting checks pass.
+- The package wheel builds with the hotel schema and web assets included.
+- The active local hotel server responds at http://127.0.0.1:18772/hotel with 24 rooms and five synthetic sample requests.
+- The browser workflow reproduced a completion-time bug after adding a handover note; the fix preserves the original completion time.
+  The real browser suite verifies that behavior through the staff UI.
+- The hotel demo uses a bounded scenario-answer engine and performs real SQLite writes for its local tasks and conversations.
+  Provider voice and actual staff notifications are not configured or sent.
 - The user clarified the two-use-case product direction in this conversation on October 17, 2026.
   Source: the user's emergency-overflow and hotel-service description, captured in `PRODUCT_DIRECTION.md`.
 - The current shared agent prompt and backend urgent-call handler contain instructions to hang up and dial the emergency number.
@@ -81,8 +100,9 @@
 
 ## Not done yet
 
-- The newly documented emergency overflow and hotel workflows have not been implemented or deployed by this documentation change.
-- No live backend behavior, dashboard, shared config, agent deployment, or other session folder was changed.
+- The emergency-overflow workflow remains a documented target and has not been implemented by this hotel demo.
+- The hotel demo is local and synthetic, with no public deployment, real guest identity, individual staff accounts, Retell voice, or hotel-system integration.
+- No shared backend source, provider agent, or other session folder was changed.
 - No live callers, Retell simulations, clinical validation, or forty-label human/judge calibration were run.
 - No automatic official-feed polling, Supabase migration, embeddings/topic model, semantic answer cache, acoustic inference, or photo processing is included.
 - Census live demographic data requires credentials; defaults remain explicitly illustrative rather than claimed as Census-derived.
