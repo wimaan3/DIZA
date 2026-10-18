@@ -93,6 +93,21 @@ def place_list(text):
     return merged[:6]
 
 
+def is_corner(text):
+    """'14th St and Colorado Ave' (two streets, no city)."""
+    m = CROSS.match(text or '')
+    return bool(m and not m.group(3) and STREET.search(m.group(1)) and STREET.search(m.group(2)))
+
+
+def corner_list(text):
+    """'14th St and Colorado Ave, 17th St and Colorado Ave, Santa Monica' -> each corner, with the trailing city on each."""
+    segs = [x.strip(' .') for x in re.split(r'\s*(?:;|,|\balso\b|\bthen\b)\s*', text or '', flags=re.I) if x.strip(' .')]
+    corners, rest = [x for x in segs if is_corner(x)], [x for x in segs if not is_corner(x)]
+    if len(corners) < 2 or len(rest) > 1 or (rest and STREET.search(rest[0])):
+        return []
+    return [f'{x}, {rest[0]}' if rest else x for x in corners][:6]
+
+
 GENERIC = set('unit apt apartment suite ste room floor fl building bldg house home near by the at in on of and a an my our st ave rd dr blvd '
               'church school park store shop market station hospital corner street road freeway highway mall bank restaurant hotel '
               'old new big little here there outside inside'.split())

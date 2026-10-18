@@ -8,7 +8,9 @@ from backend.app import ops as O, resources as R
 from fastapi.testclient import TestClient
 from retell.lib.webhook_auth import symmetric
 # No network in tests: a fixed gazetteer stands in for the geocoder.
-SPOTS={'Kansas City':(39.10,-94.58),'Wichita':(37.69,-97.34),'Tulsa':(36.16,-95.99),'Lake Ave and Altadena Dr':(34.19,-118.13)}
+SPOTS={'6th Street and Broadway, Santa Monica':(34.0166,-118.4935),'Broadway & 6th St, Santa Monica':(34.0168,-118.4931),
+       '14th Street and Colorado Avenue, Santa Monica':(34.0236,-118.4866),'17th Street and Colorado Avenue, Santa Monica':(34.0262,-118.4836),
+       'Kansas City':(39.10,-94.58),'Wichita':(37.69,-97.34),'Tulsa':(36.16,-95.99),'Lake Ave and Altadena Dr':(34.19,-118.13)}
 R.geocode=lambda text,deadline:SPOTS.get(text)
 
 class SecondReader(unittest.TestCase):
@@ -72,6 +74,24 @@ class Api(unittest.TestCase):
   self.assertEqual(got,[('Kansas City',39.10,'P0'),('Tulsa',36.16,'P0'),('Wichita',37.69,'P0')])
   self.assertTrue(all('One of 3 places' in i['summary'] and i['call_id']=='call_k' and i['request'] for i in d['incidents']))
   self.assertEqual(len({i['cluster_id'] for i in d['incidents']}),3)
+ def test_one_caller_many_places_and_the_city_said_once(self):
+  # Replays a live call: the city was said with the first fire, then two more corners without it.
+  self.report('6th Street and Broadway, Santa Monica','fire','call_many')
+  self.report('14th Street and Colorado Avenue, 17th Street and Colorado Avenue','fire','call_many')
+  d=self.wait(lambda d:sum(i['lat'] is not None for i in d['incidents'])==3)
+  self.assertEqual(sorted(i['location'] for i in d['incidents']),['14th Street and Colorado Avenue, Santa Monica','17th Street and Colorado Avenue, Santa Monica','6th Street and Broadway, Santa Monica'])
+  self.assertEqual(len({i['cluster_id'] for i in d['incidents']}),3)  # 400+ m apart: three incidents
+ def test_two_callers_same_fire_different_words_join(self):
+  self.report('6th Street and Broadway, Santa Monica','fire','call_x1')
+  self.report('Broadway & 6th St, Santa Monica','fire','call_x2')
+  d=self.wait(lambda d:sum(i['lat'] is not None for i in d['incidents'])==2 and len({i['cluster_id'] for i in d['incidents']})==1)
+  self.assertEqual(len({i['cluster_id'] for i in d['incidents']}),1);self.assertEqual(d['incidents'][0]['corroboration']['reports'],2)
+ def test_our_building_is_pinned_at_its_address(self):
+  self.c.post('/api/demo/seed?mode=building');self.c.get('/api/building')
+  self.fn('flag_urgent',{'reason':'fire','keyword':'fire'},'call_bldg')
+  self.report('Larchmont Court apartments','fire','call_bldg',immediate_danger=True)
+  d=self.wait(lambda d:any(i['lat'] is not None for i in d['incidents']))
+  i=[x for x in d['incidents'] if 'Larchmont' in x['location']][0];self.assertEqual((i['lat'],i['lon']),(34.0635,-118.3005))
  def test_update_incident_fills_card_and_reports_missing(self):
   self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},'call_u')
   out=self.fn('update_incident',{'field':'people','value':'3 adults'},'call_u')

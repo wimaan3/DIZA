@@ -422,9 +422,14 @@ def _geocode_report(rid):
         if gps:
             with connect() as c:
                 c.execute('UPDATE reports SET lat=?,lon=?,gps_accuracy=?,geo_tried=1 WHERE id=?',(gps['lat'],gps['lon'],gps['accuracy'],r['id']))
+            join_nearby(r['id'])
             continue
-        # "Kansas City, Wichita and Tulsa": one call naming several places becomes one card and one pin per place, looked up in parallel.
-        parts=[] if loc.startswith('(') else resources.place_list(loc)
+        # The caller said the city once ("6th and Broadway in Santa Monica"); later corners on the same call use it too.
+        with connect() as c:
+            city=call_city(c,r['dedupe'].split(':')[0],r['id'])
+        with_city=lambda p:f'{p}, {city}' if city and resources.is_corner(p) else p
+        # "Kansas City, Wichita and Tulsa" or "14th and Colorado, 17th and Colorado": one card and one pin per place, in parallel.
+        parts=[] if loc.startswith('(') else [with_city(p) for p in resources.corner_list(loc) or resources.place_list(loc)]
         found=[]
         if parts:
             from concurrent.futures import ThreadPoolExecutor
@@ -433,13 +438,49 @@ def _geocode_report(rid):
         if len(found)>1:
             split_report(r['id'],loc,found)
             continue
-        pos=None if loc.startswith('(') else resources.geocode(loc,time.monotonic()+12)  # background: a verified corner takes a few lookups
+        pos=None if loc.startswith('(') else resources.geocode(with_city(loc),time.monotonic()+12)  # background: a verified corner takes a few lookups
+        if not pos and not loc.startswith('('):
+            pos=building_pin(loc)  # "Larchmont Court apartments": one of our buildings, pinned at its address
         if not pos and found:
             loc,pos=found[0][0],found[0][1]
             with connect() as c:
                 c.execute('UPDATE reports SET location=? WHERE id=?',(loc,r['id']))
         with connect() as c:
             c.execute('UPDATE reports SET lat=?,lon=?,geo_tried=1 WHERE id=? AND location=?',(pos[0] if pos else None,pos[1] if pos else None,r['id'],loc))
+        if pos:
+            join_nearby(r['id'])
+
+def call_city(c,call_id,rid):
+    # A city or neighborhood the caller already gave on this call ("..., Santa Monica"), from their other reports.
+    from .resources import CROSS,STREET
+    for o in c.execute('SELECT location FROM reports WHERE substr(dedupe,1,?)=? AND id!=? ORDER BY created',(len(call_id)+1,call_id+':',rid)):
+        m=CROSS.match(o['location'] or '')
+        if m and m.group(3) and not STREET.search(m.group(3)):
+            return m.group(3)
+    return ''
+
+def building_pin(loc):
+    from .building import building_match
+    with connect() as c:
+        b,_=building_match(c,loc)
+    return (b['lat'],b['lon']) if b and b['lat'] is not None else None
+
+NEARBY_M=250
+def join_nearby(rid):
+    # Different callers describe one fire differently ("6th and Broadway", "Broadway & 6th St"): the same kind of
+    # problem pinned within 250 m and 10 minutes is one incident. Reports stay separate cards; only the grouping joins.
+    from .resources import miles
+    with connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        r=c.execute('SELECT * FROM reports WHERE id=?',(rid,)).fetchone()
+        if not r or r['lat'] is None or r['category'] in ('info','other'): return
+        for o in c.execute("SELECT * FROM reports WHERE id!=? AND category=? AND lat IS NOT NULL AND cluster_id!=? AND abs(created-?)<600 ORDER BY created",
+                           (rid,r['category'],r['cluster_id'],r['created'])).fetchall():
+            if miles((r['lat'],r['lon']),(o['lat'],o['lon']))*1609<NEARBY_M:
+                c.execute('UPDATE reports SET cluster_id=? WHERE cluster_id=?',(o['cluster_id'],r['cluster_id']))
+                q=c.execute('SELECT id FROM requests WHERE report_id=?',(rid,)).fetchone()
+                event(c,q['id'] if q else rid,f"Linked to the {r['category'].replace('_',' ')} report at {o['location']} (within {NEARBY_M} m)")
+                return
 
 def split_report(rid,loc,found):
     # The first place keeps the original card; every other place gets its own card (same call, same priority, own request).
@@ -463,6 +504,9 @@ def split_report(rid,loc,found):
                 if r['severity']=='P0': offer(c,qid)
         q=c.execute('SELECT id FROM requests WHERE report_id=?',(rid,)).fetchone()
         event(c,q['id'] if q else rid,f'{note}: one card per place')
+        ids=[x['id'] for x in c.execute('SELECT id FROM reports WHERE dedupe LIKE ?',(r['dedupe']+'%',))]
+    for i in ids:
+        join_nearby(i)
 
 def places():
     from . import resources

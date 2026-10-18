@@ -76,13 +76,17 @@
 11. **Maintenance calls reach /building:** a submitted `maintenance_request` form becomes a building ticket (building from the number called or the name given; unit parsed from what the caller said, e.g. "building F4, room 4A" gives 4A). Forms submitted earlier are backfilled once on startup.
 12. **Assignment calls (`assign.py`):** when an offer goes to a teammate with a phone, DIZA calls them with the `assignment_brief` agent. Yes accepts; no declines and goes to the backup, who is called too. Only the dialled number can answer, and the offer is held open 120 s while it rings. Until the agent is pushed, the card just notes "assignment calls aren't set up yet".
 
+13. **Several places / several callers:** corner lists ("14th and Colorado, 17th and Colorado") split into one card and pin each. A corner without a city uses the city the same caller already gave. Reports at one of our buildings pin at the building. The same kind of problem pinned within 250 m and 10 min joins one incident, so different callers' wordings fold together; the cards stay separate.
+14. **Building catch-all:** disturbance, noise and security words file noise/security tickets, and anything else at a clearly identified building files an "other" ticket.
+
 ## Requests to phone-agent session
 1. **Wire `update_incident`** (`{field, value}`, field in location, callback, relationship, what, people, hazards, access_needs). It returns `{ok, missing:[…]}`; ask next for the first item in `missing`. Call it as each fact comes in, so the operator's card fills live.
 2. **When a caller names several places,** pass them all in `location_text` ("Kansas City, Wichita, and Tulsa"). The backend splits them into one card per place.
 3. **Push the agents** (`python agents/push.py --env prod`): this adds `transfer_failed` and `location_text` to `route_to_human` in `agents/tools.json`, plus one rule in `_shared_rules.md` (retry once with `transfer_failed: true`, then `schedule_callback`). The backend already accepts both; until the push, a failed transfer still falls back to a callback.
 4. **Push the new `assignment_brief` agent** (`python agents/push.py --env prod --only assignment_brief --no-bind`). Then set `RETELL_ASSIGN_AGENT_ID` on Railway, or commit the updated `agents/retell.ids.json`.
 5. **Ask for the city or neighborhood with cross streets** ("11th and Broadway, *in Santa Monica*"). The backend pins the exact corner only when a city is named, because LA County has many same-named corners. Without one, the card goes to "place on map" rather than getting a wrong pin.
-6. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
+6. **File every place a caller names.** In a live call, "fires at Brentwood, Broadway, Olympic Blvd, Colorado Ave" was dropped. Put all the places in `location_text`, comma-separated (the backend splits towns and corner lists into one card per place), or call `submit_report` once per place.
+7. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
 
 ## Open questions
 - Web search beyond the knowledge base: which provider (needs a key on Railway), or not at all?
