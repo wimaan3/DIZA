@@ -17,12 +17,12 @@ function extendShell(source) {
   const edits = [
     ["import Building from './Building.jsx';",
       `import Building from ${JSON.stringify(buildingModule)};`],
-    ["<Building2 size={18}/>{t('Building')}",
-      "<Building2 size={18}/><span>{t('Building')}</span><CareBadge headers={headers}/>"],
-    ["'BUILDING MODE / TENANT TICKETS'", "'BUILDING / REPAIRS & RESIDENT CARE'"],
-    ["'Every tenant call, ranked and linked.'", "'One building. Every resident looked after.'"],
-    ["'Rules set urgency, merge duplicates and link related problems. You assign, decide and close.'",
-      "'Coordinate repairs, review the floor plan, and follow through on urgent and everyday resident care.'"],
+    ["<Building2 size={18}/>{t('Building management')}",
+      "<Building2 size={18}/><span>{t('Building management')}</span><CareBadge headers={headers}/>"],
+    ['t("BUILDING MODE / TENANT TICKETS")', "t('BUILDING / REPAIRS & RESIDENT CARE')"],
+    ['t("Every tenant call, ranked and linked.")', "t('One building. Every resident looked after.')"],
+    ['t("Rules set urgency, merge duplicates and link related problems. You assign, decide and close.")',
+      "t('Coordinate repairs, review the floor plan, and follow through on urgent and everyday resident care.')"],
   ];
   for (const [before, after] of edits) {
     if (source.split(before).length !== 2) {

@@ -4,6 +4,8 @@ COPY sessions/elder-care/package*.json ./
 RUN npm ci
 COPY sessions/cs2-backend/mvp/dashboard/ /build/sessions/cs2-backend/mvp/dashboard/
 COPY sessions/elder-care/workspace/ ./workspace/
+COPY sessions/elder-care/branding/ ./branding/
+COPY sessions/elder-care/web/branding/ ./web/branding/
 COPY sessions/elder-care/web/building.js ./web/building.js
 RUN npm run build
 
