@@ -152,6 +152,12 @@ def expire():
         for row in c.execute('SELECT call_id,responder_id FROM routings WHERE created<=?',(time.time()-ROUTE_HOLD,)).fetchall():
             c.execute("UPDATE responders SET status='available' WHERE id=? AND status='busy'",(row['responder_id'],))
             c.execute('DELETE FROM routings WHERE call_id=? AND responder_id=?',(row['call_id'],row['responder_id']))
+        # Busy with nothing behind it (no call routed to them, no accepted job, no pending offer): available again.
+        # Covers a transfer whose call_ended never arrived and any path that set busy without a call to end.
+        c.execute("""UPDATE responders SET status='available' WHERE status IN ('busy','reserved')
+            AND id NOT IN (SELECT responder_id FROM routings)
+            AND id NOT IN (SELECT assignee FROM requests WHERE status='accepted' AND assignee IS NOT NULL)
+            AND id NOT IN (SELECT responder_id FROM attempts WHERE status='offered')""")
         for a in c.execute("SELECT * FROM attempts WHERE status='offered' AND expires<=?",(time.time(),)).fetchall():
             c.execute("UPDATE attempts SET status='timed_out' WHERE id=?",(a['id'],))
             c.execute("UPDATE responders SET status='available' WHERE id=?",(a['responder_id'],))

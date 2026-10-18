@@ -20,7 +20,7 @@ const mmss=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 function useNow(){const[n,setN]=useState(Date.now()/1000);useEffect(()=>{const id=setInterval(()=>setN(Date.now()/1000),1000);return()=>clearInterval(id)},[]);return n}
 
 export default function Ops({headers,act,state,wall,onError,me,setMe}){
- const[data,setData]=useState(null),[sel,setSel]=useState(null),[merge,setMerge]=useState(false);
+ const[data,setData]=useState(null),[sel,setSel]=useState(null),[merge,setMerge]=useState(false),[laneTab,setLaneTab]=useState('urgent');
  const now=useNow(),seen=useRef(null),[fresh,setFresh]=useState({}),[arrivals,setArrivals]=useState([]);
  async function refresh(){try{const r=await fetch('/api/ops',{headers});if(!r.ok)throw Error(t('Operator queue unavailable'));const d=await r.json();
   const ids=new Set(d.incidents.map(i=>i.id));
@@ -28,7 +28,8 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
   seen.current=ids;setData(d)}catch(e){onError(e.message)}}
  useEffect(()=>{refresh();const id=setInterval(refresh,1500);return()=>clearInterval(id)},[headers.Authorization]);
  // A new report stays announced until the operator opens it: in a long queue it may land far below the fold.
- function show(id){setSel(id);setArrivals(a=>a.filter(x=>x!==id));setTimeout(()=>document.getElementById('q-'+id)?.scrollIntoView({block:'center',behavior:'smooth'}),50)}
+ const laneOf=i=>['P0','P1'].includes(i?.effective)?'urgent':'routine';
+ function show(id){setLaneTab(laneOf(inc.find(x=>x.id===id)));setSel(id);setArrivals(a=>a.filter(x=>x!==id));setTimeout(()=>document.getElementById('q-'+id)?.scrollIntoView({block:'center',behavior:'smooth'}),50)}
  async function run(path,body){const ok=await act(path,body);if(ok)refresh();return ok}
  const inc=data?.incidents||[];
  const urgent=inc.filter(i=>['P0','P1'].includes(i.effective)),routine=inc.filter(i=>!['P0','P1'].includes(i.effective));
@@ -48,7 +49,7 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
  useEffect(()=>{function key(e){
   if(e.target.closest('input,textarea,select')||e.metaKey||e.ctrlKey||e.altKey||!cur)return;
   const k=e.key.toLowerCase(),at=order.findIndex(i=>i.id===cur.id);
-  if(k==='j'||k==='k'){e.preventDefault();const n=order[Math.min(order.length-1,Math.max(0,at+(k==='j'?1:-1)))];if(n){setSel(n.id);document.getElementById('q-'+n.id)?.scrollIntoView({block:'nearest'})}}
+  if(k==='j'||k==='k'){e.preventDefault();const n=order[Math.min(order.length-1,Math.max(0,at+(k==='j'?1:-1)))];if(n){setSel(n.id);setLaneTab(laneOf(n));document.getElementById('q-'+n.id)?.scrollIntoView({block:'nearest'})}}
   else if(k==='t')take(cur);else if(k==='m')setMerge(true);else if(k==='c')callback(cur);else if(k==='r')review(cur);
   else if('1234'.includes(k)&&k)setPriority(cur,SEV[+k-1]);
  }window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[cur?.id,order.length,operator]);
@@ -66,12 +67,16 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
   <div className="ops-toolbar"><label>{t('I am')} <select value={operator} onChange={e=>setMe(e.target.value)}>{state.responders.map(r=><option key={r.id} value={r.id}>{r.name} · {t(r.status)}</option>)}</select></label>
    <span className="keys"><kbd>J</kbd><kbd>K</kbd> {t('move')} · <kbd>T</kbd> {t('take call')} · <kbd>M</kbd> {t('merge')} · <kbd>1</kbd>–<kbd>4</kbd> {t('priority')} · <kbd>C</kbd> {t('callback')} · <kbd>R</kbd> {t('reviewed')}</span>
    {state.demo&&<button className="small" onClick={()=>run('/api/demo/seed?mode=crisis')}>{t('Load demo: falls & freeway crash')}</button>}{!state.live&&<button className="small" onClick={()=>run('/api/demo/surge')}>{t('Simulate surge')}</button>}<a className="small linkbtn" href="/ops?wall=1" target="_blank" rel="noreferrer">{t('Wall view ↗')}</a></div>
-  {map}
   <div className="ops-grid">
-   <div className="lanes">{lane(t('Urgent'),urgent,t('P0–P1 · P0 pinned, then score, then wait'),'urgent')}{lane(t('Not urgent'),routine,t('P2–P3 · review, info, follow-ups'),'routine')}</div>
+   <section className="panel lane queue2"><div className="lane-tabs" role="tablist">{[['urgent',t('Urgent'),urgent],['routine',t('Not urgent'),routine]].map(([k,label,list])=>
+     <button key={k} role="tab" aria-selected={laneTab===k} className={'lane-tab '+k+(laneTab===k?' on':'')} onClick={()=>setLaneTab(k)}>{label} <span>{list.length}</span></button>)}
+     <small>{laneTab==='urgent'?t('P0–P1 · P0 pinned, then score, then wait'):t('P2–P3 · review, info, follow-ups')}</small></div>
+    <div className="report-list">{(laneTab==='urgent'?urgent:routine).length?(laneTab==='urgent'?urgent:routine).map(i=><QueueCard key={i.id} i={i} now={now} on={cur?.id===i.id} fresh={fresh[i.id]>Date.now()} pick={()=>setSel(i.id)}/>):<p className="none">{laneTab==='urgent'?t('No urgent reports right now.'):t('Nothing waiting.')}</p>}</div></section>
    {cur?<IncidentCard i={cur} all={inc} state={state} now={now} merge={merge} setMerge={setMerge} operator={operator} nameOf={nameOf}
      run={run} setPriority={setPriority} review={review} take={take} callback={callback}/>:<section className="panel detail"><div className="empty full"><Layers size={38}/><h3>{t('No reports yet.')}</h3><p>{t('Calls to the line appear here within seconds. In drill mode, load the demo (elderly falls and a freeway crash) to see a busy night.')}</p></div></section>}
-  </div><div className="trends"><LoadStrip m={m} charts/></div></>;
+  </div>
+  {map}
+  <div className="trends"><LoadStrip m={m} charts/></div></>;
 }
 
 function QueueCard({i,now,on,fresh,pick}){
@@ -132,14 +137,14 @@ const Tile=({n,label,d})=><div className="ctile"><strong>{n}</strong><b>{label}<
 // "Load taken off": what the line handled so people didn't have to. Measured from stored calls; estimates say so.
 function LoadStrip({m,big,charts}){
  const tiles=[
-  {icon:<Phone/>,label:t('Calls handled with no operator'),value:`${m.ai_only}`,of:m.calls?t('of {n}',{n:m.calls}):'',detail:t('{n} warm transfers to a person',{n:m.transferred})},
-  {icon:<Users/>,label:t('Callers answered at once (peak)'),value:m.peak_concurrent,detail:t('no hold queue while the AI takes the call')},
-  {icon:<Layers/>,label:t('Duplicate reports folded'),value:m.folded,detail:t('{a} reports → {b} incidents',{a:m.reports,b:m.incidents})},
-  {icon:<Timer/>,label:t('Operator time saved (estimate)'),value:`${m.minutes_saved}`,of:t('min'),detail:t('{n} answers pre-collected × {s} s each',{n:m.prefilled,s:m.question_seconds})},
-  {icon:<Zap/>,label:t('Call to ranked card (median)'),value:m.median_to_card_s==null?'–':mmss(m.median_to_card_s),detail:t('from pickup to a card in this queue')},
-  {icon:<ArrowDownRight/>,label:t('Handled outside 911'),value:m.diverted,detail:t('info answered + follow-ups queued')},
+  {hint:t('Calls in the last 24 h that the AI handled end to end, with no warm transfer to a person.'),icon:<Phone/>,label:t('Calls handled with no operator'),value:`${m.ai_only}`,of:m.calls?t('of {n}',{n:m.calls}):'',detail:t('{n} warm transfers to a person',{n:m.transferred})},
+  {hint:t('Most calls the line was on at the same moment in the last 24 h. Nobody waited on hold for a free operator.'),icon:<Users/>,label:t('Callers answered at once (peak)'),value:m.peak_concurrent,detail:t('no hold queue while the AI takes the call')},
+  {hint:t('Reports about the same thing (same place and kind, or pinned within 250 m in 10 minutes) grouped into one incident. Every report stays visible.'),icon:<Layers/>,label:t('Duplicate reports folded'),value:m.folded,detail:t('{a} reports → {b} incidents',{a:m.reports,b:m.incidents})},
+  {hint:t('Estimate: checklist answers the AI collected before a person saw the card, at 20 seconds per question an operator would otherwise ask.'),icon:<Timer/>,label:t('Operator time saved (estimate)'),value:`${m.minutes_saved}`,of:t('min'),detail:t('{n} answers pre-collected × {s} s each',{n:m.prefilled,s:m.question_seconds})},
+  {hint:t('Median time from the call being answered to its card appearing, ranked, in this queue.'),icon:<Zap/>,label:t('Call to ranked card (median)'),value:m.median_to_card_s==null?'–':mmss(m.median_to_card_s),detail:t('from pickup to a card in this queue')},
+  {hint:t('Information questions answered from verified sources plus follow-ups queued (callbacks, forms): calls that never needed an emergency operator.'),icon:<ArrowDownRight/>,label:t('Handled outside 911'),value:m.diverted,detail:t('info answered + follow-ups queued')},
  ];
- return <section className={'loadstrip'+(big?' big':'')} aria-label={charts?'Trends, last hour and 24 hours':'Load taken off operators, last 24 hours'}>{!charts&&<div className="load-tiles">{tiles.map(x=><div className="stat" key={x.label}><div className="stat-label">{x.label}{x.icon}</div><strong>{x.value}{x.of&&<em> {x.of}</em>}</strong><small>{x.detail}</small></div>)}</div>}
+ return <section className={'loadstrip'+(big?' big':'')} aria-label={charts?'Trends, last hour and 24 hours':'Load taken off operators, last 24 hours'}>{!charts&&<div className="load-tiles">{tiles.map(x=><div className="stat" key={x.label} title={x.hint} tabIndex={0} aria-label={`${x.label}: ${x.value}. ${x.hint}`}><div className="stat-label">{x.label}{x.icon}</div><strong>{x.value}{x.of&&<em> {x.of}</em>}</strong><small>{x.detail}</small></div>)}</div>}
   {charts&&<div className="load-charts"><Surge buckets={m.buckets}/><Bars title={t('What callers report')} rows={m.categories.map(c=>({k:cat(c.category),v:c.count}))}/><Bars title={t('Languages')} rows={m.languages.map(c=>({k:LANG[c.language]||c.language,v:c.count}))}/></div>}
   {!charts&&(m.waiting_p0>0||m.flags>0)&&<p className="load-alert"><AlertTriangle size={14}/>{m.waiting_p0>0&&t('{n} life-threat reports with nobody on them.',{n:m.waiting_p0})+' '}{m.flags>0&&t('{n} possible missed dangers to review.',{n:m.flags})}</p>}</section>;
 }

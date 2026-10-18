@@ -431,9 +431,10 @@ def take_call(rid: str, t: Take):
         if cid:
             c.execute('DELETE FROM routings WHERE call_id=?', (cid,))
             c.execute('INSERT INTO routings VALUES(?,?,?)', (cid, who['id'], time.time()))
-        c.execute("UPDATE responders SET status='busy' WHERE id=?", (who['id'],))
         c.execute('UPDATE reports SET claimed_by=? WHERE id=?', (who['id'], rid))
         live = cid and (c.execute('SELECT status FROM calls WHERE call_id=?', (cid,)).fetchone() or {'status': ''})['status'] == 'live'
+        if live:  # busy only while that call is live; call_ended frees them (routings)
+            c.execute("UPDATE responders SET status='busy' WHERE id=?", (who['id'],))
         log(c, r, f"{who['name']} took this call" + ('' if live else ' · the call has ended, so DIZA will connect them by phone' if cid else ' (no call attached)'))
     if cid and not live:  # the caller already hung up: taking it means calling them back
         queue_callback(rid, Callback(responder_id=who['id']))
@@ -484,6 +485,21 @@ def queue_callback(rid: str, cb: Callback | None = None):
         from .assign import start_callback
         start_callback(code, rid, cb.responder_id)
     return {'ok': True, 'code': code}
+
+
+class CaseStatus(BaseModel):
+    status: str = Field(pattern='^(queued|in_progress|done)$')
+    by: str = Field(default='operator', max_length=100)
+
+
+@app.post('/api/cases/{code}/status')
+def case_status(code: str, cs: CaseStatus):
+    """Follow-ups (callbacks, forms, requests made on calls): mark them in progress or done from the dashboard."""
+    with connect() as c:
+        if not c.execute('UPDATE cases SET status=?,updated=? WHERE code=?', (cs.status, time.time(), code)).rowcount:
+            raise HTTPException(404, 'Follow-up not found')
+        event(c, code, f"{cs.by} marked {code} {cs.status.replace('_', ' ')}")
+    return {'ok': True}
 
 
 class Zone(BaseModel):
