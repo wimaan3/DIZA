@@ -264,7 +264,7 @@ def build_incidents(c, now):
                                          'lat', 'lon', 'gps_accuracy', 'reviewed_at', 'reviewed_by', 'review_note', 'claimed_by')},
                     'effective': effective, 'flags': flags, 'call_id': cid, 'caller_last4': call.get('caller_last4') or '', 'call_status': call.get('status') or '',
                     'agent': call.get('agent') or '', 'fields': f, 'vulnerable': vulnerable, 'people': people, 'hits': [h['word'] for h in hits],
-                    'quotes': [l for l in text.splitlines() if l.strip()][-4:], 'request': q, 'timeline': events[-30:],
+                    'quotes': list(dict.fromkeys(l.strip() for l in text.splitlines() if l.strip()))[-4:], 'request': q, 'timeline': events[-30:],
                     'agency': (pick_police(r['location'], None) or {}).get('name', ''), 'handled': bool(handled),
                     'wait_s': (now - r['created']) if not handled else None, 'target_s': TARGET_S[effective],
                     'checklist': checklist(r, f, call.get('caller_last4') or '', text, hits, vulnerable, people),
