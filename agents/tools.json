@@ -867,5 +867,41 @@
       "required": []
     },
     "speak_during_execution": false
+  },
+  "swap_to_armenian": {
+    "type": "agent_swap",
+    "name": "swap_to_armenian",
+    "description": "Hand the call to the Armenian line.",
+    "agent_id": "@agent:inbound_hy",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": false,
+    "speak_during_execution": false
+  },
+  "swap_to_persian": {
+    "type": "agent_swap",
+    "name": "swap_to_persian",
+    "description": "Hand the call to the Persian (Farsi) line.",
+    "agent_id": "@agent:inbound_fa",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": false,
+    "speak_during_execution": false
+  },
+  "swap_to_tagalog": {
+    "type": "agent_swap",
+    "name": "swap_to_tagalog",
+    "description": "Hand the call to the Filipino (Tagalog) line.",
+    "agent_id": "@agent:inbound_fil",
+    "agent_version": "@version",
+    "post_call_analysis_setting": "only_destination_agent",
+    "webhook_setting": "both_agents",
+    "keep_current_language": false,
+    "keep_current_voice": false,
+    "speak_during_execution": false
   }
 }
