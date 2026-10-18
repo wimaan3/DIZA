@@ -336,6 +336,16 @@ def ops_state():
 
 
 # --- Operator actions (behind OPS_API_TOKEN when set); every one is logged on the card's timeline ---
+def effective_severity(c, r):
+    """The severity the queue shows: the second reader can raise an unreviewed card; a person's review settles it."""
+    if r['reviewed_at'] is not None:
+        return r['severity']
+    cid = call_of(dict(r))
+    call = c.execute('SELECT transcript FROM calls WHERE call_id=?', (cid,)).fetchone() if cid else None
+    flags = second_reader(r['severity'], r['category'], danger_hits(caller_text(call['transcript'] if call else '', r['evidence'])))
+    return min([r['severity']] + [x['implied'] for x in flags], key=SEVERITIES.index)
+
+
 def report_row(c, rid):
     r = c.execute('SELECT * FROM reports WHERE id=?', (rid,)).fetchone()
     if not r:
@@ -359,14 +369,15 @@ def set_priority(rid: str, p: Priority):
     with connect() as c:
         c.execute('BEGIN IMMEDIATE')
         r = report_row(c, rid)
-        lower = SEVERITIES.index(p.severity) > SEVERITIES.index(r['severity'])
+        shown = effective_severity(c, r)  # lowering is judged against what the operator sees, not the stored value
+        lower = SEVERITIES.index(p.severity) > SEVERITIES.index(shown)
         if lower and len(p.reason.strip()) < 3:
             raise HTTPException(400, 'Lowering a priority needs a reason')
         c.execute('UPDATE reports SET severity=?,reason=?,reviewed_at=?,reviewed_by=?,review_note=? WHERE id=?',
                   (p.severity, f"Set to {p.severity} by {p.by}" + (f': {p.reason}' if p.reason else ''), time.time(), p.by, p.reason or None, rid))
         if p.severity != 'P3' and not c.execute('SELECT 1 FROM requests WHERE report_id=?', (rid,)).fetchone():
             c.execute('INSERT INTO requests VALUES(?,?,?,?,?,?)', (str(uuid.uuid4()), rid, 'new', None, time.time(), time.time()))
-        log(c, r, f"{p.by} {'lowered' if lower else 'raised' if p.severity != r['severity'] else 'confirmed'} priority {r['severity']} → {p.severity}" + (f': {p.reason}' if p.reason else ''))
+        log(c, r, f"{p.by} {'lowered' if lower else 'raised' if p.severity != shown else 'confirmed'} priority {shown} → {p.severity}" + (f': {p.reason}' if p.reason else ''))
     return {'ok': True}
 
 

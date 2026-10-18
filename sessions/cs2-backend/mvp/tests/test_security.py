@@ -13,6 +13,7 @@ ARGS={'incident':'Apartment door forced open, laptop missing','location_text':'U
 class SecurityBriefing(unittest.TestCase):
  def setUp(self):
   self.ctx=TestClient(app);self.c=self.ctx.__enter__();self.c.post('/api/demo/reset')
+  with connect() as c:c.execute('DELETE FROM security_briefs')
   self.placed=[]
   self.p=patch.object(S,'retell_post',side_effect=lambda path,body:(self.placed.append((path,body)),{'call_id':'call_out_1'})[1]);self.p.start()
  def tearDown(self):self.p.stop();self.ctx.__exit__(None,None,None)
@@ -41,14 +42,44 @@ class SecurityBriefing(unittest.TestCase):
  def test_busy_security_falls_back_to_a_drill_stand_in(self):
   with connect() as c:c.execute("UPDATE responders SET status='busy' WHERE id='t2'")
   out=self.fn('brief_security',ARGS)
-  self.assertEqual(out['status'],'calling');self.assertTrue(self.placed)
+  self.assertEqual(out['status'],'calling');self.assertEqual(self.placed[0][1]['to_number'],'+15555550001')
+ def test_one_briefing_per_call_across_both_paths(self):
+  self.fn('brief_security',ARGS)
+  self.fn('brief_security',{**ARGS,'incident':'Different words for the same break-in'})
+  self.assertEqual(len(self.placed),1)
  def test_retell_failure_is_reported_not_raised(self):
   self.p.stop()
   with patch.object(S,'retell_post',side_effect=OSError('down')):
    out=self.fn('brief_security',ARGS,call_id='call_s2')
   self.p.start()
   self.assertEqual(out['status'],'failed')
- def test_route_to_human_prefers_security_skill(self):
+ def wait_placed(self,n):
+  import time
+  for _ in range(50):
+   if len(self.placed)>=n:return
+   time.sleep(0.05)
+ def test_route_to_human_prefers_security_skill_and_skips_double_briefing(self):
   out=self.fn('route_to_human',{'needs':['security'],'language':'en','severity':'P2','summary':'Break-in found this morning'},call_id='call_s3')
   self.assertEqual(out['responder_name'],'Guard Two')
+  self.wait_placed(1);self.assertEqual(self.placed,[])  # security takes the warm transfer and hears the whisper
+ def test_route_to_human_with_security_need_briefs_a_stand_in_when_security_is_busy(self):
+  with connect() as c:
+   c.execute("UPDATE responders SET status='busy' WHERE id='t2'")
+   c.execute("INSERT OR REPLACE INTO responders VALUES('t3','Third Mate','evac_logistics','available')")
+   c.execute("INSERT OR REPLACE INTO responder_phones VALUES('t3','+15555550003')")
+  out=self.fn('route_to_human',{'needs':['security'],'language':'en','severity':'P2','summary':'Car broken into overnight, bag stolen'},call_id='call_s4')
+  self.assertEqual(out['responder_name'],'Teammate One')
+  self.wait_placed(1)
+  # Never the person already taking the caller: the other free teammate stands in for security.
+  self.assertEqual(len(self.placed),1);self.assertEqual(self.placed[0][1]['to_number'],'+15555550003')
+  self.assertIn('Car broken into overnight',self.placed[0][1]['retell_llm_dynamic_variables']['briefing'])
+ def test_security_busy_and_nobody_free_means_no_briefing(self):
+  with connect() as c:c.execute("UPDATE responders SET status='busy' WHERE id='t2'")
+  self.fn('route_to_human',{'needs':['security'],'language':'en','severity':'P2','summary':'Bike stolen'},call_id='call_s6')
+  self.wait_placed(1);self.assertEqual(self.placed,[])
+  with connect() as c:
+   self.assertEqual(c.execute("SELECT status FROM security_briefs WHERE call_id='call_s6'").fetchone()[0],'no_security_on_duty')
+ def test_route_to_human_without_security_need_does_not_brief(self):
+  self.fn('route_to_human',{'needs':['medical'],'language':'en','severity':'P2','summary':'Sprained ankle'},call_id='call_s5')
+  self.wait_placed(1);self.assertEqual(self.placed,[])
 if __name__=='__main__':unittest.main()
