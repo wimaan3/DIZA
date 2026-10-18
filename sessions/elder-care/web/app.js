@@ -1,4 +1,5 @@
 import { createFacilityWorkspace } from "./facility.js";
+import { createBuildingWorkspace } from "./building.js";
 
 const app = document.querySelector("#app");
 const dialogRoot = document.querySelector("#dialog-root");
@@ -6,9 +7,10 @@ const announce = document.querySelector("#announcer");
 const embedded = new URLSearchParams(location.search).get("embedded") === "1";
 const requestedView = new URLSearchParams(location.search).get("view");
 if (embedded) document.documentElement.classList.add("embedded-care");
+if (requestedView === "building") document.documentElement.classList.add("unified-building");
 let data,
   selected,
-  view = ["daily", "urgent", "residents", "facility", "history"].includes(requestedView) ? requestedView : "daily",
+  view = ["daily", "urgent", "residents", "facility", "history", "building"].includes(requestedView) ? requestedView : "daily",
   statusFilter = "open",
   search = "",
   staffId = sessionStorage.getItem("diza-care-staff") || "nurse-jordan";
@@ -93,6 +95,10 @@ const categoryIcon = (r) =>
       }[r.category] || "heart";
 
 const facilityWorkspace = createFacilityWorkspace({ esc, icon, age, clock });
+const buildingWorkspace = createBuildingWorkspace({
+  esc, icon, age, facility: facilityWorkspace, requestCard, careDetail: detail,
+  setCareSelection: (id) => { selected = id; },
+});
 
 async function api(path, body) {
   const response = await fetch(path, {
@@ -170,6 +176,9 @@ function draw() {
     "roomFilter",
     "editRoom",
     "facilityAction",
+    "buildingItem",
+    "buildingRoom",
+    "buildingFilter",
   ].find((key) => focus?.dataset?.[key]);
   const focusValue = focusKey ? focus.dataset[focusKey] : null;
   if (!data) {
@@ -188,6 +197,7 @@ function draw() {
     residents: "A little attention. Every day.",
     history: "Every handoff has a story.",
     facility: "One home. A coordinated response.",
+    building: "One building. Every resident looked after.",
   }[view];
   app.innerHTML = `<div class="layout">
     ${embedded ? "" : `<aside class="sidebar"><a class="brand" href="/care" aria-label="DIZA Care home"><span class="brand-icon">${icon("heart", 23)}</span>DIZA<span>care</span></a>
@@ -199,14 +209,14 @@ function draw() {
       ${data.legacy_available ? `<a class="legacy-link" href="/ops">Original operations ${icon("arrow", 15)}</a>` : ""}
       <div class="sidebar-foot"><span class="avatar">${initials(staffFor(staffId)?.name || "")}</span><div><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select></div></div>
     </aside>`}
-    <div class="main-wrap">${embedded ? `<div class="embedded-toolbar" role="region" aria-label="Resident care controls"><nav aria-label="Care workspace">${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("facility", "grid", "Rooms & repairs")}${nav("history", "clock", "Completed care")}</nav><div class="embedded-staff"><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span></div></div>` : `<header class="topbar"><span>Care workspace <span class="slash">/</span> ${view === "facility" ? "Rooms & repairs" : view === "residents" ? "Residents" : view === "history" ? "Completed care" : view === "urgent" ? "Urgent response" : "Daily overview"}</span><div><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span><span class="date">${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: data.timezone }).format(new Date())}</span></div></header>`}
-    <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow">${esc(data.facility.toUpperCase())} / CARE TEAM</div><h1>${title}</h1><p class="subtitle">${view === "facility" ? "Coordinate shared room issues and follow through on every resident’s care." : view === "urgent" ? "Prioritize urgent needs. Confirm who is taking responsibility." : view === "residents" ? "Keep wellbeing checks personal, visible, and followed through." : view === "history" ? "Review completed requests and the people who followed through." : "A shared view of what matters, and who needs you next."}</p></div><button class="primary" data-action="new" ${disabled()}>${icon("plus", 17)} Record a request</button></div>
+    <div class="main-wrap">${embedded ? `<div class="embedded-toolbar" role="region" aria-label="Resident care controls">${view === "building" ? "" : `<nav aria-label="Care workspace">${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("facility", "grid", "Rooms & repairs")}${nav("history", "clock", "Completed care")}</nav>`}<div class="embedded-staff"><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span></div></div>` : `<header class="topbar"><span>Care workspace <span class="slash">/</span> ${view === "facility" ? "Rooms & repairs" : view === "residents" ? "Residents" : view === "history" ? "Completed care" : view === "urgent" ? "Urgent response" : "Daily overview"}</span><div><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span><span class="date">${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: data.timezone }).format(new Date())}</span></div></header>`}
+    <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow">${esc(data.facility.toUpperCase())} / CARE TEAM</div><h1>${title}</h1><p class="subtitle">${view === "building" ? "One room map. One work queue. Care and repairs coordinated together." : view === "facility" ? "Coordinate shared room issues and follow through on every resident’s care." : view === "urgent" ? "Prioritize urgent needs. Confirm who is taking responsibility." : view === "residents" ? "Keep wellbeing checks personal, visible, and followed through." : view === "history" ? "Review completed requests and the people who followed through." : "A shared view of what matters, and who needs you next."}</p></div><button class="primary" data-action="new" ${disabled()}>${icon("plus", 17)} Record a request</button></div>
     ${error ? `<div role="alert" class="error-banner">${icon("alert")}<span>${esc(error)}</span><button data-action="refresh">Reconnect</button></div>` : ""}
     ${!connected && lastSuccess ? `<p class="stale">Last connected ${esc(new Date(lastSuccess).toLocaleTimeString())}. Actions are paused.</p>` : ""}
     <div class="demo-note">${icon("shield", 16)} <span>${data.demo ? "Demo workspace · fictional residents and staff." : "Care coordination workspace."} Staff selection is a demo control. No calls, pages, or emergency dispatch are sent.</span>${data.demo ? `<button data-action="demo" ${disabled()}>Load demo scenarios ${icon("arrow", 14)}</button>` : ""}</div>
     ${urgent.length ? `<div class="urgent-banner"><span class="urgent-icon">${icon("alert", 22)}</span><div><strong>${urgent.length} urgent ${urgent.length === 1 ? "request needs" : "requests need"} attention</strong><p>${urgent.filter((r) => r.status === "new").length} awaiting a nurse or care lead. Follow your home's emergency procedure for immediate danger.</p></div><button data-view="urgent">Open urgent queue <span aria-hidden="true">→</span></button></div>` : ""}
-    ${view !== "facility" ? `<section class="stats" aria-label="Care overview">${stat("Urgent needs", urgent.length, urgent.length ? "Nurse or care lead required" : "No open urgent requests", "alert", "rose")}${stat("Everyday requests", daily.length, `${daily.filter((r) => r.status === "new").length} awaiting staff acceptance`, "mug", "sand")}${stat("Check-ins to review", unresolvedCheckins.length, due.length ? `${due.length} not recorded after 10 am` : "Daily check-in target: 10 am", "users", "lavender")}${stat("Care in progress", active().filter((r) => r.status === "in_progress").length, "Responsibility accepted by staff", "heart", "mint")}</section>` : ""}
-    ${view === "facility" ? facilityWorkspace.render(data, staffId, disabled()) : view === "residents" ? residentsView() : queueView()}
+    ${view !== "facility" ? `<section class="stats" aria-label="Care overview">${stat("Urgent needs", urgent.length, urgent.length ? "Nurse or care lead required" : "No open urgent requests", "alert", "rose")}${stat("Everyday requests", daily.length, `${daily.filter((r) => r.status === "new").length} awaiting staff acceptance`, "mug", "sand")}${stat("Check-ins to review", unresolvedCheckins.length, due.length ? `${due.length} not recorded after 10 am` : "Daily check-in target: 10 am", "users", "lavender")}${view === "building" ? stat("Open repairs", data.facility_workflow.tickets.filter((item) => !item.merged_into && item.status !== "closed").length, "Shared incidents linked to resident care", "grid", "mint") : stat("Care in progress", active().filter((r) => r.status === "in_progress").length, "Responsibility accepted by staff", "heart", "mint")}</section>` : ""}
+    ${view === "building" ? buildingWorkspace.render(data, staffId, disabled()) : view === "facility" ? facilityWorkspace.render(data, staffId, disabled()) : view === "residents" ? residentsView() : queueView()}
     <footer><span>${icon("heart", 14)} Designed around people. Supported by DIZA.</span><span>${data.residents.length} residents · ${esc(data.timezone.replaceAll("_", " "))}</span></footer>
     </main></div></div>`;
   if (focusId && document.getElementById(focusId)) {
@@ -217,7 +227,7 @@ function draw() {
   } else if (focusKey && !modal) {
     app
       .querySelector(
-        `button[data-${focusKey.replace(/([A-Z])/g, "-$1").toLowerCase()}="${CSS.escape(focusValue)}"]:not(:disabled)`,
+        `[data-${focusKey.replace(/([A-Z])/g, "-$1").toLowerCase()}="${CSS.escape(focusValue)}"]:not(:disabled)`,
       )
       ?.focus({ preventScroll: true });
   }
@@ -274,11 +284,11 @@ function queueView() {
     ${view === "daily" ? `<section class="checkin-strip"><div class="strip-icon">${icon("users", 25)}</div><div><h2>A moment to check in.</h2><p>${data.residents.filter((r) => r.checkin?.outcome === "seen_well").length} of ${data.residents.length} residents recorded as seen well today. Follow-ups stay visible in the queue.</p></div><button class="secondary" data-view="residents">View residents <span aria-hidden="true">→</span></button></section>` : ""}`;
 }
 
-function requestCard(r, chosen) {
+function requestCard(r, chosen, combined = false) {
   const person = personFor(r.resident_id);
   const owner = staffFor(r.assignee);
   const waiting = r.urgency === "urgent" && r.status === "new";
-  return `<button class="request-card ${chosen ? "selected" : ""} ${r.urgency === "urgent" ? "urgent-card" : ""}" data-request="${esc(r.id)}" aria-pressed="${chosen}"><div class="request-icon ${r.urgency === "urgent" ? "rose" : "sand"}">${icon(categoryIcon(r), 21)}</div><div class="card-content"><div class="card-top"><strong>${esc(r.summary)}</strong><span class="age ${waiting ? "urgent-text" : ""}">${icon("clock", 12)} ${age(r.created)}</span></div><div class="resident-line">${esc(person.name)} <span>·</span> Room ${esc(person.room)} <span>·</span> ${esc(person.wing)} wing</div><div class="card-bottom"><span class="tag ${r.urgency === "urgent" ? "urgent-tag" : ""}">${r.urgency === "urgent" ? "Urgent" : esc(data.categories[r.category])}</span><span class="status ${r.status}"><i></i>${labels[r.status]}</span>${owner ? `<span class="owner">${esc(owner.name)}</span>` : ""}</div></div></button>`;
+  return `<button class="request-card ${chosen ? "selected" : ""} ${r.urgency === "urgent" ? "urgent-card" : ""}" data-request="${esc(r.id)}" aria-pressed="${chosen}"><div class="request-icon ${r.urgency === "urgent" ? "rose" : "sand"}">${icon(categoryIcon(r), 21)}</div><div class="card-content"><div class="card-top"><strong>${esc(r.summary)}</strong><span class="age ${waiting ? "urgent-text" : ""}">${icon("clock", 12)} ${age(r.created)}</span></div><div class="resident-line">${esc(person.name)} <span>·</span> Room ${esc(person.room)} <span>·</span> ${esc(person.wing)} wing</div><div class="card-bottom">${combined ? '<span class="tag">Care request</span>' : ""}<span class="tag ${r.urgency === "urgent" ? "urgent-tag" : ""}">${r.urgency === "urgent" ? "Urgent" : esc(data.categories[r.category])}</span><span class="status ${r.status}"><i></i>${labels[r.status]}</span>${owner ? `<span class="owner">${esc(owner.name)}</span>` : ""}</div></div></button>`;
 }
 
 function detail(r) {
@@ -480,8 +490,30 @@ async function submitDialog(form) {
 }
 
 document.addEventListener("click", async (event) => {
+  const room = event.target.closest("[data-building-room]");
+  if (view === "building" && room) {
+    buildingWorkspace.room(room.dataset.buildingRoom);
+    draw();
+    return;
+  }
   const button = event.target.closest("button");
   if (!button || button.disabled) return;
+  if (view === "building" && button.dataset.buildingItem) {
+    buildingWorkspace.select(button.dataset.buildingItem);
+    draw();
+    return;
+  }
+  if (view === "building" && button.dataset.buildingFilter) {
+    buildingWorkspace.filter(button.dataset.buildingFilter);
+    draw();
+    return;
+  }
+  if (view === "building" && button.dataset.view === "urgent") {
+    buildingWorkspace.filter("urgent");
+    draw();
+    document.getElementById("combined-queue-title")?.scrollIntoView({block:"start"});
+    return;
+  }
   if (button.dataset.view) {
     view = button.dataset.view;
     search = "";
@@ -491,8 +523,13 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (button.dataset.facilityCode) {
-    view = "facility";
-    facilityWorkspace.select(button.dataset.facilityCode);
+    if (view === "building") {
+      const ticket = data.facility_workflow.tickets.find((item) => item.code === button.dataset.facilityCode);
+      buildingWorkspace.select("repair:" + (ticket?.merged_into || button.dataset.facilityCode), true);
+    } else {
+      view = "facility";
+      facilityWorkspace.select(button.dataset.facilityCode);
+    }
     draw();
     return;
   }
@@ -508,6 +545,11 @@ document.addEventListener("click", async (event) => {
   }
   if (button.dataset.openCare) {
     const item = data.requests.find((r) => r.id === button.dataset.openCare);
+    if (item && view === "building") {
+      buildingWorkspace.select("care:" + item.id, true);
+      draw();
+      return;
+    }
     if (item) {
       view =
         item.status === "resolved"
@@ -542,6 +584,7 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (button.dataset.request) {
+    if (view === "building") buildingWorkspace.select("care:" + button.dataset.request);
     selected = button.dataset.request;
     draw();
     return;
@@ -599,6 +642,11 @@ document.addEventListener("change", (event) => {
   }
 });
 document.addEventListener("input", (event) => {
+  if (event.target.id === "building-search") {
+    buildingWorkspace.search(event.target.value);
+    draw();
+    return;
+  }
   if (event.target.id === "queue-search") {
     search = event.target.value;
     selected = null;
@@ -618,6 +666,21 @@ document.addEventListener("submit", async (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
+  if (view === "building" && !modal && !event.target.closest("input,textarea,select") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    const room = event.target.closest("[data-building-room]");
+    if (room && ["Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      buildingWorkspace.room(room.dataset.buildingRoom);
+      draw();
+      return;
+    }
+    if (["j", "k"].includes(event.key)) {
+      event.preventDefault();
+      buildingWorkspace.move(event.key === "j" ? 1 : -1);
+      draw();
+      return;
+    }
+  }
   if (
     view !== "facility" ||
     modal ||
