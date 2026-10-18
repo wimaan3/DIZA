@@ -55,3 +55,14 @@
 - Only the Dockerfile selection changes: existing `/ops` health check, restart policy, `$PORT` startup, `/data/diza.sqlite3` database location and original backend remain in place.
 - The previous deployment returned the original Operations HTML at `/city-3d/`; HTTP 200 alone is insufficient to verify activation.
 - Config PR requires DS review per AGENTS.md. No direct main push or self-merge.
+
+## Operations Live map integration
+- **Branch:** `codex/ops-map-3d`.
+- The user clarified that the 3D renderer must replace the existing Operations Live map shown in their screenshot, not be a separate primary experience. This explicitly authorizes the necessary edits in the existing dashboard folder.
+- Replaced `dashboard/src/LiveMap.jsx` with MapLibre while keeping the existing props and mutation callbacks. Ops and Wall view now use 3D directly; no iframe, separate event store or second token login.
+- Preserved severity markers, selected/flagged/GPS styling, linked-report rings, public places, unlocated list, draggable coordinates, zone drawing/saving/removal and offline outline. New incoming reports no longer force a world-scale fit; operators can choose All reports explicitly or jump to LA presets.
+- Extracted presets, verified facility directory and building styling into `dashboard/src/city-map-data.js`, shared with the standalone explorer. Added `ops-map-3d.css`; added MapLibre and removed unused Leaflet dependency from the existing dashboard; split the map library into its own build chunk.
+- Added Chinese/Spanish labels for new controls. Facility positions remain approximate address matches, not indoor or surveyed entrance data.
+- `tests/ops_map_browser.py` tests the integrated `/ops` UI against an isolated local backend and temporary SQLite database, with Retell disabled. It checks selection, persisted dragging, pending placement, zone creation/deletion, 2D/3D, offline, facility layer, region navigation, mobile layout and Wall view.
+- Both dashboard builds and shared-data tests pass. Integrated browser checks passed with no JavaScript errors; desktop and mobile screenshots inspected. Full Docker build remains unverified (daemon unavailable).
+- CS#2 review and a subsequent deployment are required before this replacement appears online.

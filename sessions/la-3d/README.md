@@ -2,7 +2,7 @@
 
 A city-scale view for community operations. Downtown, USC / West Adams, Westwood and Santa Monica presets sit over a pannable MapLibre map. OpenFreeMap supplies building footprints and mapped or estimated heights; this is not a photorealistic mesh or an indoor floor plan.
 
-The implementation is isolated here per the repository's session ownership rules. It does not replace the existing dashboard or modify another session's code.
+The initial explorer is available at `/city-3d/`. The Operations integration follow-up replaces the existing dashboard Live map at `/ops` and in Wall view, as explicitly requested by the user. It uses the same event state, selection and mutation callbacks; no separate login or iframe is introduced.
 
 ## What works
 
@@ -80,4 +80,4 @@ Map attribution is kept visible: OpenFreeMap / OpenMapTiles / OpenStreetMap. See
 
 No automated police/911 routing, resident records, facility occupancy, hazard detection, SMS, indoor layouts, photogrammetry, or operational dispatch is added. The city layer does not use an LLM, so panning or rotating it consumes no model tokens. Network tile delivery and the existing app's services have their own costs.
 
-After CS#2 review, integrate a `/city-3d/` navigation link in the shared dashboard or adopt this wrapper deployment. A future facilities import can replace the four curated markers without changing the map; real facility footprints and entrances should be verified before site-level use.
+The Operations replacement is in `sessions/cs2-backend/mvp/dashboard/src/LiveMap.jsx`. Both views share presets, facility sources and building styling from `city-map-data.js` in that dashboard. The Operations view preserves dragging report pins, placing unlocated reports and drawing/deleting zones through the original API callbacks. It defaults to a local 3D view; All reports explicitly frames distant reports. CS#2 review is required before merging the integration. A future facilities import can replace the four curated markers; real facility footprints and entrances should be verified before site-level use.
