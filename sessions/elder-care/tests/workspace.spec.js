@@ -29,17 +29,22 @@ test("operations remains the default with the original map, lanes, metrics and t
   await unlock(page);
   await expect(page).toHaveURL(/\/ops$/);
   await expect(page.getByRole("heading", { name: /^Live map/ })).toBeVisible();
-  await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.locator(".maplibregl-map")).toBeVisible();
   await expect(page.getByRole("heading", { name: /Urgent/ }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: /Not urgent/ }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Incident card", exact: true })).toBeVisible();
   for (const name of ["Draw zone", "Offline map", /^Take call/, /^Callback/, /^Reviewed/, /^Merge/]) {
     await expect(page.getByRole("button", { name }).first()).toBeVisible();
   }
+  await expect(page.getByRole("button",{name:"3D",exact:true})).toHaveAttribute("aria-pressed","true");
+  await page.getByRole("button",{name:"2D",exact:true}).click();
+  await expect(page.getByRole("button",{name:"2D",exact:true})).toHaveAttribute("aria-pressed","true");
+  await page.getByRole("button",{name:"3D",exact:true}).click();
   await page.getByRole("button", { name: "Offline map", exact: true }).click();
   await expect(page.getByText("Offline outline map · US Census TIGER data")).toBeVisible();
   await page.getByRole("button", { name: "Draw zone", exact: true }).click();
-  const map = page.locator(".leaflet-container");
+  const map = page.locator(".maplibregl-canvas");
+  await expect(page.locator(".ops3d-marker").first()).toBeVisible();
   for (const position of [{x:140,y:100},{x:240,y:100},{x:200,y:180}]) await map.click({position});
   await page.getByRole("button", { name: "Finish", exact: true }).click();
   await page.getByPlaceholder(/Zone name/).fill("Care home evacuation assembly");

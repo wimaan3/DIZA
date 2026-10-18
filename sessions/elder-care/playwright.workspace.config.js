@@ -13,6 +13,8 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:8768",
     viewport: { width: 1440, height: 1000 },
+    reducedMotion: "reduce",
+    launchOptions: {args: ["--enable-unsafe-swiftshader"]},
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },

@@ -34,21 +34,21 @@ function extendShell(source) {
 }
 
 function preserveMapClasses(source) {
-  // Leaflet adds classes to its container. React must not overwrite that node's
+  // MapLibre adds classes to its container. React must not overwrite that node's
   // className when drawing or placing begins, or map controls lose their styles.
-  const before = '<div className={\'map\'+((chosen&&chosen.lat==null)||draw?\' placing\':\'\')} ref={el}/>';
+  const before = '<div className={\'map\'+(chosen&&!position(chosen)||draw?\' placing\':\'\')} ref={el}/>';
   if (source.split(before).length !== 2) {
     throw new Error("Upstream LiveMap container changed; review the care integration");
   }
   return source.replace(before,
-    '<div className={\'map-state\'+((chosen&&chosen.lat==null)||draw?\' placing\':\'\')}><div className="map" ref={el}/></div>');
+    '<div className={\'map-state\'+(chosen&&!position(chosen)||draw?\' placing\':\'\')}><div className="map" ref={el}/></div>');
 }
 
 export default defineConfig({
   root,
   resolve: {
     // Both source trees share one React instance and the existing library versions.
-    alias: Object.fromEntries(["react", "react-dom", "leaflet", "lucide-react"].map(
+    alias: Object.fromEntries(["react", "react-dom", "maplibre-gl", "lucide-react"].map(
       (name) => [name, path.dirname(require.resolve(`${name}/package.json`))],
     )),
   },
@@ -60,5 +60,8 @@ export default defineConfig({
       if (id.split("?")[0] === upstreamMap) return preserveMapClasses(source);
     },
   }],
-  build: { outDir: path.resolve(root, "../dist"), emptyOutDir: true },
+  build: {
+    outDir: path.resolve(root, "../dist"), emptyOutDir: true,
+    rollupOptions: {output: {manualChunks: {maplibre: ["maplibre-gl"]}}},
+  },
 });
