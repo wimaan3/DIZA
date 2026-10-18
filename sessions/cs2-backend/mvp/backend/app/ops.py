@@ -151,6 +151,19 @@ def init_ops():
             except Exception: pass
         # Retry recent reports that never got a pin (lookups used to be LA-only and couldn't split "Wichita and Tulsa").
         c.execute("UPDATE reports SET geo_tried=0 WHERE lat IS NULL AND geo_tried=1 AND created>? AND location NOT LIKE '(%'", (time.time() - 86400,))
+        regeocode_once(c, 'regeocode-2026-10-18')
+
+
+def regeocode_once(c, name):
+    """One-time fix: re-look-up the last day's pins made by older geocoder rules ("Tulsa" St, a "Bakersfield" building)
+    and split lists of places. Never touches caller GPS, operator-placed pins or demo data. Runs once per database."""
+    c.execute('CREATE TABLE IF NOT EXISTS migrations(name TEXT PRIMARY KEY,ts REAL)')
+    if c.execute('SELECT 1 FROM migrations WHERE name=?', (name,)).fetchone():
+        return 0
+    n = c.execute("UPDATE reports SET lat=NULL,lon=NULL,geo_tried=0 WHERE created>? AND gps_accuracy IS NULL AND location NOT LIKE '(%' "
+                  "AND location NOT LIKE 'Placed by operator%' AND source!='demo' AND dedupe NOT LIKE '%#%'", (time.time() - 86400,)).rowcount
+    c.execute('INSERT INTO migrations VALUES(?,?)', (name, time.time()))
+    return n
 
 
 def call_of(report):

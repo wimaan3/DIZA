@@ -45,4 +45,23 @@ class Lookup(unittest.TestCase):
   self.assertEqual(self.c.post('/api/kb_items',json={'question':'Is the 110 freeway closed near downtown?','answer':'Caltrans reports the 110 is open; check quickmap.dot.ca.gov.','source':'Caltrans QuickMap','approved_by':'supervisor','gap_id':gap['id']}).status_code,200)
   again=self.ask('is the 110 freeway closed near downtown',call_id='c3');self.assertIn('Caltrans',again['answer'])
   self.assertEqual(self.c.get('/api/kb').json()['gaps'],[])
+class NamedTown(unittest.TestCase):
+ # Offline: a fake Nominatim. The LA-first search finds a street or a building; the town with that exact name wins.
+ def fake(self,local,anywhere):
+  def get(url,deadline):
+   return [local] if 'countrycodes' in url else [anywhere]
+  return get
+ def geo(self,text,local,anywhere):
+  resources._geo_cache.clear()
+  with patch.object(resources,'_get_json',self.fake(local,anywhere)):return resources.geocode(text,__import__('time').monotonic()+5)
+ def test_building_or_street_loses_to_the_named_town(self):
+  bldg={'class':'building','name':'CSU Bakersfield–Antelope Valley','lat':'34.68','lon':'-118.18'}
+  town={'class':'boundary','name':'Bakersfield','lat':'35.37','lon':'-119.02'}
+  self.assertEqual(self.geo('Bakersfield',bldg,town),(35.37,-119.02))
+  self.assertEqual(self.geo('Tulsa',{'class':'highway','name':'Tulsa','lat':'34.27','lon':'-118.46'},{'class':'place','name':'Tulsa','lat':'36.16','lon':'-95.99'}),(36.16,-95.99))
+ def test_local_place_with_the_exact_name_stays(self):
+  beach={'class':'natural','name':'Venice Beach','lat':'33.98','lon':'-118.47'}
+  self.assertEqual(self.geo('Venice Beach',beach,{'class':'place','name':'Venice Beach','lat':'27.0','lon':'-82.4'}),(33.98,-118.47))
+  lib={'class':'amenity','name':'Altadena Main Library','lat':'34.19','lon':'-118.14'}
+  self.assertEqual(self.geo('Altadena Library',lib,{'class':'amenity','name':'Altadena Main Library','lat':'34.19','lon':'-118.14'}),(34.19,-118.14))
 if __name__=='__main__':unittest.main()

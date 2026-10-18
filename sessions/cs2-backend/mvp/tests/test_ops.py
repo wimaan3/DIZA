@@ -97,6 +97,13 @@ class Api(unittest.TestCase):
   self.assertEqual(z.status_code,200);self.assertEqual(len(self.ops()['zones']),1)
   self.assertEqual(self.c.post('/api/zones',json={'name':'x','points':[[1,2]]}).status_code,422)
   self.c.post(f"/api/zones/{z.json()['id']}/delete");self.assertEqual(self.ops()['zones'],[])
+ def test_regeocode_once_fixes_old_pins_but_not_gps_or_operator(self):
+  with connect() as c:
+   for rid,loc,gps,src in [('a','Kansas City, Wichita, and Tulsa',None,'retell'),('b','Pasadena',12,'retell'),('c','Placed by operator (1, 2)',None,'retell'),('d','Lake Ave and Altadena Dr',None,'demo')]:
+    c.execute("INSERT INTO reports(id,dedupe,cluster_id,location,category,summary,evidence,unknowns,severity,reason,language,source,created,lat,lon,geo_tried,gps_accuracy) VALUES(?,?,?,?,'fire','x','','[]','P1','r','en',?,?,1,1,1,?)",(rid,'call_'+rid+':h',rid,loc,src,time.time(),gps))
+   self.assertEqual(O.regeocode_once(c,'t-once'),1);self.assertEqual(O.regeocode_once(c,'t-once'),0)
+  d=self.wait(lambda d:sum(i['lat'] is not None for i in d['incidents'])==6)
+  self.assertEqual(sorted(i['location'] for i in d['incidents'] if i['source']=='retell' and i['lat']!=1),['Kansas City','Tulsa','Wichita'])
  def test_crisis_seed_and_load_metrics(self):
   self.assertEqual(self.c.post('/api/demo/seed?mode=crisis').json()['created'],14)
   d=self.ops();m=d['metrics'];inc=d['incidents']
