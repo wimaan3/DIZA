@@ -161,6 +161,97 @@ def norm_unit(text):
     return t.upper()
 
 
+UNIT_IN_TEXT = re.compile(r"\b(?:unit|apt|apartment|room|rm|suite|ste|number|no)\.?\s*#?\s*(\d{1,4}\s*-?\s*[a-z]?)\b|#\s*(\d{1,4}\s*-?\s*[a-z]?)\b|\b(\d{1,4}\s*-?\s*[a-z])\b", re.I)
+
+
+def unit_from_text(c, building_id, text):
+    """'Larchmont Court, building F4, room 4A' -> '4A' ("F4" is a floor label, not a unit). Prefers a unit the building has."""
+    found = [norm_unit(next(g for g in m if g)) for m in UNIT_IN_TEXT.findall(text or '')]
+    known = {r['unit'] for r in c.execute('SELECT unit FROM units WHERE building_id=?', (building_id,))}
+    return next((u for u in found if u in known), found[0] if found else '')
+
+
+def ticket_from_form(c, call, payload, case_code, caller_last4=None):
+    """A maintenance request filled on a call becomes a /building ticket (same urgency, merge and cross-reference rules).
+    The building comes from the number called or the name the caller gave; the unit from what they said. Idempotent per case."""
+    c.execute('CREATE TABLE IF NOT EXISTS form_tickets(case_code TEXT PRIMARY KEY,ticket_code TEXT)')
+    done = c.execute('SELECT ticket_code FROM form_tickets WHERE case_code=?', (case_code,)).fetchone()
+    if done:
+        return c.execute('SELECT * FROM tickets WHERE code=?', (done['ticket_code'],)).fetchone()
+    where, issue = str(payload.get('location') or ''), str(payload.get('issue') or '')
+    b = building_for(c, call, where)
+    if not b:
+        return None
+    unit = unit_from_text(c, b['id'], where)
+    t, _ = file_ticket(c, b, unit or where, category_of(issue), f'{issue} ({where})'[:300], quote=issue, call_id=call.get('call_id', ''),
+                       caller_last4=last4(call) if caller_last4 is None else caller_last4, source='retell')
+    tlog(c, t['code'], 'note', f'From maintenance request {case_code} on a call')
+    c.execute('INSERT OR IGNORE INTO form_tickets VALUES(?,?)', (case_code, t['code']))
+    return t
+
+
+def tickets_from_recent_forms():
+    """Maintenance requests submitted before this was wired in (e.g. a test call today) appear on /building too."""
+    with connect() as c:
+        c.execute('CREATE TABLE IF NOT EXISTS form_tickets(case_code TEXT PRIMARY KEY,ticket_code TEXT)')
+        rows = c.execute("SELECT * FROM cases WHERE type='form:maintenance_request' AND status!='draft' AND created>? "
+                         "AND code NOT IN (SELECT case_code FROM form_tickets)", (time.time() - 2 * 86400,)).fetchall()
+        for r in rows:
+            t = ticket_from_form(c, {'call_id': r['call_id'] or ''}, json.loads(r['payload'] or '{}'), r['code'], caller_last4=r['caller_last4'] or '')
+            if t:
+                event(c, r['code'], f"Filed on /building as {t['code']} (unit {t['unit']})")
+
+
+MAINT_WORDS = (('water_leak', ('leak', 'leaking', 'dripping', 'water coming', 'flooded bathroom', 'toilet overflow')), ('no_heat', ('no heat', 'heater', 'heating')),
+               ('no_hot_water', ('hot water',)), ('lockout', ('locked out', 'lockout', 'lost my key')), ('pest', ('roach', 'mice', 'mouse', 'rats', 'bed bug', 'pest')),
+               ('appliance', ('fridge', 'stove', 'oven', 'washer', 'dryer', 'dishwasher')), ('noise', ('noise', 'loud music', 'party next door')),
+               ('electrical', ('outlet', 'no power in my', 'lights out in my', 'breaker')))
+LIFE_SAFETY = {'fire', 'smoke', 'gas', 'medical', 'safety_crime'}
+
+
+def building_match(c, text):
+    """(building, unit) only when the caller clearly means one of our buildings: they named it, or said unit/apt/room
+    plus a unit that building has. Never the 'first building' fallback: a street fire must not become a ticket."""
+    t = (text or '').lower()
+    for b in c.execute('SELECT * FROM buildings').fetchall():
+        names = set(re.findall(r'[a-z]+', b['name'].lower())) - {'the', 'apartments', 'apartment', 'building', 'court', 'demo', 'tower', 'house'}
+        if names & set(re.findall(r'[a-z]+', t)):
+            return b, unit_from_text(c, b['id'], text)
+    if re.search(r'\b(unit|apt|apartment|room|suite)\b|#\s*\d', t):
+        for b in c.execute('SELECT * FROM buildings').fetchall():
+            u = unit_from_text(c, b['id'], text)
+            if u and find_unit(c, b['id'], u):
+                return b, u
+    return None, ''
+
+
+def maintenance_issues(text):
+    t = (text or '').lower()
+    return [cat for cat, words in MAINT_WORDS if any(w in t for w in words)]
+
+
+def tickets_for_report(call, args, category):
+    """A phone report at one of our buildings also reaches the manager on /building: one ticket per maintenance problem
+    the caller named, plus an emergency ticket when it is a fire, gas, medical or safety matter. Returns (tickets, maintenance_only)."""
+    text = ' '.join(str(args.get(k) or '') for k in ('summary', 'evidence', 'hazard_text'))
+    with connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        b, unit = building_match(c, args.get('location_text', ''))
+        if not b:
+            return [], False
+        issues = maintenance_issues(text)
+        danger = bool(args.get('immediate_danger')) or category in LIFE_SAFETY or c.execute(
+            'SELECT 1 FROM reports WHERE substr(dedupe,1,?)=? AND severity=\'P0\'', (len(call['call_id']) + 1, call['call_id'] + ':')).fetchone() is not None
+        made = []
+        for cat in issues + (['gas_smell' if category == 'gas' else 'other'] if danger else []):
+            summary = (args.get('summary') or cat.replace('_', ' ')) if cat != 'water_leak' or not danger else f"Leak reported ({args.get('summary') or ''})"
+            t, _ = file_ticket(c, b, unit or args.get('location_text', ''), cat, str(summary)[:300], quote=str(args.get('evidence') or '')[:500],
+                               language=args.get('language') or 'en', hint='emergency' if danger and cat in ('other', 'gas_smell') else '',
+                               call_id=call['call_id'], caller_last4=last4(call), source='retell')
+            made.append(t)
+        return made, bool(issues) and not danger
+
+
 # --- Storage ---
 
 def init_building():
