@@ -128,7 +128,9 @@ def offer(c,qid,prefer=''):
     c.execute("UPDATE requests SET status='offered',assignee=?,updated=? WHERE id=?",(candidate['id'],time.time(),qid))
     c.execute('INSERT INTO attempts VALUES(?,?,?,?,?)',(str(uuid.uuid4()),qid,candidate['id'],'offered',time.time()+TIMEOUT))
     why=' (backup)' if prefer and candidate['id']==prefer else (lambda w:f' ({w})' if w else '')(area_match(profs.get(candidate['id'],{}),rep['location'],point))
-    event(c,qid,f"Offer visible in supporter inbox: {candidate['name']}{why} · awaiting acceptance (no phone notification sent)")
+    event(c,qid,f"Offer visible in supporter inbox: {candidate['name']}{why} · awaiting acceptance")
+    from .assign import start_call  # a teammate with a phone also gets a call about it
+    start_call(qid,candidate['id'])
 
 def backup_of(c,rid):
     from .team import profiles
@@ -158,6 +160,7 @@ async def lifespan(app):
     init_locate()
     init_building()
     init_ops()
+    init_assign()
     init_security()
     async def worker():
         while True:
@@ -495,6 +498,8 @@ app.include_router(building_router)
 from .security import router as security_router, init_security
 app.include_router(security_router)
 from .ops import init_ops
+from .assign import router as assign_router, init_assign
+app.include_router(assign_router)
 from .regions import region
 
 DIST=ROOT/'dashboard'/'dist'

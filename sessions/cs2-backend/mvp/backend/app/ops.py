@@ -156,6 +156,8 @@ def init_ops():
         # Retry recent reports that never got a pin (lookups used to be LA-only and couldn't split "Wichita and Tulsa").
         c.execute("UPDATE reports SET geo_tried=0 WHERE lat IS NULL AND geo_tried=1 AND created>? AND location NOT LIKE '(%'", (time.time() - 86400,))
         regeocode_once(c, 'regeocode-2026-10-18')
+    from .building import tickets_from_recent_forms
+    tickets_from_recent_forms()
 
 
 def regeocode_once(c, name):

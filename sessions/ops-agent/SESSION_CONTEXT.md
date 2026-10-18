@@ -73,11 +73,15 @@
     The pick is on duty only, volunteers never get P0/P1, and it scores language +3, each skill +2, area +2. The reason is spoken in the handoff ("speaks Spanish, medical, covers Altadena").
     A failed transfer goes to that person's backup, then the next best untried person. Dashboard offers that are declined or time out also go to the backup first.
 
+11. **Maintenance calls reach /building:** a submitted `maintenance_request` form becomes a building ticket (building from the number called or the name given; unit parsed from what the caller said, e.g. "building F4, room 4A" gives 4A). Forms submitted earlier are backfilled once on startup.
+12. **Assignment calls (`assign.py`):** when an offer goes to a teammate with a phone, DIZA calls them with the `assignment_brief` agent. Yes accepts; no declines and goes to the backup, who is called too. Only the dialled number can answer, and the offer is held open 120 s while it rings. Until the agent is pushed, the card just notes "assignment calls aren't set up yet".
+
 ## Requests to phone-agent session
 1. **Wire `update_incident`** (`{field, value}`, field in location, callback, relationship, what, people, hazards, access_needs). It returns `{ok, missing:[…]}`; ask next for the first item in `missing`. Call it as each fact comes in, so the operator's card fills live.
 2. **When a caller names several places,** pass them all in `location_text` ("Kansas City, Wichita, and Tulsa"). The backend splits them into one card per place.
 3. **Push the agents** (`python agents/push.py --env prod`): this adds `transfer_failed` and `location_text` to `route_to_human` in `agents/tools.json`, plus one rule in `_shared_rules.md` (retry once with `transfer_failed: true`, then `schedule_callback`). The backend already accepts both; until the push, a failed transfer still falls back to a callback.
-4. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
+4. **Push the new `assignment_brief` agent** (`python agents/push.py --env prod --only assignment_brief --no-bind`). Then set `RETELL_ASSIGN_AGENT_ID` on Railway, or commit the updated `agents/retell.ids.json`.
+5. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
 
 ## Open questions
 - Web search beyond the knowledge base: which provider (needs a key on Railway), or not at all?

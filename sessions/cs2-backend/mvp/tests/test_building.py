@@ -146,4 +146,23 @@ class Api(unittest.TestCase):
   self.assertTrue(any(t['ca_clock'] and t['ca_clock']['level']=='past_30' for t in s['tickets']))
   self.assertNotIn('after_hours_phone',s['building'])
   start=time.monotonic();self.c.get('/api/building');self.assertLess(time.monotonic()-start,0.5)
+class MaintenanceCall(unittest.TestCase):
+ setUp=Api.setUp;tearDown=Api.tearDown;fn=Api.fn;tickets=Api.tickets
+ # Replays a real test call: the agent filled a maintenance form; it must land on /building as a ticket for unit 4A.
+ def test_maintenance_form_becomes_a_building_ticket(self):
+  self.c.post('/api/demo/reset');self.c.post('/api/demo/seed?mode=building')
+  before=set(self.tickets())
+  start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{}},'call_mf')
+  self.fn('fill_form',{'case_code':start['case_code'],'fields':{'location':'Larchmont Court Apartments, building F4, room 4A','issue':"It's leaking in the bathroom"}},'call_mf')
+  out=self.fn('submit_form',{'case_code':start['case_code'],'confirmed':True},'call_mf');self.assertEqual(out['status'],'new')
+  new=[t for k,t in self.tickets().items() if k not in before]
+  self.assertEqual(len(new),1);t=new[0]
+  self.assertEqual((t['unit'],t['category']),('4A','water_leak'));self.assertTrue(any(start['case_code'] in e['message'] for e in t['timeline']))
+  self.fn('submit_form',{'case_code':start['case_code'],'confirmed':True},'call_mf')  # a retry never files twice
+  self.assertEqual(len(self.tickets()),len(before)+1)
+ def test_unit_from_what_the_caller_said(self):
+  self.c.post('/api/demo/seed?mode=building')
+  with connect() as c:
+   for text,want in [('building F4, room 4A','4A'),('apt #2B','2B'),('Larchmont Court 3C','3C'),('unit 12','12'),('the lobby','')]:
+    self.assertEqual(B.unit_from_text(c,B.DEMO_BUILDING,text),want,text)
 if __name__=='__main__':unittest.main()
