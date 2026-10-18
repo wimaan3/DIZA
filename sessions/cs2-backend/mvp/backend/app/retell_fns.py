@@ -9,6 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from . import resources
+from .team import init_team, normalize, pick, caller_place, profiles
 from .main import DEMO, ROOT, Report, app, connect, event, offer, save_report, session_of, verified_body
 
 router = APIRouter(prefix='/retell/fn')
@@ -28,15 +29,16 @@ def init_fns():
         CREATE TABLE IF NOT EXISTS kb_gaps(id INTEGER PRIMARY KEY AUTOINCREMENT,call_id TEXT,question TEXT,created REAL);
         CREATE TABLE IF NOT EXISTS kb_items(id INTEGER PRIMARY KEY AUTOINCREMENT,question TEXT,answer TEXT,source TEXT,approved_by TEXT,created REAL);
         ''')
-        # Real human-in-the-loop phones come from the environment only, never from git:
-        # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics,lang:en"}]'
+        # Real human-in-the-loop phones come from the environment only, never from git. Fields: team.py.
+        # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics","languages":["en"],"areas":["Altadena"],"backup":"sam"}]'
         team = responders_from_env()
+        init_team(c, team)
         if team:  # the env list is the source of truth: someone removed from it stops getting calls
             keep = [r['id'] for r in team]
             marks = ','.join('?' * len(keep))
             c.execute(f'DELETE FROM responder_phones WHERE responder_id NOT IN ({marks})', keep)
         for r in team:
-            c.execute('INSERT OR REPLACE INTO responders VALUES(?,?,?,?)', (r['id'], r['name'], r.get('skills', 'general'), 'available'))
+            c.execute('INSERT OR REPLACE INTO responders VALUES(?,?,?,?)', (r['id'], r['name'], normalize(r)[0], 'available'))
             c.execute('INSERT OR REPLACE INTO responder_phones VALUES(?,?)', (r['id'], e164(r['phone'])))
         # A real team is configured: drop the local placeholder people so the dashboard shows only real responders.
         if c.execute('SELECT COUNT(*) FROM responder_phones').fetchone()[0]:
@@ -210,30 +212,30 @@ def route_to_human(p=Depends(parse)):
     severity = args.get('severity', 'P2')
 
     def make():
+        cid = call['call_id']
         with connect() as c:
             c.execute('BEGIN IMMEDIATE')
-            # Same call asking again (a failed transfer, or a new severity): keep the person already reserved for it.
-            mine = c.execute("SELECT r.id,r.name,r.skills,p.phone FROM routings g JOIN responders r ON r.id=g.responder_id JOIN responder_phones p ON p.responder_id=r.id WHERE g.call_id=? ORDER BY g.created DESC LIMIT 1", (call['call_id'],)).fetchone()
-            if mine:
+            prefer = ''
+            mine = c.execute("SELECT r.id,r.name,r.skills,p.phone FROM routings g JOIN responders r ON r.id=g.responder_id JOIN responder_phones p ON p.responder_id=r.id WHERE g.call_id=? ORDER BY g.created DESC LIMIT 1", (cid,)).fetchone()
+            if mine and args.get('transfer_failed'):
+                # The transfer didn't connect: free that person, never ring them again on this call, try their backup next.
+                c.execute('INSERT INTO routing_tries VALUES(?,?,?,?)', (cid, mine['id'], 'no_answer', time.time()))
+                c.execute("UPDATE responders SET status='available' WHERE id=? AND status='busy'", (mine['id'],))
+                c.execute('DELETE FROM routings WHERE call_id=? AND responder_id=?', (cid, mine['id']))
+                prefer = profiles(c).get(mine['id'], {}).get('backup', '')
+                event(c, cid, f"{mine['name']} didn't answer the transfer · trying " + ('their backup' if prefer else 'the next best person'))
+            elif mine:
+                # Same call asking again (a new severity, or a retry): keep the person already reserved for it.
                 return {'oncall_number': mine['phone'], 'responder_name': mine['name'], 'brief': (args.get('summary') or '')[:300], 'match_reason': 'already assigned to this call'}
-            rows = c.execute("SELECT r.id,r.name,r.skills,p.phone FROM responders r JOIN responder_phones p ON p.responder_id=r.id WHERE r.status='available'").fetchall()
-            best = None
-            for r in rows:
-                skills = set(r['skills'].lower().split(','))
-                if severity in ('P0', 'P1') and 'volunteer' in skills:
-                    continue  # never send urgent calls to unverified/general volunteers
-                score = len(wanted & skills)
-                if best is None or score > best[0]:
-                    best = (score, r)
-            if not best:
-                event(c, call['call_id'], f'No responder with a phone available for {severity} call · callback offered')
+            tried = {x[0] for x in c.execute('SELECT responder_id FROM routing_tries WHERE call_id=?', (cid,))}
+            where, point = caller_place(c, cid)
+            r, reason = pick(c, wanted, severity, where or args.get('location_text') or '', point, exclude=tried, prefer=prefer)
+            if not r:
+                event(c, cid, f'No responder with a phone available for {severity} call ({reason}) · callback offered')
                 return {'oncall_number': '', 'responder_name': '', 'brief': '', 'match_reason': '', 'fallback': 'callback'}
-            score, r = best
             c.execute("UPDATE responders SET status='busy' WHERE id=?", (r['id'],))
-            c.execute('INSERT INTO routings VALUES(?,?,?)', (call['call_id'], r['id'], time.time()))
-            matched = sorted(wanted & set(r['skills'].lower().split(',')))
-            reason = 'you match ' + ', '.join(m.replace('lang:', 'language ') for m in matched) if matched else 'you were the first available person'
-            event(c, call['call_id'], f"Warm transfer to {r['name']} ({severity}) · {reason}")
+            c.execute('INSERT INTO routings VALUES(?,?,?)', (cid, r['id'], time.time()))
+            event(c, cid, f"Warm transfer to {r['name']} ({severity}) · {reason}")
             return {'oncall_number': r['phone'], 'responder_name': r['name'], 'brief': (args.get('summary') or '')[:300], 'match_reason': reason}
     out = once('route_to_human', call, args, make)
     from .security import brief_after_routing  # a break-in or threat also gets on-duty security a briefing call
