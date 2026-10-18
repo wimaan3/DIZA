@@ -77,6 +77,19 @@ class Action(BaseModel):
         return self
 
 
+class ResidentProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    id: str = Field(min_length=1, max_length=80)
+    staff_id: str = Field(min_length=1, max_length=80)
+    version: int = Field(ge=0)
+    name: str = Field(min_length=1, max_length=100)
+    room: str = Field(min_length=1, max_length=20, pattern=r"^[A-Za-z0-9-]+$")
+    wing: str = Field(min_length=1, max_length=40)
+    language: str = Field(min_length=1, max_length=40)
+    preferences: str = Field(default="", max_length=1200)
+    checkin_enabled: bool = False
+
+
 class Checkin(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     staff_id: str = Field(min_length=1, max_length=80)
@@ -129,6 +142,14 @@ def create_app(db_path=None, *, include_legacy=True):
                 CREATE TABLE IF NOT EXISTS care_staff (
                     id TEXT PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS resident_profiles (
+                    resident_id TEXT PRIMARY KEY REFERENCES residents(id),
+                    checkin_enabled INTEGER NOT NULL, version INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS resident_profile_events (
+                    id TEXT PRIMARY KEY, resident_id TEXT NOT NULL REFERENCES residents(id),
+                    actor TEXT NOT NULL, details TEXT NOT NULL, created REAL NOT NULL
+                );
                 CREATE TABLE IF NOT EXISTS care_requests (
                     id TEXT PRIMARY KEY, code TEXT UNIQUE NOT NULL,
                     idempotency_key TEXT UNIQUE NOT NULL, payload_hash TEXT NOT NULL,
@@ -167,7 +188,9 @@ def create_app(db_path=None, *, include_legacy=True):
                 ("care-amira", "Amira Patel", "caregiver"),
                 ("lead-morgan", "Morgan Ellis", "care_lead"),
                 ("facilities-alex", "Alex Chen", "facilities"),
+                ("manager-taylor", "Taylor Brooks", "manager"),
             ])
+            c.execute("INSERT OR IGNORE INTO resident_profiles SELECT id,1,1 FROM residents")
             columns = {row[1] for row in c.execute("PRAGMA table_info(care_requests)")}
             for name, declaration in (("facility_code", "TEXT"), ("call_id", "TEXT NOT NULL DEFAULT ''"), ("access_ok", "INTEGER")):
                 if name not in columns:
@@ -260,8 +283,11 @@ def create_app(db_path=None, *, include_legacy=True):
             residents = []
             for row in c.execute("SELECT * FROM residents ORDER BY room"):
                 person = dict(row)
+                profile = c.execute("SELECT * FROM resident_profiles WHERE resident_id=?", (person["id"],)).fetchone()
+                person["profile_version"] = profile["version"]
+                person["checkin_enabled"] = bool(profile["checkin_enabled"])
                 person["checkin"] = latest.get(person["id"])
-                person["checkin_due"] = person["checkin"] is None and now.hour >= 10
+                person["checkin_due"] = person["checkin_enabled"] and person["checkin"] is None and now.hour >= 10
                 residents.append(person)
             requests = [dict(row) for row in c.execute(
                 "SELECT * FROM care_requests ORDER BY CASE urgency WHEN 'urgent' THEN 0 ELSE 1 END, created"
@@ -284,6 +310,33 @@ def create_app(db_path=None, *, include_legacy=True):
                 "events": [dict(row) for row in c.execute("SELECT * FROM care_events ORDER BY created DESC LIMIT 200")],
                 "checkins": checks,
             }
+
+    @app.post("/api/care/residents")
+    def save_resident(data: ResidentProfile):
+        with connect() as c:
+            c.execute("BEGIN IMMEDIATE")
+            actor = staff(c, data.staff_id)
+            if actor["role"] not in {"nurse", "care_lead", "manager"}:
+                raise HTTPException(403, "A nurse, care lead or building manager must manage resident profiles")
+            existing = c.execute("SELECT * FROM resident_profiles WHERE resident_id=?", (data.id,)).fetchone()
+            if (existing["version"] if existing else 0) != data.version:
+                raise HTTPException(409, "This resident profile changed. Refresh before saving.")
+            room = data.room.upper()
+            c.execute("INSERT INTO residents VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,room=excluded.room,wing=excluded.wing,language=excluded.language,preferences=excluded.preferences",
+                      (data.id, data.name, room, data.wing, data.language, data.preferences))
+            c.execute("INSERT INTO resident_profiles VALUES(?,?,?) ON CONFLICT(resident_id) DO UPDATE SET checkin_enabled=excluded.checkin_enabled,version=excluded.version",
+                      (data.id, data.checkin_enabled, data.version + 1))
+            # A move changes the resident's address, never an existing physical repair.
+            c.execute("INSERT OR IGNORE INTO units VALUES(?,?,?,?,?,?)", (
+                facility.BUILDING_ID, room, int(room[0]) if room[0].isdigit() else 1,
+                "R" + room[-1], data.wing, data.language,
+            ))
+            c.execute("INSERT OR IGNORE INTO care_room_versions VALUES(?,1)", (room,))
+            c.execute("INSERT INTO resident_profile_events VALUES(?,?,?,?,?)", (
+                str(uuid.uuid4()), data.id, actor["name"],
+                data.model_dump_json(exclude={"staff_id"}), time.time(),
+            ))
+            return {**resident(c, data.id), "profile_version": data.version + 1, "checkin_enabled": data.checkin_enabled}
 
     @app.post("/api/care/requests", status_code=201)
     def new_request(data: CareInput):
@@ -357,6 +410,8 @@ def create_app(db_path=None, *, include_legacy=True):
                 return dict(existing)
             person = resident(c, rid)
             actor = staff(c, data.staff_id)
+            if not c.execute("SELECT checkin_enabled FROM resident_profiles WHERE resident_id=?", (rid,)).fetchone()[0]:
+                raise HTTPException(409, "Scheduled check-ins are not enabled for this resident")
             if actor["role"] == "facilities":
                 raise HTTPException(403, "A care team member must record wellbeing check-ins")
             if data.outcome != "seen_well" and not data.note:

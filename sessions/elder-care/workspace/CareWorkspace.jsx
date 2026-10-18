@@ -1,3 +1,4 @@
+import {residentRequestCounts} from "../web/building.js";
 import React, { useEffect, useRef, useState } from "react";
 
 export function useCareData(headers) {
@@ -26,11 +27,9 @@ export function useCareData(headers) {
 
 export function CareBadge({headers}) {
   const {data, unavailable} = useCareData(headers);
-  const urgent = data?.requests.filter(
-    (item) => item.urgency === "urgent" && item.status !== "resolved",
-  ).length;
+  const urgent = data ? residentRequestCounts(data).urgent : 0;
   return !unavailable && urgent > 0
-    ? <span className="care-urgent-count" aria-label={`${urgent} urgent care requests`}>{urgent}</span>
+    ? <span className="care-urgent-count" aria-label={`${urgent} urgent resident requests`}>{urgent}</span>
     : null;
 }
 

@@ -1,21 +1,14 @@
 .care-urgent-count {margin-left:auto;min-width:22px;padding:3px 6px;border-radius:5px;background:#f9dfd3;color:#742b20;font-size:10px;font-weight:700}
 .map-state.placing .map {cursor:crosshair}
-.content:has(.building-workspace[data-building="care-home"]) {padding:0;max-width:none}
-.content:has(.building-workspace[data-building="care-home"]) > .title-row,
-.content:has(.building-workspace[data-building="care-home"]) > .notice,
-.content:has(.building-workspace[data-building="care-home"]) > footer {display:none}
+.content:has(.building-workspace) {padding:0;max-width:none}
+.content:has(.building-workspace) > .title-row,
+.content:has(.building-workspace) > .notice,
+.content:has(.building-workspace) > footer {display:none}
 .building-workspace [hidden] {display:none!important}
-.building-context {display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px 26px;background:#fff;border-bottom:1px solid #dce3dc;font-size:12px}
-.building-context label {font-weight:600}
-.building-context select {width:auto;max-width:100%;margin:0;font-size:12px}
-.building-context > span {margin-left:auto;color:#52624d;font-size:11px}
-.apartment-building {padding-top:24px}
 .care-workspace {display:block;width:100%;height:calc(100dvh - 152px);min-height:0;border:0}
 @media(max-width:800px){
  .shell > aside nav {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
  .shell > aside nav button {min-height:44px;padding:10px}
  .header-right .modeswitch button {padding:7px 9px}
- .building-context {padding:14px 16px}
- .building-context > span {margin-left:0;line-height:1.5}
  .care-workspace {height:calc(100dvh - 150px)}
 }

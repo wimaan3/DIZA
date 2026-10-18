@@ -45,3 +45,8 @@
  .combined-work-grid .request-list {max-height:460px}
  .combined-work-grid .detail-body {max-height:none}
 }
+
+.resident-row-actions {display:flex;align-items:center;gap:8px;flex-shrink:0}
+.resident-row-actions .text-button {border:0;background:transparent;color:#36543b;text-decoration:underline;min-height:38px;padding:6px}
+.support-summary {margin:0;padding:0 18px 10px;color:#52644d;font-size:11px;line-height:1.5}
+.case-context {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:14px 18px;background:#f4f7f1;border-bottom:1px solid var(--line);font-size:12px}

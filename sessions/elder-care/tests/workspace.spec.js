@@ -77,21 +77,40 @@ test("original language controls and wall view remain available", async ({page})
   await wall.close();
 });
 
-test("Imaan's apartment floor plan and repair tools remain available for that building", async ({page,request}) => {
+test("apartment residents use the same floor plan, support and repairs without a mode switch", async ({page,request}) => {
   await unlock(page,"/building");
-  await page.getByLabel("Building",{exact:true}).selectOption("apartments");
-  await expect(page.getByRole("group",{name:/Building floor plan/})).toBeVisible();
-  await page.getByRole("button",{name:/^Unit 2D, floor/}).click();
-  await page.getByRole("textbox",{name:"Add a note",exact:true}).fill("Care coordinator checked room access.");
-  await page.getByRole("button",{name:"Add note",exact:true}).click();
-  await expect(page.locator(".timeline")).toContainText("Care coordinator checked room access.");
-  await page.getByRole("combobox",{name:"Assign to",exact:true}).selectOption("hvac");
-  await expect.poll(async()=>{
-    const data=await(await request.get("/api/building",{headers:auth})).json();
-    return data.tickets.find((ticket)=>ticket.unit==="2D")?.assignee;
-  }).toBe("hvac");
-  await sidebar(page,"Supporter inbox").click();
-  await expect(page.getByRole("heading",{name:"Supporter inbox",exact:true})).toBeVisible();
+  const home=building(page);
+  await expect(page.locator("#building-select")).toHaveCount(0);
+  await home.getByLabel("Working as staff member").selectOption("manager-taylor");
+  await home.getByRole("button",{name:"Add resident",exact:true}).click();
+  await home.getByLabel("Resident name",{exact:true}).fill("Jamie Rivers");
+  await home.getByLabel("Room or apartment",{exact:true}).fill("2D");
+  await home.getByLabel("Wing or area",{exact:true}).fill("East");
+  await home.getByLabel("Preferences & support needs",{exact:true}).fill("Please arrange visits in advance.");
+  await home.getByRole("button",{name:"Save resident",exact:true}).click();
+  await expect(home.getByRole("dialog")).not.toBeVisible();
+  await expect(home.getByRole("button",{name:/^Room 2D, Jamie Rivers/})).toBeVisible();
+  await expect(home.locator(".combined-checkin-row").filter({hasText:"Jamie Rivers"})).toContainText("Check-ins not scheduled");
+  await home.getByRole("button",{name:"Record a request",exact:true}).click();
+  const state=await(await request.get("/api/care/state",{headers:auth})).json();
+  const resident=state.residents.find((person)=>person.name==="Jamie Rivers");
+  await home.getByRole("combobox",{name:"Resident",exact:true}).selectOption(resident.id);
+  await home.getByRole("combobox",{name:"Type of request",exact:true}).selectOption("maintenance");
+  await home.getByRole("combobox",{name:"Room issue type",exact:true}).selectOption("appliance");
+  await home.getByLabel("What is needed?",{exact:true}).fill("Apartment 2D kitchen light needs replacement");
+  await home.getByRole("button",{name:"Record request",exact:true}).click();
+  await expect(home.getByRole("dialog")).not.toBeVisible();
+  await home.getByRole("button",{name:/^Room 2D, Jamie Rivers/}).click();
+  await expect(home.locator(".request-list .request-card")).toHaveCount(1);
+  await home.getByRole("button",{name:"Assign facilities / vendor",exact:true}).click();
+  await home.getByLabel("Assigned team member or vendor").selectOption("vendor-electrical");
+  await home.getByRole("button",{name:"Save assignment",exact:true}).click();
+  await expect(home.getByRole("dialog")).not.toBeVisible();
+  await home.getByRole("button",{name:"Edit profile for Jamie Rivers",exact:true}).click();
+  await home.getByLabel("Scheduled wellbeing check-ins").selectOption("true");
+  await home.getByRole("button",{name:"Save resident",exact:true}).click();
+  await expect(home.getByRole("button",{name:"Record check-in for Jamie Rivers",exact:true})).toBeVisible();
+  await expect(home.getByRole("group",{name:/Building floor plan/})).toBeVisible();
 });
 
 function building(page) {return page.frameLocator('iframe[title="Building workspace"]');}
@@ -103,10 +122,10 @@ test("Building has one floor plan, mixed queue and detail pane for care and repa
   await expect(home.getByRole("tab")).toHaveCount(0);
   await expect(page.locator("aside nav button")).toHaveCount(3);
   await expect(home.getByRole("group",{name:/Building floor plan/})).toBeVisible();
-  await expect(home.getByRole("heading",{name:"Resident check-ins",exact:true})).toBeVisible();
-  await expect(home.getByRole("heading",{name:/Building work queue/})).toBeVisible();
-  await expect(home.locator(".request-list").getByText("Care request",{exact:true}).first()).toBeVisible();
-  await expect(home.locator(".request-list").getByText("Repair incident",{exact:true}).first()).toBeVisible();
+  await expect(home.getByRole("heading",{name:"Residents & support",exact:true})).toBeVisible();
+  await expect(home.getByRole("heading",{name:/Resident requests/})).toBeVisible();
+  await expect(home.locator(".request-list")).toContainText("Arthur needs a nurse");
+  await expect(home.locator(".request-list").getByText("Maintenance",{exact:true}).first()).toBeVisible();
   await page.screenshot({path:"workspace-test-results/unified-building-1440.png",fullPage:true});
   await home.getByRole("button",{name:/^Room 101, Margaret Wilson/}).click();
   await expect(home.locator(".room-filter")).toContainText("Room 101");
@@ -126,7 +145,7 @@ test("Building has one floor plan, mixed queue and detail pane for care and repa
   await expect(home.getByRole("group",{name:/Building floor plan/})).toBeVisible();
   await home.getByRole("button",{name:new RegExp(`^Open ${ticket.code}`)}).click();
   await expect(home.getByRole("heading",{name:"Original reports (2)"})).toBeVisible();
-  await expect(home.getByRole("heading",{name:/Building work queue/})).toBeVisible();
+  await expect(home.getByRole("heading",{name:/Resident requests/})).toBeVisible();
   const after=await(await request.get("/api/care/state",{headers:auth})).json();
   expect(after.facility_workflow.tickets.find((item)=>item.code===ticket.code).assignee).toBe("facilities-alex");
 });
@@ -164,12 +183,11 @@ test("care lifecycle, keyboard queue navigation and unsaved notes work in the me
   await home.getByLabel("Search building work",{exact:true}).fill(summary);
   await home.getByRole("button",{name:"Add note",exact:true}).click();
   await home.getByLabel("Handoff note",{exact:true}).fill("Offer a seat in the garden.");
-  await page.getByLabel("Building",{exact:true}).selectOption("apartments");
-  await page.getByLabel("Building",{exact:true}).selectOption("care-home");
+  await page.waitForTimeout(4200); // A polling interval must preserve an open draft.
   await expect(home.getByLabel("Handoff note",{exact:true})).toHaveValue("Offer a seat in the garden.");
   await home.getByRole("button",{name:"Save note",exact:true}).click();
   await home.getByRole("button",{name:"Accept responsibility",exact:true}).click();
-  await home.getByRole("button",{name:"Start care",exact:true}).click();
+  await home.getByRole("button",{name:"Start support",exact:true}).click();
   await home.getByRole("button",{name:"Record outcome & resolve",exact:true}).click();
   await home.getByLabel("Outcome and follow-up").fill("Resident enjoyed a conversation in the garden.");
   await home.getByRole("button",{name:"Resolve request",exact:true}).click();
@@ -204,7 +222,7 @@ test("the unified building is accessible on desktop and mobile, including room e
 });
 
 
-test("one maintenance report appears as linked care and repair work, with independent outcomes", async ({page,request}) => {
+test("one maintenance request contains repair and resident follow-up through both outcomes", async ({page,request}) => {
   await unlock(page,"/building");
   const home=building(page),summary=`Reading light needs replacement ${Date.now()}`;
   await home.getByLabel("Working as staff member").selectOption("lead-morgan");
@@ -216,7 +234,7 @@ test("one maintenance report appears as linked care and repair work, with indepe
   await home.getByRole("button",{name:"Record request",exact:true}).click();
   await expect(home.getByRole("dialog")).not.toBeVisible();
   await home.getByLabel("Search building work",{exact:true}).fill(summary);
-  await expect(home.locator(".request-list .request-card")).toHaveCount(2);
+  await expect(home.locator(".request-list .request-card")).toHaveCount(1);
   const data=await(await request.get("/api/care/state",{headers:auth})).json();
   const care=data.requests.find((item)=>item.summary===summary);
   await home.locator(`[data-building-item="repair:${care.facility_code}"]`).click();
@@ -229,8 +247,18 @@ test("one maintenance report appears as linked care and repair work, with indepe
   await home.getByRole("button",{name:"Close repair",exact:true}).click();
   await expect(home.getByRole("dialog")).not.toBeVisible();
   await expect(home.locator(".request-list .request-card")).toHaveCount(1);
-  await expect(home.locator(".request-list")).toContainText("Care request");
+  await expect(home.locator(".request-list")).toContainText("Resident follow-up pending");
+  await home.locator(".related-care-link").first().click();
+  await home.getByRole("button",{name:"Accept responsibility",exact:true}).click();
+  await home.getByRole("button",{name:"Start support",exact:true}).click();
+  await home.getByRole("button",{name:"Record outcome & resolve",exact:true}).click();
+  await home.getByLabel("Outcome and follow-up").fill("Resident confirmed the light works and needs no more help.");
+  await home.getByRole("button",{name:"Resolve request",exact:true}).click();
+  await expect(home.getByRole("dialog")).not.toBeVisible();
+  await expect(home.locator(".request-list .request-card")).toHaveCount(0);
+  await home.getByRole("button",{name:"Completed",exact:true}).click();
+  await expect(home.locator(".request-list .request-card")).toHaveCount(1);
   const after=await(await request.get("/api/care/state",{headers:auth})).json();
-  expect(after.requests.find((item)=>item.id===care.id).status).toBe("new");
+  expect(after.requests.find((item)=>item.id===care.id).status).toBe("resolved");
   expect(after.facility_workflow.tickets.find((item)=>item.code===care.facility_code).status).toBe("closed");
 });

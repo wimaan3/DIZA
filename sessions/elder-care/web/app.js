@@ -32,6 +32,7 @@ const roleNames = {
   caregiver: "Caregiver",
   care_lead: "Care lead",
   facilities: "Facilities",
+  manager: "Building manager",
 };
 const esc = (value) =>
   String(value ?? "").replace(
@@ -188,16 +189,17 @@ function draw() {
   const urgent = active().filter((r) => r.urgency === "urgent");
   const daily = active().filter((r) => r.urgency === "routine");
   const unresolvedCheckins = data.residents.filter(
-    (r) => r.checkin?.outcome !== "seen_well",
+    (r) => r.checkin_enabled && r.checkin?.outcome !== "seen_well",
   );
   const due = data.residents.filter((r) => r.checkin_due);
+  const overview = view === "building" ? buildingWorkspace.overview(data) : null;
   const title = {
     daily: "Care, in good hands.",
     urgent: "Every urgent need, seen.",
     residents: "A little attention. Every day.",
     history: "Every handoff has a story.",
     facility: "One home. A coordinated response.",
-    building: "One building. Every resident looked after.",
+    building: "One place for every resident.",
   }[view];
   app.innerHTML = `<div class="layout">
     ${embedded ? "" : `<aside class="sidebar"><a class="brand" href="/care" aria-label="DIZA Care home"><span class="brand-icon">${icon("heart", 23)}</span>DIZA<span>care</span></a>
@@ -210,12 +212,12 @@ function draw() {
       <div class="sidebar-foot"><span class="avatar">${initials(staffFor(staffId)?.name || "")}</span><div><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select></div></div>
     </aside>`}
     <div class="main-wrap">${embedded ? `<div class="embedded-toolbar" role="region" aria-label="Resident care controls">${view === "building" ? "" : `<nav aria-label="Care workspace">${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("facility", "grid", "Rooms & repairs")}${nav("history", "clock", "Completed care")}</nav>`}<div class="embedded-staff"><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span></div></div>` : `<header class="topbar"><span>Care workspace <span class="slash">/</span> ${view === "facility" ? "Rooms & repairs" : view === "residents" ? "Residents" : view === "history" ? "Completed care" : view === "urgent" ? "Urgent response" : "Daily overview"}</span><div><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span><span class="date">${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: data.timezone }).format(new Date())}</span></div></header>`}
-    <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow">${esc(data.facility.toUpperCase())} / CARE TEAM</div><h1>${title}</h1><p class="subtitle">${view === "building" ? "One room map. One work queue. Care and repairs coordinated together." : view === "facility" ? "Coordinate shared room issues and follow through on every resident’s care." : view === "urgent" ? "Prioritize urgent needs. Confirm who is taking responsibility." : view === "residents" ? "Keep wellbeing checks personal, visible, and followed through." : view === "history" ? "Review completed requests and the people who followed through." : "A shared view of what matters, and who needs you next."}</p></div><button class="primary" data-action="new" ${disabled()}>${icon("plus", 17)} Record a request</button></div>
+    <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow">${esc(data.facility.toUpperCase())} / RESIDENT SERVICES</div><h1>${title}</h1><p class="subtitle">${view === "building" ? "Apartments and care homes. Repairs, everyday help and urgent support in one workflow." : view === "facility" ? "Coordinate shared room issues and follow through on every resident’s care." : view === "urgent" ? "Prioritize urgent needs. Confirm who is taking responsibility." : view === "residents" ? "Keep wellbeing checks personal, visible, and followed through." : view === "history" ? "Review completed requests and the people who followed through." : "A shared view of what matters, and who needs you next."}</p></div><button class="primary" data-action="new" ${disabled()}>${icon("plus", 17)} Record a request</button></div>
     ${error ? `<div role="alert" class="error-banner">${icon("alert")}<span>${esc(error)}</span><button data-action="refresh">Reconnect</button></div>` : ""}
     ${!connected && lastSuccess ? `<p class="stale">Last connected ${esc(new Date(lastSuccess).toLocaleTimeString())}. Actions are paused.</p>` : ""}
     <div class="demo-note">${icon("shield", 16)} <span>${data.demo ? "Demo workspace · fictional residents and staff." : "Care coordination workspace."} Staff selection is a demo control. No calls, pages, or emergency dispatch are sent.</span>${data.demo ? `<button data-action="demo" ${disabled()}>Load demo scenarios ${icon("arrow", 14)}</button>` : ""}</div>
-    ${urgent.length ? `<div class="urgent-banner"><span class="urgent-icon">${icon("alert", 22)}</span><div><strong>${urgent.length} urgent ${urgent.length === 1 ? "request needs" : "requests need"} attention</strong><p>${urgent.filter((r) => r.status === "new").length} awaiting a nurse or care lead. Follow your home's emergency procedure for immediate danger.</p></div><button data-view="urgent">Open urgent queue <span aria-hidden="true">→</span></button></div>` : ""}
-    ${view !== "facility" ? `<section class="stats" aria-label="Care overview">${stat("Urgent needs", urgent.length, urgent.length ? "Nurse or care lead required" : "No open urgent requests", "alert", "rose")}${stat("Everyday requests", daily.length, `${daily.filter((r) => r.status === "new").length} awaiting staff acceptance`, "mug", "sand")}${stat("Check-ins to review", unresolvedCheckins.length, due.length ? `${due.length} not recorded after 10 am` : "Daily check-in target: 10 am", "users", "lavender")}${view === "building" ? stat("Open repairs", data.facility_workflow.tickets.filter((item) => !item.merged_into && item.status !== "closed").length, "Shared incidents linked to resident care", "grid", "mint") : stat("Care in progress", active().filter((r) => r.status === "in_progress").length, "Responsibility accepted by staff", "heart", "mint")}</section>` : ""}
+    ${(overview?.urgent ?? urgent.length) ? `<div class="urgent-banner"><span class="urgent-icon">${icon("alert", 22)}</span><div><strong>${overview?.urgent ?? urgent.length} urgent ${(overview?.urgent ?? urgent.length) === 1 ? "request needs" : "requests need"} attention</strong><p>${overview ? "Urgent repairs and personal needs require staff review." : urgent.filter((r) => r.status === "new").length + " awaiting a nurse or care lead."} Follow your building's emergency procedure for immediate danger.</p></div><button data-view="urgent">Open urgent queue <span aria-hidden="true">→</span></button></div>` : ""}
+    ${view !== "facility" ? `<section class="stats" aria-label="Care overview">${stat("Urgent needs", overview?.urgent ?? urgent.length, urgent.length ? "Nurse or care lead required" : "No open urgent requests", "alert", "rose")}${stat("Everyday requests", overview?.everyday ?? daily.length, "Repairs, practical help and personal support", "mug", "sand")}${stat("Check-ins to review", unresolvedCheckins.length, due.length ? `${due.length} not recorded after 10 am` : "Only residents with scheduled check-ins", "users", "lavender")}${view === "building" ? stat("Open repairs", data.facility_workflow.tickets.filter((item) => !item.merged_into && item.status !== "closed").length, "Included in the resident request queue", "grid", "mint") : stat("Care in progress", active().filter((r) => r.status === "in_progress").length, "Responsibility accepted by staff", "heart", "mint")}</section>` : ""}
     ${view === "building" ? buildingWorkspace.render(data, staffId, disabled()) : view === "facility" ? facilityWorkspace.render(data, staffId, disabled()) : view === "residents" ? residentsView() : queueView()}
     <footer><span>${icon("heart", 14)} Designed around people. Supported by DIZA.</span><span>${data.residents.length} residents · ${esc(data.timezone.replaceAll("_", " "))}</span></footer>
     </main></div></div>`;
@@ -288,7 +290,7 @@ function requestCard(r, chosen, combined = false) {
   const person = personFor(r.resident_id);
   const owner = staffFor(r.assignee);
   const waiting = r.urgency === "urgent" && r.status === "new";
-  return `<button class="request-card ${chosen ? "selected" : ""} ${r.urgency === "urgent" ? "urgent-card" : ""}" data-request="${esc(r.id)}" aria-pressed="${chosen}"><div class="request-icon ${r.urgency === "urgent" ? "rose" : "sand"}">${icon(categoryIcon(r), 21)}</div><div class="card-content"><div class="card-top"><strong>${esc(r.summary)}</strong><span class="age ${waiting ? "urgent-text" : ""}">${icon("clock", 12)} ${age(r.created)}</span></div><div class="resident-line">${esc(person.name)} <span>·</span> Room ${esc(person.room)} <span>·</span> ${esc(person.wing)} wing</div><div class="card-bottom">${combined ? '<span class="tag">Care request</span>' : ""}<span class="tag ${r.urgency === "urgent" ? "urgent-tag" : ""}">${r.urgency === "urgent" ? "Urgent" : esc(data.categories[r.category])}</span><span class="status ${r.status}"><i></i>${labels[r.status]}</span>${owner ? `<span class="owner">${esc(owner.name)}</span>` : ""}</div></div></button>`;
+  return `<button class="request-card ${chosen ? "selected" : ""} ${r.urgency === "urgent" ? "urgent-card" : ""}" data-request="${esc(r.id)}" aria-pressed="${chosen}"><div class="request-icon ${r.urgency === "urgent" ? "rose" : "sand"}">${icon(categoryIcon(r), 21)}</div><div class="card-content"><div class="card-top"><strong>${esc(r.summary)}</strong><span class="age ${waiting ? "urgent-text" : ""}">${icon("clock", 12)} ${age(r.created)}</span></div><div class="resident-line">${esc(person.name)} <span>·</span> Room ${esc(person.room)} <span>·</span> ${esc(person.wing)} wing</div><div class="card-bottom"><span class="tag ${r.urgency === "urgent" ? "urgent-tag" : ""}">${r.urgency === "urgent" ? "Urgent" : esc(data.categories[r.category])}</span><span class="status ${r.status}"><i></i>${labels[r.status]}</span>${owner ? `<span class="owner">${esc(owner.name)}</span>` : ""}</div></div></button>`;
 }
 
 function detail(r) {
@@ -303,9 +305,9 @@ function detail(r) {
   return `<div class="detail-heading"><span class="eyebrow">REQUEST DETAILS</span><span class="code">${esc(r.code)}</span></div><div class="person-block"><span class="person-avatar">${initials(person.name)}</span><h2>${esc(person.name)}</h2><p>Room ${esc(person.room)} · ${esc(person.wing)} wing</p><span class="tag">${esc(person.language)} preferred</span></div>
     <div class="detail-body"><div class="preference">${icon("heart", 17)}<p>${esc(person.preferences)}</p></div><h3>${esc(r.summary)}</h3><p class="detail-location">Reported location: ${esc(r.location)}</p>${r.quote ? `<blockquote><span>RESIDENT / REPORTER'S WORDS</span>“${esc(r.quote)}”</blockquote>` : '<p class="muted">No direct quote recorded.</p>'}
     ${clinical ? `<div class="clinical-note ${r.urgency === "urgent" ? "danger" : ""}">${icon("shield", 17)}<div><strong>${r.urgency === "urgent" ? "Urgent human review" : "Nurse review required"}</strong><p>${esc(r.reason)}${r.urgency === "urgent" ? ". Follow the home’s emergency procedure for immediate danger. No emergency services have been contacted by DIZA." : ". Medication decisions stay with qualified staff."}</p></div></div>` : ""}
-    ${r.facility_code ? `<div class="care-incident-link"><strong>Shared room incident</strong><button class="secondary full" data-facility-code="${esc(r.facility_code)}">Open ${esc(r.facility_code)} ${icon("arrow", 14)}</button><p>Repair coordination and resident care each keep their own outcome.</p></div>` : ""}${careCallContext(r)}
+    ${r.facility_code ? `<div class="care-incident-link"><strong>Shared room incident</strong><button class="secondary full" data-facility-code="${esc(r.facility_code)}">Open ${esc(r.facility_code)} ${icon("arrow", 14)}</button><p>Repair progress and resident follow-up are tracked inside this request.</p></div>` : ""}${careCallContext(r)}
     <dl class="metadata"><div><dt>Recorded by</dt><dd>${esc(r.reported_by)}</dd></div><div><dt>Responsible</dt><dd>${owner ? esc(owner.name) : "Not yet accepted"}</dd></div><div><dt>Received</dt><dd>${clock(r.created)} · ${r.source === "voice" ? "Voice intake" : "Staff entry"}</dd></div></dl>
-    ${r.status !== "resolved" ? `<div class="request-actions">${r.status === "new" ? `<button class="primary full" data-action="accept" ${disabled()} ${!eligible ? "disabled" : ""}>${icon("check", 17)} Accept responsibility</button>${!eligible ? `<p class="action-hint">${clinical ? "A nurse or care lead must accept this request." : "This request requires a care team member."}</p>` : ""}` : r.assignee === staffId ? `<button class="primary full" data-action="${r.status === "accepted" ? "start" : "resolve"}" ${disabled()}>${icon(r.status === "accepted" ? "heart" : "check", 17)} ${r.status === "accepted" ? "Start care" : "Record outcome & resolve"}</button>` : `<p class="action-hint">${esc(owner?.name)} has accepted responsibility.</p>`}<div class="secondary-actions"><button class="secondary" data-action="note" ${disabled()}>${icon("note", 15)} Add note</button>${r.urgency !== "urgent" ? `<button class="text-danger" data-action="escalate" ${disabled()}>Mark urgent</button>` : ""}</div></div>` : `<div class="resolved-note">${icon("check", 17)} Resolved by staff. Outcome recorded below.</div>`}
+    ${r.status !== "resolved" ? `<div class="request-actions">${r.status === "new" ? `<button class="primary full" data-action="accept" ${disabled()} ${!eligible ? "disabled" : ""}>${icon("check", 17)} Accept responsibility</button>${!eligible ? `<p class="action-hint">${clinical ? "A nurse or care lead must accept this request." : "This request requires a care team member."}</p>` : ""}` : r.assignee === staffId ? `<button class="primary full" data-action="${r.status === "accepted" ? "start" : "resolve"}" ${disabled()}>${icon(r.status === "accepted" ? "heart" : "check", 17)} ${r.status === "accepted" ? (view === "building" ? "Start support" : "Start care") : "Record outcome & resolve"}</button>` : `<p class="action-hint">${esc(owner?.name)} has accepted responsibility.</p>`}<div class="secondary-actions"><button class="secondary" data-action="note" ${disabled()}>${icon("note", 15)} Add note</button>${r.urgency !== "urgent" ? `<button class="text-danger" data-action="escalate" ${disabled()}>Mark urgent</button>` : ""}</div></div>` : `<div class="resolved-note">${icon("check", 17)} Resolved by staff. Outcome recorded below.</div>`}
     <div class="timeline"><h3>Handoff history</h3>${events.map((e) => `<div class="timeline-entry"><i></i><p>${esc(e.message)}</p><small>${esc(e.actor)} · ${clock(e.created)}</small></div>`).join("")}</div></div>`;
 }
 
@@ -341,8 +343,15 @@ function openDialog(type, residentId, reporterId) {
   const request = data.requests.find((r) => r.id === selected);
   if (request) modal.request = { ...request };
   let title, description, fields, submit;
-  if (type === "new") {
-    title = "Record a care request";
+  if (type === "profile") {
+    const person = residentId === "new" ? null : personFor(residentId);
+    modal.profile = person ? {...person} : {id: crypto.randomUUID(), profile_version: 0};
+    title = person ? "Edit resident profile" : "Add a resident";
+    description = "Use the same units and request workflow for every resident. Enable scheduled check-ins only when needed.";
+    fields = `<label>Resident name<input name="name" required maxlength="100" value="${esc(person?.name || "")}"></label><div class="form-row"><label>Room or apartment<input name="room" required pattern="[A-Za-z0-9-]+" maxlength="20" value="${esc(person?.room || "")}"></label><label>Wing or area<input name="wing" required maxlength="40" value="${esc(person?.wing || "")}"></label></div><label>Preferred language<input name="language" required maxlength="40" value="${esc(person?.language || "English")}"></label><label>Preferences & support needs<textarea name="preferences" rows="3" maxlength="1200">${esc(person?.preferences || "")}</textarea></label><label>Scheduled wellbeing check-ins<select name="checkin_enabled"><option value="false" ${!person?.checkin_enabled ? "selected" : ""}>Not scheduled</option><option value="true" ${person?.checkin_enabled ? "selected" : ""}>Daily staff check-in</option></select></label>`;
+    submit = "Save resident";
+  } else if (type === "new") {
+    title = view === "building" ? "Record a resident request" : "Record a care request";
     description =
       "Capture the need in their own words. Urgent requests go straight to nurse review.";
     fields = `<label>Resident<select name="resident_id" required><option value="" selected disabled>Select a resident and room</option>${data.residents.map((r) => `<option value="${esc(r.id)}">${esc(r.name)} · Room ${esc(r.room)}</option>`).join("")}</select></label><div class="form-row"><label>Type of request<select name="category">${Object.entries(
@@ -354,7 +363,7 @@ function openDialog(type, residentId, reporterId) {
       )
       .join(
         "",
-      )}</select></label><label>Priority<select name="urgency"><option value="routine">Everyday care</option><option value="urgent">Urgent - needs a nurse now</option></select></label></div><fieldset id="facility-fields" hidden disabled><legend>Room incident details</legend><label>Room issue type<select name="facility_category">${Object.entries(
+      )}</select></label><label>Priority<select name="urgency"><option value="routine">Everyday request</option><option value="urgent">Urgent - needs a nurse now</option></select></label></div><fieldset id="facility-fields" hidden disabled><legend>Room incident details</legend><label>Room issue type<select name="facility_category">${Object.entries(
       data.facility_workflow.categories,
     )
       .map(
@@ -401,7 +410,7 @@ function openDialog(type, residentId, reporterId) {
       resolve: "Resolve request",
     }[type];
   }
-  dialogRoot.innerHTML = `<dialog aria-labelledby="dialog-title" aria-describedby="dialog-description"><form id="care-form"><div class="modal-heading"><span class="eyebrow">DIZA CARE / STAFF ENTRY</span><button type="button" class="icon-button" data-action="close" aria-label="Close dialog">${icon("close")}</button></div><h2 id="dialog-title">${esc(title)}</h2><p id="dialog-description">${esc(description)}</p><div class="modal-error" role="alert" hidden></div>${fields}<div class="modal-footer"><button type="button" class="secondary" data-action="close">Cancel</button><button class="primary" type="submit">${submit}</button></div></form></dialog>`;
+  dialogRoot.innerHTML = `<dialog aria-labelledby="dialog-title" aria-describedby="dialog-description"><form id="care-form"><div class="modal-heading"><span class="eyebrow">DIZA / RESIDENT SERVICES</span><button type="button" class="icon-button" data-action="close" aria-label="Close dialog">${icon("close")}</button></div><h2 id="dialog-title">${esc(title)}</h2><p id="dialog-description">${esc(description)}</p><div class="modal-error" role="alert" hidden></div>${fields}<div class="modal-footer"><button type="button" class="secondary" data-action="close">Cancel</button><button class="primary" type="submit">${submit}</button></div></form></dialog>`;
   const dialog = dialogRoot.querySelector("dialog");
   dialog.showModal();
   dialog.addEventListener("cancel", (event) => {
@@ -424,7 +433,11 @@ async function submitDialog(form) {
   const fields = Object.fromEntries(new FormData(form));
   const type = modal.type;
   let path, body;
-  if (type === "new") {
+  if (type === "profile") {
+    path = "/api/care/residents";
+    body = {...fields, id: modal.profile.id, version: modal.profile.profile_version,
+      staff_id: staffId, checkin_enabled: fields.checkin_enabled === "true"};
+  } else if (type === "new") {
     path = "/api/care/requests";
     if ("access_ok" in fields)
       fields.access_ok =
@@ -591,6 +604,10 @@ document.addEventListener("click", async (event) => {
   }
   if (button.dataset.checkin) {
     openDialog("checkin", button.dataset.checkin);
+    return;
+  }
+  if (button.dataset.profile) {
+    openDialog("profile", button.dataset.profile);
     return;
   }
   const action = button.dataset.action;
