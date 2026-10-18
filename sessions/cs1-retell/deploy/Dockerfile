@@ -5,6 +5,8 @@ WORKDIR /app/sessions/cs2-backend/mvp/dashboard
 COPY sessions/cs2-backend/mvp/dashboard/package*.json ./
 RUN npm ci
 COPY sessions/cs2-backend/mvp/dashboard/ ./
+COPY sessions/elder-care/branding/ /app/sessions/elder-care/branding/
+COPY sessions/elder-care/web/branding/ /app/sessions/elder-care/web/branding/
 RUN npm run build
 
 # 2) FastAPI backend serving the API, the Retell endpoints and the built dashboard

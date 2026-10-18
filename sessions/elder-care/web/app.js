@@ -183,7 +183,7 @@ function draw() {
   ].find((key) => focus?.dataset?.[key]);
   const focusValue = focusKey ? focus.dataset[focusKey] : null;
   if (!data) {
-    app.innerHTML = `<main class="boot"><span class="brand large">${icon("heart", 30)} DIZA<span>care</span></span><h1>${error ? "Connect to your care workspace" : "Opening your care workspace"}</h1><p>${esc(error || "Loading the care queue...")}</p>${error === "Staff access token required" ? tokenForm() : '<button class="primary" data-action="refresh">Try again</button>'}</main>`;
+    app.innerHTML = `<main class="boot"><span class="brand large"><picture><source media="(prefers-reduced-motion: reduce)" srcset="/care-assets/branding/diza-logo-light-static.svg"><img class="diza-logo" src="/care-assets/branding/diza-logo-light.svg" alt="DIZA" width="431" height="128"></picture></span><h1>${error ? "Connect to your care workspace" : "Opening your care workspace"}</h1><p>${esc(error || "Loading the care queue...")}</p>${error === "Staff access token required" ? tokenForm() : '<button class="primary" data-action="refresh">Try again</button>'}</main>`;
     return;
   }
   const urgent = active().filter((r) => r.urgency === "urgent");
@@ -202,7 +202,7 @@ function draw() {
     building: "One place for every resident.",
   }[view];
   app.innerHTML = `<div class="layout">
-    ${embedded ? "" : `<aside class="sidebar"><a class="brand" href="/care" aria-label="DIZA Care home"><span class="brand-icon">${icon("heart", 23)}</span>DIZA<span>care</span></a>
+    ${embedded ? "" : `<aside class="sidebar"><a class="brand" href="/care" aria-label="DIZA Care home"><picture><source media="(prefers-reduced-motion: reduce)" srcset="/care-assets/branding/diza-logo-dark-static.svg"><img class="diza-logo" src="/care-assets/branding/diza-logo-dark.svg" alt="DIZA" width="431" height="128"></picture></a>
       <div class="facility"><span class="facility-mark">WH</span><div><strong>${esc(data.facility)}</strong><small>Residential care home</small></div></div>
       <div class="nav-label">CARE WORKSPACE</div><nav aria-label="Care workspace">
         ${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("facility", "grid", "Rooms & repairs")}${nav("history", "clock", "Completed care")}
