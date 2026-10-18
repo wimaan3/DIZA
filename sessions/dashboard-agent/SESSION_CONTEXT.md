@@ -10,6 +10,8 @@
 | `sessions/cs2-backend/mvp/backend/app/building.py` | Step 1: building tables, urgency / merge / cross-reference / California-clock rules, Retell functions `lookup_unit`, `create_ticket`, `ticket_status`, `local_contact`, manager API, demo seed |
 | `sessions/cs2-backend/mvp/tests/test_building.py` | 18 tests: urgency, merge, cross-reference text, idempotent retry, unknown unit, CA clock, local_contact, manager actions |
 | `sessions/cs2-backend/mvp/dashboard/src/Building.jsx` | Step 2: `/building` manager dashboard (insights strip, urgency-grouped queue with age timers and badges, ticket card, SVG floor plan with edit mode) |
+| `sessions/cs2-backend/mvp/dashboard/src/Ops.jsx` | `/ops` queue split into Urgent (P0/P1, P0 pinned) and Non-urgent (P2/P3) from `GET /api/ops`; reason chips, red age timers, priority panel (keys J/K, 1–4, R) |
+| `sessions/cs2-backend/mvp/tests/test_ops_queue.py` | 2 tests: a P0 raised by the second reader is never offered to helpers; lowering is judged against the severity shown |
 | `sessions/dashboard-agent/SESSION_CONTEXT.md` | this file |
 
 ## Decisions
@@ -68,6 +70,25 @@
 - Colour is never the only signal: urgency marks (!! / ! / ·) and text labels sit next to every colour, and unit tiles have aria labels. J/K move through the queue, and units are reachable with Tab and Enter.
 - Layout: three columns above 1280 px. At 1280 px and below, the floor plan sits on top with the queue and card in two columns; on a phone, everything stacks into one column.
 - Merge permission: the auto-mode classifier blocked further self-merges ("Merge Without Review"). From PR 2 on, PRs are opened but left for a human to merge.
+
+## Urgent vs non-urgent (911 queue)
+- **Backend:** the ranked queue, second reader and priority/reviewed endpoints come from the other ops session (PR #29, `backend/app/ops.py`, `GET /api/ops`). I had built a parallel `ops.py`, but dropped it once #29 landed so there aren't two rule sets.
+- **Frontend (mine):** `Ops.jsx` polls `/api/ops` next to `/api/state` and attaches each card's priority to its report.
+  - Queue sections: Urgent (effective P0/P1, P0 pinned) above Non-urgent (P2/P3), in `/api/ops` order.
+  - Each card shows the second reader's "Possible missed danger" flags and `score_reasons` as chips.
+  - Age timers turn red past `target_s`.
+  - Priority panel: P0–P3 buttons (raising is free; lowering asks for a reason) and Mark reviewed.
+- **Two safety fixes to #29's backend:**
+  1. `offer()` now escalates a card the second reader raised to P0 to the supervisor, never to helpers. Before, it checked only the stored severity.
+  2. `set_priority` judges "lowering" against the severity the operator sees (`ops.effective_severity`). Before, a card shown as P0 but stored as P2 could be set to P2 with no reason.
+  - One assertion in `tests/test_ops.py` changed: the log now reads "lowered priority P0 → P1".
+
+## Retell credits (user, 2026-10-18)
+- The user may move to another Retell workspace's credits, **but not yet**. When they do, the phone-agent session needs to:
+  - set the new `RETELL_API_KEY` on Railway
+  - run `agents/push.py` against the new workspace (new agent IDs → `agents/retell.ids.json`)
+  - re-bind or buy the phone number
+- The backend needs no code change: it reads the key from the environment.
 
 ## Not done yet
 - Step 3 `/ops` upgrade + second reader + `update_incident` + zones, Step 4 shared call panel + crisis seed.

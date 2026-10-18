@@ -232,7 +232,10 @@ def route_to_human(p=Depends(parse)):
             reason = 'you match ' + ', '.join(m.replace('lang:', 'language ') for m in matched) if matched else 'you were the first available person'
             event(c, call['call_id'], f"Warm transfer to {r['name']} ({severity}) · {reason}")
             return {'oncall_number': r['phone'], 'responder_name': r['name'], 'brief': (args.get('summary') or '')[:300], 'match_reason': reason}
-    return once('route_to_human', call, args, make)
+    out = once('route_to_human', call, args, make)
+    from .security import brief_after_routing  # a break-in or threat also gets on-duty security a briefing call
+    brief_after_routing(call, args, out)
+    return out
 
 
 @router.post('/lookup_info')

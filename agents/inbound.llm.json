@@ -1,14 +1,12 @@
 {
   "_prompt_files": [
     "_shared_rules.md",
-    "security.md",
     "inbound.md",
     "finding_help.md"
   ],
   "_tools": [
     "flag_urgent",
     "route_to_human",
-    "brief_security",
     "transfer_to_human",
     "transfer_to_crisis_line",
     "swap_to_crisis",

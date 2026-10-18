@@ -82,7 +82,7 @@ class Api(unittest.TestCase):
   self.assertEqual(self.c.post(f'/api/reports/{rid}/priority',json={'severity':'P3'}).status_code,400)
   self.assertEqual(self.c.post(f'/api/reports/{rid}/priority',json={'severity':'P1','reason':'called back: grandmother got out','by':'Op'}).status_code,200)
   i=self.ops()['incidents'][0];self.assertEqual((i['severity'],i['effective']),('P1','P1'));self.assertTrue(i['flags'])  # flag still shown after review
-  self.assertTrue(any('lowered priority P2 → P1' in e['message'] or 'raised priority P2 → P1' in e['message'] for e in i['timeline']))
+  self.assertTrue(any('lowered priority P0 → P1' in e['message'] for e in i['timeline']))  # judged against the P0 the operator saw
  def test_take_call_routes_next_transfer_to_that_operator(self):
   rid=self.report(call_id='call_t')['report_id']
   self.assertEqual(self.c.post(f'/api/reports/{rid}/take',json={'responder_id':'op2'}).status_code,200)

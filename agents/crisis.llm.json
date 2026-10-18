@@ -1,9 +1,9 @@
 {
   "_prompt_files": [
     "_shared_rules.md",
-    "security.md",
     "crisis.md",
-    "finding_help.md"
+    "finding_help.md",
+    "security.md"
   ],
   "_tools": [
     "flag_urgent",
