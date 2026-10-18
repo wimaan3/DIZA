@@ -108,6 +108,12 @@ class RetellFunctions(unittest.TestCase):
   self.c.post('/retell/webhook',content=raw,headers={'x-retell-signature':symmetric['sign'](raw,'test-key')})
   self.assertEqual(self.state()['calls'][0]['direction'],'text')
   self.assertIn('Text the DIZA Community Line',self.c.get('/text').text)
+ def test_retry_in_same_call_keeps_responder_and_phone_is_e164(self):
+  from backend.app.retell_fns import e164
+  self.assertEqual([e164(x) for x in ('+1<5555550001>','(555) 555-0001','5555550001','+1 555-555-0001')],['+15555550001']*4)
+  a=self.fn('route_to_human',{'needs':['listener'],'language':'en','severity':'P3','summary':'wants a human'},{**CALL,'call_id':'c15'})
+  b=self.fn('route_to_human',{'needs':['listener'],'language':'en','severity':'P0','summary':'now urgent'},{**CALL,'call_id':'c15'})
+  self.assertTrue(a['oncall_number']);self.assertEqual(a['oncall_number'],b['oncall_number'])
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])
