@@ -145,6 +145,7 @@ async def lifespan(app):
     init_alerts()
     init_locate()
     init_building()
+    init_ops()
     async def worker():
         while True:
             expire()
@@ -268,7 +269,7 @@ def surge():
 def reset():
     if not DEMO: raise HTTPException(403)
     with connect() as c:
-        for table in ('attempts','requests','reports','events','webhook_events','calls','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents','tickets','ticket_events'): c.execute(f'DELETE FROM {table}')
+        for table in ('attempts','requests','reports','events','webhook_events','calls','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents','tickets','ticket_events','incident_fields','zones'): c.execute(f'DELETE FROM {table}')
         c.execute("UPDATE responders SET status='available'")
     return {'ok':True}
 
@@ -388,9 +389,46 @@ def _geocode_report(rid):
             with connect() as c:
                 c.execute('UPDATE reports SET lat=?,lon=?,gps_accuracy=?,geo_tried=1 WHERE id=?',(gps['lat'],gps['lon'],gps['accuracy'],r['id']))
             continue
+        # "Kansas City, Wichita and Tulsa": one call naming several places becomes one card and one pin per place, looked up in parallel.
+        parts=[] if loc.startswith('(') else resources.place_list(loc)
+        found=[]
+        if parts:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(len(parts)) as ex:
+                found=[(p,s) for p,s in zip(parts,ex.map(lambda p:resources.geocode(p,time.monotonic()+6),parts)) if s]
+        if len(found)>1:
+            split_report(r['id'],loc,found)
+            continue
         pos=None if loc.startswith('(') else resources.geocode(loc,time.monotonic()+4)
+        if not pos and found:
+            loc,pos=found[0][0],found[0][1]
+            with connect() as c:
+                c.execute('UPDATE reports SET location=? WHERE id=?',(loc,r['id']))
         with connect() as c:
             c.execute('UPDATE reports SET lat=?,lon=?,geo_tried=1 WHERE id=? AND location=?',(pos[0] if pos else None,pos[1] if pos else None,r['id'],loc))
+
+def split_report(rid,loc,found):
+    # The first place keeps the original card; every other place gets its own card (same call, same priority, own request).
+    with connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        r=dict(c.execute('SELECT * FROM reports WHERE id=?',(rid,)).fetchone())
+        if r['location']!=loc: return  # the caller corrected the location meanwhile
+        note=f"One of {len(found)} places this caller named ({', '.join(p for p,_ in found)})"
+        for i,(place,(lat,lon)) in enumerate(found):
+            summary=f"{r['summary']} · {note}"[:2000]
+            if i==0:
+                c.execute('UPDATE reports SET location=?,lat=?,lon=?,geo_tried=1,summary=? WHERE id=?',(place,lat,lon,summary,rid))
+                continue
+            nid=str(uuid.uuid4())
+            c.execute('INSERT INTO reports(id,dedupe,cluster_id,location,category,summary,evidence,unknowns,severity,reason,language,source,created,lat,lon,geo_tried) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)',
+                      (nid,f"{r['dedupe']}#{i}",str(uuid.uuid4()),place,r['category'],summary,r['evidence'],r['unknowns'],r['severity'],r['reason'],r['language'],r['source'],r['created']+i/1000,lat,lon))
+            if r['severity']!='P3':
+                qid=str(uuid.uuid4())
+                c.execute('INSERT INTO requests VALUES(?,?,?,?,?,?)',(qid,nid,'new',None,time.time(),time.time()))
+                event(c,qid,f'Split from a call that named {len(found)} places · no person has accepted responsibility')
+                if r['severity']=='P0': offer(c,qid)
+        q=c.execute('SELECT id FROM requests WHERE report_id=?',(rid,)).fetchone()
+        event(c,q['id'] if q else rid,f'{note}: one card per place')
 
 def places():
     from . import resources
@@ -434,6 +472,7 @@ from .building import router as building_router, init_building
 app.include_router(building_router)
 from .security import router as security_router
 app.include_router(security_router)
+from .ops import init_ops
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():
