@@ -5,10 +5,10 @@ import{Building2,Clock,Users,Link2,Languages,Wrench,AlertTriangle,CheckCircle2,P
 // Building mode: the manager's queue of tenant tickets. Rules on the backend set urgency, merge duplicates and
 // cross-reference related tickets; every reason is shown here. Nothing is hidden: closed and merged tickets stay listed.
 const URG=['emergency','urgent','routine'];
-const URG_LABEL={emergency:'Emergency repair',urgent:'Urgent',routine:'Routine'};
+const URG_LABEL={emergency:'Emergency',urgent:'Urgent',routine:'Routine'};
 const URG_MARK={emergency:'!!',urgent:'!',routine:'·'};
 const CAT={water_leak:'Water leak',no_heat:'No heat',no_hot_water:'No hot water',electrical:'Electrical',gas_smell:'Gas smell',lockout:'Lockout',pest:'Pests',appliance:'Appliance',noise:'Noise',security:'Security',resident_care:'Resident care',other:'Other'};
-const STATUS={new:'New',assigned:'Assigned',in_progress:'In progress',waiting_tenant:'Waiting on tenant',closed:'Closed'};
+const STATUS={new:'New',assigned:'Assigned',in_progress:'In progress',waiting_tenant:'Waiting on resident',closed:'Closed'};
 const LANG={en:'English',es:'Spanish',ko:'Korean',zh:'Chinese',vi:'Vietnamese',ru:'Russian',hy:'Armenian',fa:'Persian',tl:'Tagalog',fil:'Filipino'};
 const REL={unit:'same unit',stack:'stack',hvac_zone:'HVAC zone',floor:'floor'};
 export const dur=s=>{s=Math.max(0,Math.floor(s));const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return d?tr('{d}d {h}h',{d,h}):h?tr('{h}h {m}m',{h,m}):tr('{m}m {s}s',{m,s:String(s%60).padStart(2,'0')})};
@@ -43,14 +43,14 @@ export default function Building({headers,act,onError}){
  const ins=data.insights;
  return <div className="building">
   <div className="stats ins">
-   <Stat label={tr("Open tickets")} icon={<Wrench/>} value={URG.reduce((a,u)=>a+ins.open_by_urgency[u],0)} detail={URG.map(u=>`${ins.open_by_urgency[u]} ${tr(URG_LABEL[u])}`).join(' · ')} urgent={ins.open_by_urgency.emergency>0}/>
+   <Stat label={tr("Urgent needs")} icon={<AlertTriangle/>} value={ins.open_by_urgency.emergency+ins.open_by_urgency.urgent} detail={`${ins.open_by_urgency.emergency} ${tr('Emergency')} · ${ins.open_by_urgency.urgent} ${tr('Urgent')}`} urgent={ins.open_by_urgency.emergency>0}/>
+   <Stat label={tr("Resident care")} icon={<Users/>} value={tickets.filter(t=>t.status!=='closed'&&!t.merged_into).filter(t=>t.category==='resident_care').length} detail={tr("Wellness checks, medication, falls")}/>
+   <Stat label={tr("Open repairs")} icon={<Wrench/>} value={tickets.filter(t=>t.status!=='closed'&&!t.merged_into).filter(t=>t.category!=='resident_care').length} detail={tr("Leaks, heat, power, locks and more")}/>
    <Stat label={tr("Median to first human action")} icon={<Clock/>} value={ins.median_first_action_s==null?'—':dur(ins.median_first_action_s)} detail={tr("Assign, status, note or tenant notified \u00b7 last 30 days")}/>
-   <Stat label={tr("Duplicates merged this week")} icon={<GitMerge/>} value={ins.duplicates_merged_week} detail={tr("Every caller is kept on the ticket")}/>
-   <Stat label={tr("Top repeat problem")} icon={<Link2/>} value={ins.top_repeats[0]?`${ins.top_repeats[0].count}×`:'—'} detail={ins.top_repeats.length?ins.top_repeats.slice(0,2).map(r=>`${r.problem} ${r.where}`).join(' · '):tr("No repeats this week")}/>
    <Stat label={tr("Languages this week")} icon={<Languages/>} value={Object.keys(ins.language_mix).length} detail={Object.entries(ins.language_mix).map(([l,n])=>`${tr(LANG[l]||l)} ${n}`).join(' · ')||tr("No calls yet")}/>
   </div>
   <div className="bgrid">
-   <section className="panel bqueue"><div className="panel-title"><h2>{tr("Ticket queue")} <span>{open.length}</span></h2>{unitFilter&&<button className="chip-btn" onClick={()=>setUnitFilter('')}>{tr('Unit {unit}',{unit:unitFilter})} <X size={12} aria-label={tr("Clear unit filter")}/></button>}</div>
+   <section className="panel bqueue"><div className="panel-title"><h2>{tr("Resident requests")} <span>{open.length}</span></h2>{unitFilter&&<button className="chip-btn" onClick={()=>setUnitFilter('')}>{tr('Unit {unit}',{unit:unitFilter})} <X size={12} aria-label={tr("Clear unit filter")}/></button>}</div>
     {cats.length>1&&<div className="catfilter" role="group" aria-label={tr('Filter by category')}><button className={'chip-btn'+(catFilter?'':' on')} aria-pressed={!catFilter} onClick={()=>setCatFilter('')}>{tr('All')}</button>{cats.map(([c,n])=><button key={c} className={'chip-btn'+(catFilter===c?' on':'')} aria-pressed={catFilter===c} onClick={()=>setCatFilter(catFilter===c?'':c)}>{tr(CAT[c]||c)} <span>{n}</span></button>)}</div>}
     <p className="hint">{tr("Grouped by urgency, oldest first.")} <kbd>J</kbd>/<kbd>K</kbd> {tr("to move.")}</p>
     <div className="report-list">{groups.map(([u,list])=><div key={u}><h3 className={'ugroup '+u}><span className={'umark '+u}>{URG_MARK[u]}</span>{tr(URG_LABEL[u])} <span>{list.length}</span><small>{tr('Target {duration}',{duration:dur(data.targets[u])})}</small></h3>
@@ -58,7 +58,7 @@ export default function Building({headers,act,onError}){
      <button className="text-button closed-toggle" onClick={()=>setShowClosed(!showClosed)}>{tr(showClosed?'Hide closed ({n})':'Show closed ({n})',{n:closed.length})}</button>
      {showClosed&&closed.map(t=><TicketRow key={t.code} t={t} now={now} chosen={ticket?.code===t.code} onClick={()=>setSel(t.code)} children={[]}/>)}
     </div></section>
-   <section className="panel bcard">{ticket?<TicketCard t={ticket} data={data} byCode={byCode} unit={unitOf[ticket.unit]} now={now} run={run} onSelect={setSel}/>:<div className="empty full"><CheckCircle2 size={38}/><h3>{tr("No tickets yet.")}</h3><p>{tr('Tenant calls appear here within two seconds.')}{data.demo&&tr(" Load the demo building from the menu to see a sample week.")}</p></div>}</section>
+   <section className="panel bcard">{ticket?<TicketCard t={ticket} data={data} byCode={byCode} unit={unitOf[ticket.unit]} now={now} run={run} onSelect={setSel}/>:<div className="empty full"><CheckCircle2 size={38}/><h3>{tr("No tickets yet.")}</h3><p>{tr('Calls from residents and families appear here within two seconds.')}{data.demo&&tr(" Load the demo building from the menu to see a sample week.")}</p></div>}</section>
    <section className="panel bmap"><div className="panel-title"><h2>{data.building.name}</h2><button className={'text-button'+(edit?' on':'')} onClick={()=>setEdit(!edit)} aria-pressed={edit}><Pencil size={13}/>{edit?tr("Done editing"):tr("Edit units")}</button></div>
     <FloorPlan units={units} tickets={tickets} ticket={ticket} filter={unitFilter} onUnit={u=>edit?null:setUnitFilter(unitFilter===u?'':u)} edit={edit} run={run} buildingId={data.building.id}/>
    </section>

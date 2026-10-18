@@ -5,7 +5,7 @@ import{t}from'./i18n.js';
 // One teammate's work, from both sides: 911 requests offered to them and building tickets assigned to them.
 // The same work also reaches them by phone (DIZA calls); these buttons are the dashboard way to answer.
 const LABEL={offered:'Offered to you',accepted:'Yours · in progress'};
-const TSTATUS={assigned:'Assigned to you',in_progress:'In progress',waiting_tenant:'Waiting on tenant'};
+const TSTATUS={assigned:'Assigned to you',in_progress:'In progress',waiting_tenant:'Waiting on resident'};
 export default function Inbox({data,me,setMe,act,headers,busy}){
  const[building,setBuilding]=useState(null);
  async function load(){try{const r=await fetch('/api/building',{headers});if(r.ok)setBuilding(await r.json())}catch{}}
@@ -23,11 +23,11 @@ export default function Inbox({data,me,setMe,act,headers,busy}){
    <h2>{q.report.location.startsWith('(')?t('Location not given yet'):q.report.location}</h2><p>{q.report.summary}</p><p className="subtitle">{t(q.report.reason)}</p>
    <div className="buttons">{q.status==='offered'?<><button className="primary" disabled={busy} onClick={()=>run(`/api/requests/${q.id}/decision`,{responder_id:me,action:'accept'})}>{t("Accept")}</button><button disabled={busy} onClick={()=>run(`/api/requests/${q.id}/decision`,{responder_id:me,action:'decline'})}>{t("Decline \u00b7 goes to your backup")}</button></>
     :<button className="primary" disabled={busy} onClick={()=>run(`/api/requests/${q.id}/decision`,{responder_id:me,action:'resolve'})}>{t("Mark done")}</button>}</div></div>})}
-  {tickets.map(x=><div className="task-card" key={x.code}><div className="task-kind"><Wrench size={14}/>{t('Building ticket {code}',{code:x.code})} · <b className={'urg '+x.urgency}>{t(x.urgency)}</b> · {t(TSTATUS[x.status]||x.status)}</div>
+  {tickets.map(x=><div className="task-card" key={x.code}><div className="task-kind"><Wrench size={14}/>{t('Resident request {code}',{code:x.code})} · <b className={'urg '+x.urgency}>{t(x.urgency)}</b> · {t(TSTATUS[x.status]||x.status)}</div>
    <h2>{t('Unit {unit}',{unit:x.unit})} · {t(x.category.replaceAll('_',' '))}</h2><p>{x.summary}</p>{x.ca_clock&&<p className="subtitle">{x.ca_clock.text}</p>}
    <div className="buttons">{x.status!=='in_progress'&&<button className="primary" disabled={busy} onClick={()=>run(`/api/tickets/${x.code}/status`,{status:'in_progress',actor:who?.name||'staff'})}>{t("Start")}</button>}
     <button className={x.status==='in_progress'?'primary':''} disabled={busy} onClick={()=>run(`/api/tickets/${x.code}/status`,{status:'closed',actor:who?.name||'staff'})}>{t("Close \u00b7 fixed")}</button>
-    <a className="text-button" href="/building">{t("Open in Building")}</a></div></div>)}
+    <a className="text-button" href="/building">{t("Open in Senior care")}</a></div></div>)}
   {!mine.length&&!tickets.length&&<div className="empty"><InboxIcon size={36}/><h3>{t('Nothing assigned to {who} right now.',{who:who?.name||t('you')})}</h3>
    <p>{t('Work lands here when a manager assigns you a building ticket on')} <a href="/building">{t("Building")}</a>, {t('or an operator clicks')} <b>{t("Offer to eligible responder")}</b> {t('on a 911 card in')} <a href="/ops">{t("911 operations")}</a>. {t('Life-threatening (P0) cards go to the supervisor, not here. DIZA also phones you about each assignment.')}</p></div>}
  </section>;

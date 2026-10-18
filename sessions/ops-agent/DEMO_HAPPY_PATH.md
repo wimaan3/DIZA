@@ -26,14 +26,14 @@ The hub says "No extensions." Required: **name + lens + one line · pitch deck �
 
 **Dual-use (say the second customer by name):** on Tuesday it's the **building management line** (leaks, noise, lockouts → tickets → the maintenance person's phone rings). On a crisis night it's the **911 / overflow line**, with the same agent, map and team.
 
-## 2. Tuesday: building management (≈60 s)
+## 2. Tuesday: Senior care (senior apartments / care homes, ≈60 s)
 
-**Do:** on `/building`, click **Load demo week** first so the board isn't empty. Then call the line from a phone on speaker:
+**Do:** on `/building` (the **Senior care** tab), click **Load demo week** first so the board isn't empty. Then call the line from a phone on speaker:
 
-> "Hi, I'm in Larchmont Court Apartments, unit 4A. Water is leaking from my bathroom ceiling. Also there's a loud disturbance in 2F."
+> "Hi, I'm in Larchmont Court Apartments, unit 4A. Water is leaking from my bathroom ceiling. Also there's a loud disturbance in 2F. And I haven't seen my elderly neighbor in 3E for two days, can someone check on her?"
 
 **Show:**
-1. Two tickets appear, **4A water leak (emergency)** and **2F noise**, each with its unit and building, not one blob.
+1. Three tickets appear: **4A water leak (emergency)**, **2F noise**, and **3E Resident care (urgent)**, each with its unit, not one blob. The **Resident care** card count goes up.
 2. Category chips filter them (Water / Noise …).
 3. **Assign** 4A to a teammate. **That teammate's phone rings**; DIZA briefs them, they say "yes", and the ticket moves to **In progress** by itself.
 4. They open **Supporter inbox** (pick their name), then **Close · fixed**, and the ticket is handled.
