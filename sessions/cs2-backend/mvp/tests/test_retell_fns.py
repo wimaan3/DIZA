@@ -120,6 +120,12 @@ class RetellFunctions(unittest.TestCase):
   self.assertEqual(self.c.post(f'/api/reports/{rid}/location',json={'lat':34.02,'lon':-118.28}).status_code,200)
   r=self.state()['reports'][0];self.assertEqual((r['lat'],r['lon']),(34.02,-118.28));self.assertIn('Placed by operator',r['location'])
   self.assertEqual(self.c.post('/api/reports/nope/location',json={'lat':1,'lon':1}).status_code,404)
+ def test_removed_responder_stops_getting_calls(self):
+  import backend.app.retell_fns as f
+  with __import__('backend.app.main',fromlist=['connect']).connect() as c:
+   c.execute("INSERT OR REPLACE INTO responders VALUES('old','Old Friend','evac_logistics','available')");c.execute("INSERT OR REPLACE INTO responder_phones VALUES('old','+15555550009')")
+  f.init_fns()
+  self.assertNotIn('old',{r['id'] for r in self.state()['responders']})
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])
