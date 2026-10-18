@@ -176,11 +176,16 @@ class MaintenanceCall(unittest.TestCase):
    self.report('c_street',hazard='fire',summary='fire on 11th Street and Broadway',location_text='11th Street and Broadway, Santa Monica')
    # 4. No building name, but "unit 4C" is one of our units: the ceiling leak is a ticket.
    out=self.report('c_4c',hazard='water leak',summary='water leaking from ceiling',location_text='unit 4C');self.assertTrue(out.get('ticket_code'))
+   # 5. Replays a live call: "disturbance by person in room 2F" (no building name, no maintenance word) is a noise ticket.
+   out=self.report('c_2f',hazard='other',summary='disturbance by person in room 2F',location_text='building, room 2F');self.assertTrue(out.get('ticket_code'))
+   # 6. Words we don't recognize at a known unit still reach the manager.
+   out=self.report('c_odd',hazard='other',summary='something weird with the mailbox',location_text='unit 1A');self.assertTrue(out.get('ticket_code'))
   new=[t for k,t in self.tickets().items() if k not in before]
   got=sorted((t['unit'],t['category'],t['urgency']) for t in new)
   self.assertIn(('4A','water_leak','emergency'),got);self.assertIn(('4C','water_leak','emergency'),got)
-  fire=[t for t in new if t['category']=='other'];self.assertEqual(len(fire),1);self.assertEqual(fire[0]['urgency'],'emergency')
+  fire=[t for t in new if t['category']=='other' and t['urgency']=='emergency'];self.assertEqual(len(fire),1)
   self.assertEqual(len([t for t in new if t['category']=='water_leak']),3)  # 4A, 4C, and the leak named with the fire
+  self.assertIn(('2F','noise','routine'),got);self.assertIn(('1A','other','routine'),got)
   ops=self.c.get('/api/ops').json()['incidents']
   self.assertEqual(sorted(i['location'] for i in ops),['11th Street and Broadway, Santa Monica','Larchmont Court apartments'])
  def test_unit_from_what_the_caller_said(self):
