@@ -19,3 +19,11 @@
 - Browser: Chinese Operations and Building; Spanish Building and supporter inbox; language persists across navigation/reload. Screenshot: spanish-building.png.
 - Remaining English may include free-form summaries, caller transcripts, staff notes, arbitrary backend narrative, proper names and map-provider labels. No machine translation service added.
 - Not committed, pushed or deployed. Existing sessions/la-3d/.vite cache left alone. No filters added.
+
+## Publication follow-up
+- User explicitly authorized direct main push and deployment, overriding the earlier PR-only preference for this change.
+- Branch: codex/dashboard-i18n; rebased onto daf71f1 (PR #50).
+- Preserved teammates' category filters, two-tab Ops queue, callback recipient, new Inbox component, actionable activity tabs and persistent teammate selection.
+- Translated the new Inbox and metric explanations as part of integration.
+- Re-ran production build, locale tests and diff checks; browser verified the new Spanish Inbox on the integrated build.
+- Push/deployment result is reported in chat; no API keys or phone numbers added.
