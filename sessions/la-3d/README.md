@@ -47,7 +47,7 @@ An optional combined `Dockerfile` is included; build with repo-root context:
 docker build -f sessions/la-3d/Dockerfile -t diza-city-3d .
 ```
 
-To use it on Railway, select `sessions/la-3d/Dockerfile` as the service Dockerfile path after review. The existing root Railway configuration is unchanged. Preserve the current environment and persistent `/data` volume. No remote deployment has been performed. The image has not been built in this session; the city frontend build and wrapper tests were run locally.
+The deployment follow-up sets the repository's `railway.json` Dockerfile path to `sessions/la-3d/Dockerfile`. After review and merge, Railway can build both dashboards using this image. Preserve the current environment and persistent `/data` volume. Confirm `/ops` and `/city-3d/` separately after deployment: the original SPA fallback can return HTTP 200 for an unimplemented map route. The image has not been built in this session; both frontend builds and the combined server were tested locally.
 
 ## Validation
 

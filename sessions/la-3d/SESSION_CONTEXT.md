@@ -1,7 +1,7 @@
 # Session context: la-3d
 
 - **Session:** Codex with Zoe; Los Angeles community map.
-- **Branch:** `3d-map` (requested by the user; originally `codex/la-3d`).
+- **Branch:** Map implementation merged from `3d-map`; deployment follow-up on `codex/deploy-city-3d`.
 - **Scope:** User requested pulling main and making the map 3D, then clarified city-scale LA (Downtown / USC first, also west LA, with some care facilities), rather than a single senior residence.
 
 ## Files in this folder
@@ -44,7 +44,14 @@
 - Whether CS#2 prefers the additive wrapper or integrating this map as a dashboard tab after review.
 
 ## Not done
-- No remote deployment or PR merge. Active Railway Dockerfile is unchanged.
+- Map PR #38 is merged. Deployment follow-up changes the root Railway Dockerfile selection with the user's explicit authorization; configuration review and remote deployment verification remain pending.
 - No photorealistic 3D city mesh, indoor layouts, resident/occupancy data, accessibility routing or facility capacity verification.
 - No emergency-service transfer changes and no SMS work in this scope.
 - Docker image build is not verified; both frontend code and the wrapper are tested locally.
+
+## Deployment follow-up
+- User explicitly approved changing `railway.json` to use `sessions/la-3d/Dockerfile` and redeploying. This authorizes the specific root configuration edit outside the session directory.
+- Based on latest main `568a701`, preserving the team's subsequent demo changes.
+- Only the Dockerfile selection changes: existing `/ops` health check, restart policy, `$PORT` startup, `/data/diza.sqlite3` database location and original backend remain in place.
+- The previous deployment returned the original Operations HTML at `/city-3d/`; HTTP 200 alone is insufficient to verify activation.
+- Config PR requires DS review per AGENTS.md. No direct main push or self-merge.
