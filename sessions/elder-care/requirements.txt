@@ -1,0 +1,1 @@
+-r ../cs2-backend/mvp/backend/requirements.txt
