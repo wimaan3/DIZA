@@ -93,4 +93,14 @@ class Api(unittest.TestCase):
    row=c.execute('SELECT status,assignee FROM requests WHERE id=?',(q,)).fetchone()
    self.assertEqual(row['status'],'offered');self.assertNotIn(row['assignee'],('dee','vol'))  # off duty and volunteers excluded
    self.assertTrue(any('no one with facilities on duty' in e[0] for e in c.execute('SELECT message FROM events WHERE request_id=?',(q,))))
+ def test_nobody_stays_busy_after_their_call(self):
+  # A live transfer ends -> available (call_ended). A "busy" with nothing behind it is freed by the sweep.
+  out=self.route('c_end','en');name=out['responder_name']
+  raw=json.dumps({'event':'call_ended','call':{'call_id':'c_end','from_number':'+15555550100','to_number':'+15555550999','direction':'inbound','start_timestamp':1,'end_timestamp':2}})
+  self.c.post('/retell/webhook',content=raw,headers={'x-retell-signature':symmetric['sign'](raw,'test-key')})
+  with connect() as c:
+   self.assertEqual({r['name']:r['status'] for r in c.execute('SELECT name,status FROM responders')}[name],'available')
+   c.execute("UPDATE responders SET status='busy' WHERE id='ben'")  # stuck, e.g. Take call on an ended call before this fix
+  from backend.app.main import expire;expire()
+  with connect() as c:self.assertEqual(c.execute("SELECT status FROM responders WHERE id='ben'").fetchone()[0],'available')
 if __name__=='__main__':unittest.main()
