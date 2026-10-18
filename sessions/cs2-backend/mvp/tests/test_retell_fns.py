@@ -126,6 +126,19 @@ class RetellFunctions(unittest.TestCase):
    c.execute("INSERT OR REPLACE INTO responders VALUES('old','Old Friend','evac_logistics','available')");c.execute("INSERT OR REPLACE INTO responder_phones VALUES('old','+15555550009')")
   f.init_fns()
   self.assertNotIn('old',{r['id'] for r in self.state()['responders']})
+ def test_bad_responders_env_does_not_crash_startup(self):
+  from backend.app.retell_fns import load_team
+  a={'id':'a','name':'A','phone':'5555550001'};b={'id':'b','name':'B','phone':'5555550002'}
+  self.assertEqual(load_team(json.dumps(a)+','+json.dumps(b)),[a,b])
+  self.assertEqual(load_team(json.dumps(a)),[a])
+  self.assertEqual(load_team(json.dumps([a,{'id':'x'}])),[a])
+  self.assertEqual(load_team('[{"id":"a"}] junk'),[]);self.assertEqual(load_team(''),[])
+  import backend.app.retell_fns as f
+  before={r['id'] for r in self.state()['responders']}
+  os.environ['DIZA_RESPONDERS'],old='{bad',os.environ['DIZA_RESPONDERS']
+  try:f.init_fns()
+  finally:os.environ['DIZA_RESPONDERS']=old
+  self.assertEqual({r['id'] for r in self.state()['responders']},before)
  def test_flag_after_report_upgrades_it(self):
   self.report('c17');self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},{**CALL,'call_id':'c17'})
   s=self.state();rs=[r for r in s['reports']]
