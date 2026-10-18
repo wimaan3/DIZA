@@ -13,6 +13,7 @@ export function t(key,vars={}){
 }
 const DICT={
  zh:{
+  'Building management':'楼宇管理','Mark done':'标记完成','Answer once; every later caller with this question gets it':'回答一次，之后问同样问题的来电者都会听到','Source (link or office)':'来源（链接或部门）','Approve':'批准',
   'New report':'新报告','Show':'查看','Dismiss':'关闭',
   'All reports':'查看全部事件','Care locations':'养老设施','Jump to':'跳转至','Deployment area':'服务区域','Facility website':'机构官网',
   'Approximate address position. Verify facility availability.':'地址位置为近似值，请向机构核实服务情况。',
@@ -88,6 +89,7 @@ const DICT={
   'linked reports':'份关联报告','GPS from caller ±{m} m':'来电者 GPS ±{m} 米','Use the bundled outline map (works without map tiles)':'使用内置轮廓地图（无需在线地图）',
  },
  es:{
+  'Building management':'Gestión del edificio','Mark done':'Marcar hecho','Answer once; every later caller with this question gets it':'Responda una vez; cada persona que pregunte lo mismo recibirá esta respuesta','Source (link or office)':'Fuente (enlace u oficina)','Approve':'Aprobar',
   'New report':'Nuevo reporte','Show':'Ver','Dismiss':'Cerrar',
   'All reports':'Todos los informes','Care locations':'Centros para mayores','Jump to':'Ir a','Deployment area':'Área de servicio','Facility website':'Sitio del centro',
   'Approximate address position. Verify facility availability.':'Ubicación aproximada. Confirme la disponibilidad con el centro.',

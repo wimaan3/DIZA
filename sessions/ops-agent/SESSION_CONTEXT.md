@@ -92,6 +92,12 @@
     - The fictional demo vendors are removed whenever a real team exists, and their tickets move to a teammate. The demo week assigns its sample history to the team.
     - **911:** when nobody on duty has the exact skill, an offer goes to the best available on-duty teammate (never a volunteer for P0/P1), and the card says so.
 
+17. **UI audit (2026-10-18).**
+    - /ops: queue (Urgent | Not urgent tabs) beside the incident card, map below, and hover explanations on every tile. The page is 25% shorter.
+    - Line activity and Team share one tabbed panel. Unanswered questions get an Answer form (POST /api/kb_items); follow-ups get Mark done (POST /api/cases/{code}/status).
+    - The avatar shows the "I am" person's initials. The naming is "Building management" and "911 operations".
+    - No one stays busy after a call: Take call on an ended call no longer marks busy, and a sweep frees anyone busy with no live call, transfer, accepted job or pending offer.
+
 ## Requests to phone-agent session
 1. **Wire `update_incident`** (`{field, value}`, field in location, callback, relationship, what, people, hazards, access_needs). It returns `{ok, missing:[…]}`; ask next for the first item in `missing`. Call it as each fact comes in, so the operator's card fills live.
 2. **When a caller names several places,** pass them all in `location_text` ("Kansas City, Wichita, and Tulsa"). The backend splits them into one card per place.

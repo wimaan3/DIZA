@@ -124,3 +124,16 @@ mark{background:#fbe0d6;color:#7d1d10;border-radius:3px;padding:0 2px}
 .arrivals .dismiss{font-size:16px;line-height:1;padding:4px 9px}
 .catfilter{display:flex;flex-wrap:wrap;gap:5px;padding:8px 20px 0}.catfilter .chip-btn{font-size:11px;padding:4px 9px;border-radius:14px}.catfilter .chip-btn span{color:#708075;margin-left:3px}.catfilter .chip-btn.on{background:#22553e;color:#fff;border-color:#22553e}.catfilter .chip-btn.on span{color:#d2e6a1}
 .task-kind{display:flex;align-items:center;gap:6px;font-size:11px;color:#5d6d62;margin-bottom:6px;flex-wrap:wrap}.task-kind small{color:#7d1d10}.task-kind .urg.emergency{color:#7d1d10}.task-kind .urg.urgent{color:#a8641a}.supporter .buttons{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.supporter .buttons .primary{width:auto;margin:0}
+/* /ops layout: queue (tabbed) next to the incident card, map below */
+.ops-grid{grid-template-columns:minmax(330px,.85fr) minmax(400px,1.15fr);margin:0 0 18px}
+.queue2 .report-list{max-height:calc(100vh - 200px);min-height:420px}
+.ops-grid .incident{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.lane-tabs{display:flex;align-items:center;gap:6px;padding:12px 14px;border-bottom:1px solid #edf0e9;flex-wrap:wrap}
+.lane-tab{border:1px solid #dce3dc;border-radius:8px;padding:7px 12px;font-weight:600;font-size:12px;background:#fff}
+.lane-tab span{font-size:10px;padding:2px 6px;border-radius:5px;background:#edf1e7;margin-left:4px}
+.lane-tab.urgent.on{background:#7d1d10;border-color:#7d1d10;color:#fff}.lane-tab.urgent.on span{background:#ffffff33;color:#fff}
+.lane-tab.routine.on{background:#22553e;border-color:#22553e;color:#fff}.lane-tab.routine.on span{background:#ffffff33;color:#fff}
+.lane-tabs small{font-size:9px;color:#8b978b;margin-left:auto}
+.load-tiles .stat{cursor:help}
+@media(max-width:1100px){.ops-grid{grid-template-columns:1fr}.ops-grid .incident{position:static;max-height:none}}
+.kbform{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.kbform input{flex:1;min-width:180px;padding:6px 8px;border:1px solid #dce3dc;border-radius:7px;font-size:11px}.kbform .primary{width:auto;margin:0}
