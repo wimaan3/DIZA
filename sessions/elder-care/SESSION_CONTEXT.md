@@ -11,6 +11,7 @@
 | `app.py` | FastAPI care API, SQLite storage, role-aware workflow rules, check-ins, signed voice functions, and original-engine mounting |
 | `facility.py` | Adapter reusing Imaan's building rules and ticket helpers for care-home rooms, shared repairs, role-aware actions, and room editing |
 | `web/index.html` | Staff workspace entry point |
+| `web/building.js`, `web/building.css` | Combined room/riser floor plan, mixed care/repair queue, shared selection, inline check-ins, insights, and responsive layout |
 | `web/app.js` | Daily and urgent queues, resident roster, check-ins, request dialogs, assignment and care outcomes |
 | `web/style.css` | Responsive staff dashboard, visible focus states, and accessible text contrast |
 | `web/facility.js`, `web/facility.css` | Combined room map, facilities queue, original reports, call context, vendor coordination, and repair dialogs |
@@ -25,7 +26,7 @@
 | `Dockerfile`, `railway.json` | Integrated care and original-engine deployment configuration |
 | `README.md` | Run instructions, configuration, demo limits, and deployment handoff |
 | `.gitignore` | Local test artifacts and virtual environment exclusions |
-| `workspace/` | Build-time extension preserving the original operations/map/building/supporter components; BuildingWorkspace combines repairs, floor plan, care summary, resident-care panel, and urgent badge |
+| `workspace/` | Build-time extension preserving the original operations/map/building/supporter components; BuildingWorkspace opens a unified care-home screen with floor plan, care/repair queue, check-ins and urgent badge; the selector retains the original apartment sample |
 | `playwright.workspace.config.js`, `tests/workspace.spec.js` | Integrated map, building, supporter, language, wall-view, shared-token, resident-care, and mobile browser checks |
 
 ## Decisions made
@@ -61,9 +62,16 @@ Checked build-time anchors add navigation and a same-origin care panel; upstream
 The adapter keeps the Leaflet-owned container stable and puts the changing cursor class on a wrapper.
 22. The care panel reuses the original operator token and keeps all five care sections and staff controls accessible on desktop and mobile.
 23. The user requested merging Resident care into Building instead of keeping a fourth sidebar section.
-Building now contains Repairs & floor plan and Resident care tabs, with care counts and queue shortcuts in the repairs overview.
+The first consolidation used Repairs & floor plan and Resident care tabs, which decision 24 supersedes.
 The Building sidebar item carries the urgent-care badge, and old `/care` links redirect into Building.
-Care panels stay mounted when switching sections so staff retain unsaved notes, dialogs, and their current care view.
+
+24. The user clarified that repairs, floor plan and resident care must be fully merged, rather than separated by section tabs.
+Building now opens one shared room map, one mixed work queue, one detail pane and inline resident check-ins.
+The queue reuses existing care and facilities actions, including independent outcomes and original quotes/transcripts.
+Room selection filters care and repairs together; check-in concerns create work in that queue.
+The building selector retains the other fictional apartment property with its original tools and records.
+25. Mobile browser testing reproduced a dialog footer outside the visible screen.
+The embedded workspace now measures the available viewport height so form submission remains reachable after the navigation and building selector wrap.
 
 ## Key facts verified
 
@@ -92,6 +100,8 @@ The embedded care workspace has zero axe violations in the tested repair flow.
 - The original care suite still passes 30 backend tests and 16 standalone care/facilities browser workflows.
 - The six integrated browser workflows also pass after incorporating PR #39's falls/freeway demo and second-reader changes.
 Its updated operations suite passes 14 tests; the unchanged original suites and these updates account for 103 original backend tests verified across the latest main updates.
+- The fully unified Building screen passes eight integrated browser workflows, 16 compatibility browser workflows, and 30 care/backend tests.
+Tests verify a single mixed care/repair queue, shared room filtering, inline check-ins, complete care delivery, repair assignment/outcomes, independent linked outcomes, room editing, preserved notes, and desktop/mobile accessibility with zero axe violations on the tested merged screen.
 
 ## Open questions
 

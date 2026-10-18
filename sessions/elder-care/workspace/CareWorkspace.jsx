@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export function useCareData(headers) {
   const [data, setData] = useState(null);
@@ -35,8 +35,29 @@ export function CareBadge({headers}) {
 }
 
 export function CareWorkspace({view = "daily"}) {
+  const frame = useRef(null);
+  useEffect(() => {
+    function resize() {
+      const element = frame.current;
+      if (!element || !element.getBoundingClientRect().width) return;
+      const top = Math.max(0, element.getBoundingClientRect().top);
+      element.style.height = `${Math.max(240, window.innerHeight - top)}px`;
+    }
+    // The actual space differs on mobile as the sidebar and building selector
+    // wrap. Keep dialogs inside the visible frame rather than below the screen.
+    const observer = new ResizeObserver(resize);
+    observer.observe(frame.current.parentElement.parentElement);
+    window.addEventListener("resize", resize);
+    window.addEventListener("scroll", resize, {passive:true});
+    resize();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("scroll", resize);
+    };
+  }, []);
   // Same-origin isolation preserves the care UI, dialogs, keyboard handling and
   // accessibility without allowing its styles to overwrite the operations map.
-  return <iframe className="care-workspace" title="Resident care workspace"
+  return <iframe ref={frame} className="care-workspace" title={view === "building" ? "Building workspace" : "Resident care workspace"}
     src={`/care/workspace?embedded=1&view=${encodeURIComponent(view)}`}/>;
 }

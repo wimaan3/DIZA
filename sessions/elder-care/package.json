@@ -7,7 +7,7 @@
     "build": "vite build --config workspace/vite.config.js",
     "test:e2e": "playwright test",
     "test:workspace": "playwright test --config playwright.workspace.config.js",
-    "check": "node --check web/app.js && node --check web/facility.js"
+    "check": "node --check web/app.js && node --check web/facility.js && node --check web/building.js"
   },
   "dependencies": {
     "leaflet": "1.9.4",

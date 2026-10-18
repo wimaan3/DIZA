@@ -206,6 +206,8 @@ export function createFacilityWorkspace({ esc, icon, age, clock }) {
   }
   return {
     render,
+    renderDetail: (ticket, data, workingStaff, disabled) =>
+      detail(ticket, { ...data, workingStaff }, disabled),
     dialog,
     select,
     navigate,

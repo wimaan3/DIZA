@@ -14,33 +14,40 @@ All new files live in this session folder, as required by the repository's `AGEN
 - **Resident care:** the additional daily/urgent care, resident check-ins, and shared care-home repairs described below.
 
 The integrated root opens `/ops`.
-Open **Building** for **Repairs & floor plan** and **Resident care** in the same workspace.
-The repairs overview includes care counts and direct links to urgent care, everyday care, resident check-ins, and care-home repairs.
+Open **Building** for one care-home screen with a shared floor plan, resident check-ins, a mixed care/repair queue, and a single selected-item pane.
+Selecting a room filters both kinds of work, and selecting either a care request or repair opens its existing actions in place.
 The Building sidebar badge shows the number of unresolved urgent care requests even while staff use other sections.
-`/building?section=care` opens the resident-care section directly, and older `/care` links redirect there.
+`/building` opens the combined care-home workspace, and older `/care` and section links lead to that same screen.
 The sidebar has the original three sections: Building, 911 operations, and Supporter inbox.
 The apartment-building demo, crisis-map demo, and care-home demo remain distinct datasets.
 Care-home room repair reports continue to share their resident requests and facilities tickets as described below.
 
 `workspace/entry.jsx` imports the current original dashboard source directly.
-The Vite integration extends the Building component with resident care without copying the operational components or editing another session's files.
+The Vite integration extends the Building component with the combined care-home workspace without editing another session's files.
+The building selector also retains Imaan's original Larchmont apartment sample with its own units and tickets.
+These are two different fictional facilities; their rooms are never falsely matched or their records overwritten.
 Every integration anchor is checked, and a changed upstream shell fails the build instead of silently dropping functionality.
 The map adapter keeps Leaflet's container classes intact when entering drawing or placement mode.
 The care panel uses a same-origin frame to preserve its forms, dialogs, keyboard handling, and style isolation.
 It reuses the operator token already entered in the parent dashboard.
-Switching between the two Building sections preserves care dialogs, unsaved drafts, the current care section, and the selected repair ticket.
+Care requests and repair incidents share one queue with open, urgent, everyday, and completed filters.
+Linked care and repair records retain independent responsibility and outcomes.
+The room map shows both care and repair counts and highlights shared-system relationships.
+Check-in concerns create follow-up work in that queue.
+The original repair assignment, notes, merge/unmerge/split, caller context, room editing, repair outcomes, and insights remain available.
+Care dialogs and unsaved notes survive a change to the other building sample.
 
 ## What staff can do
 
 - Record meals, water, personal care, medication questions, companionship, maintenance, and wellbeing requests against a resident and room.
-- Review daily care and urgent response in separate queues, with an urgent banner visible from every view.
+- Review care and repairs in one work queue, with urgency filters and an urgent banner.
 - Accept responsibility, start care, add handoff notes, escalate concerns, and resolve requests with a required outcome.
 - Review resident language and interaction preferences before responding.
 - Record daily wellbeing observations, with overdue checks flagged after 10 am in the facility timezone.
 - Turn a check-in concern or no response into a follow-up request automatically.
 - Search by resident, room, request description, or reference code and filter open requests by status.
 - Review completed care and its handoff history.
-- Use **Rooms & repairs** to see care needs and physical incidents on the same room map.
+- Use the shared floor plan to filter care needs and physical incidents for a room.
 - Group duplicate room reports into one facilities ticket and review related issues by floor, riser, or HVAC zone.
 - Assign facilities staff or a demo vendor, coordinate access, record repair outcomes, and reopen an incomplete repair.
 - Merge, unmerge, or separate reports while preserving original quotes, linked resident requests, and available call transcripts.
@@ -69,7 +76,8 @@ They are not clinical response guarantees.
 California tenancy-law clocks from the building dashboard are not presented as care-home policy.
 
 The original building dashboard remains available at `/building` in the integrated container.
-Resident care is available at `/building?section=care`; its room map represents the resident roster rather than the separate apartment-building sample.
+The combined `/building` room map represents the care-home resident roster.
+Choose Larchmont Court in the building selector to review the separate apartment sample and its original floor plan.
 
 Urgent requests and medication questions require a nurse or care lead to accept them.
 Facilities staff can accept routine maintenance requests.
@@ -92,7 +100,7 @@ docker run --rm -p 127.0.0.1:8000:8000 diza-care
 
 Open <http://127.0.0.1:8000/ops> for the original map and operational tools.
 Select **Load demo: falls & freeway crash** to populate the geographic map and **Load demo week** in Building to populate its floor plan.
-In Building, select **Resident care**, then **Load demo scenarios** to populate the care-home addition.
+In Building, **Load demo scenarios** populates the combined care-home screen.
 The eight reports are fictional and loading them repeatedly does not duplicate care requests.
 They include a fall, everyday needs, a maintenance issue, two rooms reporting heating problems, and a repeat report that shares a repair ticket.
 Three clearly labeled synthetic call transcripts demonstrate the call-context panels.
@@ -181,7 +189,8 @@ Browser screenshots and traces are written to the ignored `test-results/` folder
 Combined-workflow tests additionally cover shared-system relationships, maintenance escalation, duplicate preservation, merge/unmerge/split, stale assignments, repair outcomes, room edits, access permission, old-demo compatibility, and unverified physical locations.
 Browser tests exercise the complete facilities workflow, room filtering, J/K navigation, resident follow-up links, call context, and desktop/mobile accessibility.
 The integrated workspace suite builds the current original dashboard and checks map drawing and pin placement, callback creation, original building notes and assignments, supporter navigation, language switching, wall view, shared token access, embedded care assignment, accessibility, and mobile layout.
-It also checks the unified Building tabs, care shortcuts, old care-link redirects, keyboard tab navigation, and unsaved handoff drafts when switching back to the floor plan.
+It also checks the single mixed queue, shared room filter, original care-link redirects, keyboard queue navigation, inline check-ins, room editing, independent care/repair outcomes, complete care delivery, and unsaved handoff drafts across building changes.
+Mobile checks include submitting a check-in form inside the actual visible workspace height.
 
 The existing backend suite was also verified in an isolated checkout with its original dashboard built.
 Run each existing test file in a separate Python process because those modules set different environment variables before importing the shared backend.
