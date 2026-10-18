@@ -175,7 +175,7 @@ def register_routes(app, connect, staff, rules):
             actor = staff(c, data.staff_id)
             ticket = get(c, code)
             check_version(c, code, data.version)
-            if data.action not in {"note", "notified"} and actor["role"] not in {"care_lead", "facilities"}:
+            if data.action not in {"note", "notified"} and actor["role"] not in {"care_lead", "facilities", "manager"}:
                 raise HTTPException(403, "Facilities staff or the care lead must coordinate repairs")
             if data.action in {"resolve", "reopen", "note", "merge", "unmerge", "split", "waiting"} and not data.note:
                 raise HTTPException(422, "Record an outcome or reason for this action")
@@ -264,7 +264,7 @@ def register_routes(app, connect, staff, rules):
         with connect() as c:
             c.execute("BEGIN IMMEDIATE")
             actor = staff(c, data.staff_id)
-            if actor["role"] not in {"care_lead", "facilities"}:
+            if actor["role"] not in {"care_lead", "facilities", "manager"}:
                 raise HTTPException(403, "Facilities staff or the care lead must edit room records")
             row = c.execute("SELECT version FROM care_room_versions WHERE room=?", (data.room,)).fetchone()
             if row is None or row[0] != data.version:

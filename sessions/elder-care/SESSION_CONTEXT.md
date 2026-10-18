@@ -103,6 +103,27 @@ Its updated operations suite passes 14 tests; the unchanged original suites and 
 - The fully unified Building screen passes eight integrated browser workflows, 16 compatibility browser workflows, and 30 care/backend tests.
 Tests verify a single mixed care/repair queue, shared room filtering, inline check-ins, complete care delivery, repair assignment/outcomes, independent linked outcomes, room editing, preserved notes, and desktop/mobile accessibility with zero axe violations on the tested merged screen.
 
+## Shared residential model correction
+
+The user's final direction is one product model for care homes and apartments.
+The earlier selector between separate care-home and apartment experiences is superseded and removed.
+`workspace/BuildingWorkspace.jsx` now mounts one shared resident-services workspace.
+`web/building.js` groups each physical maintenance issue and all linked resident follow-ups into one queue entry.
+Related merged units remain filterable and every original report is retained.
+An issue is completed only when the physical repair and every resident follow-up are resolved.
+Shared request counting also drives the sidebar badge.
+
+`app.py` adds versioned resident profiles with per-person optional check-ins and an audit trail.
+The building manager role can coordinate repairs, edit units, maintain residents and handle routine support.
+Clinical acceptance stays restricted to nurses and care leads.
+New apartment residents use the same intake, unit map and queue as the assisted-living roster.
+Moving a resident does not move an existing physical repair.
+The existing six demo residents retain their check-in schedules and all demo request identities.
+No existing legacy apartment API data is deleted or reinterpreted as another facility's records.
+
+The correction passes 33 backend tests, four grouped-request model tests, 16 compatibility browser workflows and eight integrated browser workflows.
+The integrated tests exercise adding an apartment resident to the shared map, repair assignment, optional check-ins, complete maintenance and resident outcomes, preserved drafts, original operations tools and zero axe violations on tested desktop/mobile screens.
+
 ## Open questions
 
 - Facility-specific emergency procedure, escalation contacts, staff roster, operating policy, and resident import remain deployment inputs.

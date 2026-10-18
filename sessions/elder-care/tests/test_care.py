@@ -204,6 +204,58 @@ class CareFlowTests(unittest.TestCase):
                 self.assertEqual(result["found"], expected is not None)
                 self.assertEqual(result["resident"]["id"] if result["resident"] else None, expected)
 
+    def profile(self, **changes):
+        body = dict(id="apartment-resident", staff_id="manager-taylor", version=0,
+                    name="Jamie Rivers", room="2D", wing="East", language="English",
+                    preferences="Please text before visiting", checkin_enabled=False)
+        body.update(changes)
+        return self.client.post("/api/care/residents", json=body)
+
+    def test_apartment_and_care_residents_use_the_same_units_and_intake(self):
+        response = self.profile()
+        self.assertEqual(response.status_code, 200, response.text)
+        person = next(r for r in self.state()["residents"] if r["id"] == "apartment-resident")
+        self.assertFalse(person["checkin_enabled"])
+        self.assertFalse(person["checkin_due"])
+        self.assertTrue(any(room["unit"] == "2D" for room in self.state()["facility_workflow"]["rooms"]))
+        item = self.request(resident_id=person["id"], category="maintenance", summary="The kitchen lamp needs replacing")
+        self.assertEqual(self.state()["facility_workflow"]["tickets"][0]["unit"], "2D")
+        self.assertEqual(self.action(item, "accept", "manager-taylor").status_code, 200)
+        self.assertEqual(self.client.post(f'/api/care/residents/{person["id"]}/checkins', json=dict(
+            staff_id="manager-taylor", outcome="seen_well", idempotency_key="no-schedule",
+        )).status_code, 409)
+        self.assertEqual(self.profile(version=1, checkin_enabled=True).status_code, 200)
+        self.assertEqual(self.client.post(f'/api/care/residents/{person["id"]}/checkins', json=dict(
+            staff_id="manager-taylor", outcome="follow_up", note="Resident requested company", idempotency_key="scheduled",
+        )).status_code, 201)
+        self.assertTrue(any(r["category"] == "wellbeing" and r["resident_id"] == person["id"] for r in self.state()["requests"]))
+
+    def test_profile_permissions_versions_and_moves_preserve_physical_repairs(self):
+        self.assertEqual(self.profile(staff_id="facilities-alex").status_code, 403)
+        self.assertEqual(self.profile(staff_id="care-amira").status_code, 403)
+        self.assertEqual(self.profile().status_code, 200)
+        item = self.request(resident_id="apartment-resident", category="maintenance")
+        self.assertEqual(self.profile(version=1, room="3A").status_code, 200)
+        self.assertEqual(self.profile(version=1, room="4B").status_code, 409)
+        state = self.state()
+        self.assertEqual(next(r for r in state["residents"] if r["id"] == "apartment-resident")["room"], "3A")
+        self.assertEqual(next(t for t in state["facility_workflow"]["tickets"] if t["code"] == item["facility_code"])["unit"], "2D")
+        self.assertEqual(self.profile(id="r1", version=0).status_code, 409)
+        with TestClient(create_app(self.db, include_legacy=False)) as restarted:
+            person = next(r for r in restarted.get("/api/care/state").json()["residents"] if r["id"] == "apartment-resident")
+            self.assertFalse(person["checkin_enabled"])
+            self.assertEqual(person["profile_version"], 2)
+
+    def test_building_manager_coordinates_repairs_but_cannot_accept_clinical_care(self):
+        item = self.request(category="maintenance", summary="Reading lamp needs replacement")
+        ticket = self.state()["facility_workflow"]["tickets"][0]
+        response = self.client.post(f'/api/care/facility/tickets/{ticket["code"]}/actions', json=dict(
+            staff_id="manager-taylor", version=ticket["version"], action="assign", assignee="facilities-alex"))
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(self.action(item, "accept", "manager-taylor").status_code, 200)
+        self.assertEqual(self.action(self.request(category="medication"), "accept", "manager-taylor").status_code, 403)
+        self.assertEqual(self.action(self.request(quote="I fell in the hallway"), "accept", "manager-taylor").status_code, 403)
+
 
 if __name__ == "__main__":
     unittest.main()
