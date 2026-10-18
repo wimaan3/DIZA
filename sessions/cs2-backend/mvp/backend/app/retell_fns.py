@@ -32,10 +32,16 @@ def init_fns():
         # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics,lang:en"}]'
         for r in json.loads(os.getenv('DIZA_RESPONDERS', '[]')):
             c.execute('INSERT OR REPLACE INTO responders VALUES(?,?,?,?)', (r['id'], r['name'], r.get('skills', 'general'), 'available'))
-            c.execute('INSERT OR REPLACE INTO responder_phones VALUES(?,?)', (r['id'], r['phone']))
+            c.execute('INSERT OR REPLACE INTO responder_phones VALUES(?,?)', (r['id'], e164(r['phone'])))
         # A real team is configured: drop the local placeholder people so the dashboard shows only real responders.
         if c.execute('SELECT COUNT(*) FROM responder_phones').fetchone()[0]:
             c.execute('DELETE FROM responders WHERE id NOT IN (SELECT responder_id FROM responder_phones)')
+
+
+def e164(phone):
+    # Retell transfers need +1XXXXXXXXXX; tolerate spaces, dashes, brackets or a missing +1 in DIZA_RESPONDERS.
+    digits = re.sub(r'\D', '', phone or '')
+    return '+' + (digits if len(digits) == 11 and digits.startswith('1') else '1' + digits[-10:])
 
 
 def release_call(call_id):
@@ -157,6 +163,10 @@ def route_to_human(p=Depends(parse)):
     def make():
         with connect() as c:
             c.execute('BEGIN IMMEDIATE')
+            # Same call asking again (a failed transfer, or a new severity): keep the person already reserved for it.
+            mine = c.execute("SELECT r.id,r.name,r.skills,p.phone FROM routings g JOIN responders r ON r.id=g.responder_id JOIN responder_phones p ON p.responder_id=r.id WHERE g.call_id=? ORDER BY g.created DESC LIMIT 1", (call['call_id'],)).fetchone()
+            if mine:
+                return {'oncall_number': mine['phone'], 'responder_name': mine['name'], 'brief': (args.get('summary') or '')[:300], 'match_reason': 'already assigned to this call'}
             rows = c.execute("SELECT r.id,r.name,r.skills,p.phone FROM responders r JOIN responder_phones p ON p.responder_id=r.id WHERE r.status='available'").fetchall()
             best = None
             for r in rows:
