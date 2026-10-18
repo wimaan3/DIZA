@@ -30,6 +30,15 @@ You are the single build agent for team DIZA (USC InnovateLA hackathon, Resilien
 
 ## 1. The final direction (build exactly this)
 
+**This is mostly a UI and configuration change on the engine we already have. Keep every existing feature working and reachable:**
+- 4-language agents and swaps
+- warm transfer to a human (fixed in PR #14), emergency flagging, callbacks
+- GPS location links, texting callers
+- the live transcript, the call log, the map (now editable: click to place, drag to correct)
+- the `/text` chat, alert batch calls, check-in/welfare calls, forms, resource lookup, outside data
+
+Nothing gets deleted. New modes reuse these pieces. After every change, re-run the full test suites and `safety_check.py`, and make one live test call that asks for a human, to confirm the transfer still works.
+
 **One AI intake engine, two customers, two modes. The AI only gathers and asks; plain rules rank, merge and route; humans decide.**
 
 | | Building mode (everyday customer) | 911 mode (crisis customer) |
@@ -126,7 +135,17 @@ Two customers, same engine; **no data link between them** (team decision). 911 m
      - map (existing LiveMap)
      - Take call / Callback / Merge / Mark reviewed buttons
      - hotkeys J/K, T, M, 1–4, C
-   - Remove leftovers that don't serve these two views from the main nav (services desk, alerts, volunteer inbox). Keep the code.
+   - Keep the other existing screens reachable (supporter inbox, alerts, line activity) from a secondary menu, so nothing that already works disappears.
+   - **Maps we control (no editing limits from a map provider):**
+     - **Building view:** our own SVG floor-plan map, drawn from the building's floors and units. Units are coloured by open tickets; cross-referenced units are linked with a line ("same riser"); click a unit to see its tickets. Fully ours, live, editable (add or rename units, mark risers).
+     - **911 view:** keep Leaflet as the drawing layer, with our data on top:
+       - our pins
+       - incident rings
+       - operator-placed and dragged pins (already built)
+       - operator-drawn zones (polygon tool, saved to our backend)
+
+       The basemap is only a background. Add an offline fallback basemap (a bundled GeoJSON outline of LA County cities and major streets) so the map still renders if tile servers are blocked or slow.
+     - Real-time: pins and units update within 2 s of a backend change. Show unlocated reports in a list with a "place on map" action.
 5. **Second reader + misheard-word tests (backend).** Rules over raw transcripts (EN/ES/KO/ZH word lists + sound-alikes), and a red mismatch flag on the card. Unit tests.
 6. **Demo kit.**
    - `scripts/replay_surge.py`: pushes a recorded 50-caller surge through the same signed endpoints, as a backup if the live audience call-in fails.
@@ -154,7 +173,7 @@ Two customers, same engine; **no data link between them** (team decision). 911 m
 
 ## 6. How to work
 - Branch per step (`cs1/<step>`), `git pull --rebase origin main` before pushing, PR into `main` with a short summary + test results.
-- Do not merge PRs yourself unless the user explicitly tells you to; then merge with a merge commit.
+- **Merge your own PRs** (merge commit) once tests pass. The user has said not to wait for review. Never push directly to `main`.
 - After a backend PR is merged and the site has redeployed (check a new endpoint answers), run `python agents/push.py --env staging` with `PUBLIC_BASE_URL=https://diza-production.up.railway.app`, then `python agents/contract_check.py`, then `python agents/safety_check.py`. All must pass.
 - Verify Retell API field names in the docs or the CLI's bundled schema before using new ones. Don't guess.
 - Report progress to the user after each step in 3–5 lines: what changed, test results, what's next. Flag anything you couldn't verify.
