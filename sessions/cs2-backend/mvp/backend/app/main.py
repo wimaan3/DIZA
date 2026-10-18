@@ -204,6 +204,23 @@ def assign(qid:str):
         c.execute('BEGIN IMMEDIATE'); offer(c,qid)
     return {'ok':True}
 
+class Placement(BaseModel):
+    lat:float=Field(ge=-90,le=90)
+    lon:float=Field(ge=-180,le=180)
+    label:str=Field(default='',max_length=300)
+
+@app.post('/api/reports/{rid}/location')
+def place_report(rid:str,pl:Placement):
+    # An operator places or corrects a pin by hand (caller said a landmark the geocoder can't find, or a P0 with no address yet).
+    with connect() as c:
+        r=c.execute('SELECT * FROM reports WHERE id=?',(rid,)).fetchone()
+        if not r: raise HTTPException(404,'Report not found')
+        loc=pl.label or (r['location'] if not r['location'].startswith('(') else f'Placed by operator ({pl.lat:.5f}, {pl.lon:.5f})')
+        c.execute('UPDATE reports SET lat=?,lon=?,geo_tried=1,gps_accuracy=NULL,location=? WHERE id=?',(pl.lat,pl.lon,loc,rid))
+        q=c.execute('SELECT id FROM requests WHERE report_id=?',(rid,)).fetchone()
+        event(c,q['id'] if q else rid,f'Location set on the map by an operator: {loc}')
+    return {'ok':True}
+
 @app.post('/api/responders/{rid}/available')
 def responder_available(rid:str):
     with connect() as c:
