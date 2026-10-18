@@ -194,7 +194,7 @@ def state():
           # Transcripts only for live and the 15 most recent calls, to keep the 1.5 s poll small.
           'calls':[{**dict(r),'transcript':r['transcript'] if i<15 or r['status']=='live' else None} for i,r in enumerate(c.execute('SELECT * FROM calls ORDER BY started DESC LIMIT 100'))],
           'kb_gaps':[dict(r) for r in c.execute('SELECT id,question,created FROM kb_gaps ORDER BY created DESC LIMIT 50')],
-          'alerts':list_alerts()['alerts'],'places':places()}
+          'alerts':list_alerts()['alerts'],'places':places(),'region':region()}
 
 @app.post('/api/reports')
 def submit(r:Report):
@@ -295,7 +295,10 @@ async def signed(req:Request):
 
 @app.post('/retell/inbound')
 def inbound(data=Depends(signed)):
-    return {'call_inbound':{'dynamic_variables':{'drill_mode':str(DEMO).lower(),'zone_level':'normal','known_incidents':'Use verified information only'}}}
+    # Emergency number, crisis line and service area for the country the line runs in (DIZA_COUNTRY), so prompts never hard-code 911.
+    from .regions import agent_variables
+    caller=(data.get('call_inbound') or {}).get('from_number','')
+    return {'call_inbound':{'dynamic_variables':{'drill_mode':str(DEMO).lower(),'zone_level':'normal','known_incidents':'Use verified information only',**agent_variables(caller)}}}
 
 @app.post('/retell/fn/submit_report')
 def retell_submit(data=Depends(signed)):
@@ -475,6 +478,7 @@ app.include_router(building_router)
 from .security import router as security_router, init_security
 app.include_router(security_router)
 from .ops import init_ops
+from .regions import region
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():

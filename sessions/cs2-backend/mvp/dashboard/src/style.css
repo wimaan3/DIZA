@@ -113,3 +113,6 @@ mark{background:#fbe0d6;color:#7d1d10;border-radius:3px;padding:0 2px}
 @media(max-width:1280px){.ops-grid{grid-template-columns:1fr}.load-charts{grid-template-columns:1fr 1fr}.load-charts .chart:first-child{grid-column:1/-1}}
 @media(max-width:760px){.load-tiles{grid-template-columns:1fr 1fr}.load-charts,.lanes,.wall-grid{grid-template-columns:1fr}.checklist,.corro{grid-template-columns:1fr 1fr}.ops-toolbar .keys{display:none}}
 .trends{margin-top:18px}.mapcard .legend{padding:0 20px 6px}
+.region{font-size:10px;font-weight:600;color:#40564a;background:#eef2ea;border-radius:6px;padding:5px 8px;white-space:nowrap}
+.langpick select{font-size:11px;padding:5px 7px;border:1px solid #dce3dc;border-radius:7px;background:#fff}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(max-width:800px){.region{display:none}}

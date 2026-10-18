@@ -51,7 +51,7 @@ h1{font-size:24px;margin:8px 0 12px}p{line-height:1.55;font-size:15px;color:#4d5
 </style></head><body><main><b>DIZA Community Line</b><h1>Share your exact location</h1>
 <p>Tap the button and allow location. Your position is sent once to the DIZA team for this call so we can find you on our map. Nothing else on your phone is shared.</p>
 <button id="b">Share my location</button><div id="s" class="box">%STATUS%</div>
-<div class="box warn"><b>In danger right now?</b> Call 911. DIZA cannot send police, fire or an ambulance.</div>
+<div class="box warn"><b>In danger right now?</b> Call %EMERGENCY%. DIZA cannot send police, fire or an ambulance.</div>
 <p><small>Link expires 30 minutes after it was sent. USC student project; drill use.</small></p></main>
 <script>
 const s=document.getElementById('s'),b=document.getElementById('b');
@@ -72,7 +72,8 @@ def valid(c, token):
 def location_page(token: str):
     with connect() as c:
         ok = valid(c, token)
-    return PAGE.replace('%STATUS%', 'Ready when you are.' if ok else 'This link has expired or is not valid. Tell the agent your cross streets instead.')
+    from .regions import region
+    return PAGE.replace('%EMERGENCY%', region()['emergency_spoken']).replace('%STATUS%', 'Ready when you are.' if ok else 'This link has expired or is not valid. Tell the agent your cross streets instead.')
 
 
 class Position(BaseModel):
