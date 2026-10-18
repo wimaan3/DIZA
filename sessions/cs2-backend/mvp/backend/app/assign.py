@@ -121,7 +121,7 @@ def call_for_ticket(code, staff_id):
         s = c.execute('SELECT * FROM staff_vendors WHERE id=?', (staff_id,)).fetchone()
         if not t or not s:
             return
-        phone, name, why = s['phone'], s['name'].split(' (')[0], ''
+        phone, name, why = s['phone'], s['name'].split(' (')[0].split(' ')[0] if staff_id.startswith('tm-') else s['name'].split(' (')[0], ''
         if not phone and DEMO:
             mate = stand_in(c)
             if mate:

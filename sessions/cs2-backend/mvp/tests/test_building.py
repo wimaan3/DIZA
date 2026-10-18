@@ -93,13 +93,13 @@ class Api(unittest.TestCase):
   code=self.ticket('4B')['code']
   self.assertIn('received',self.fn('ticket_status',{'code':code,'phone_last4':'0100'},'c9')['status_text'])
   self.assertIn("couldn't find",self.fn('ticket_status',{'code':code,'phone_last4':'9999'},'c9')['status_text'])
-  self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'plumb'})
-  self.assertIn('assigned to our plumber',self.fn('ticket_status',{'code':code[2:],'phone_last4':'0100'},'c9')['status_text'])
+  self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'tm-t1'})  # the team is the staff
+  self.assertIn('assigned to our',self.fn('ticket_status',{'code':code[2:],'phone_last4':'0100'},'c9')['status_text'])
  def test_manager_actions_and_first_human_action(self):
   code=self.ticket('4B')['code'];self.assertIsNone(self.tickets()[code]['first_human_action_at'])
   self.assertEqual(self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'nobody'}).status_code,400)
-  self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'plumb'});t=self.tickets()[code]
-  self.assertEqual((t['status'],t['assignee']),('assigned','plumb'));self.assertIsNotNone(t['first_human_action_at'])
+  self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'tm-t1'});t=self.tickets()[code]
+  self.assertEqual((t['status'],t['assignee']),('assigned','tm-t1'));self.assertIsNotNone(t['first_human_action_at'])
   self.c.post(f'/api/tickets/{code}/note',json={'text':'Shut off valve in 5B'});self.c.post(f'/api/tickets/{code}/notified',json={})
   self.assertEqual(self.c.post(f'/api/tickets/{code}/status',json={'status':'gone'}).status_code,400)
   self.c.post(f'/api/tickets/{code}/status',json={'status':'closed'});t=self.tickets()[code]
@@ -121,7 +121,7 @@ class Api(unittest.TestCase):
    self.assertEqual(self.fn('local_contact',{'kind':'police_nonemergency','location_text':'Venice boardwalk'},'c3')['transfer_number'],'+15555550901')
    self.assertEqual(self.fn('local_contact',{'kind':'police_nonemergency','location_text':'Glendale Galleria'},'c4')['transfer_number'],'')  # not allowlisted
    # Building security has no phone in the environment, so it falls back to the building's police non-emergency line.
-   self.assertEqual(self.fn('local_contact',{'kind':'security','building_id':'bldg-demo'},'c5')['transfer_number'],'+15555550901')
+   self.assertEqual(self.fn('local_contact',{'kind':'security','building_id':'bldg-demo'},'c5')['transfer_number'],'+15555550001')  # our teammate with the security skill is building security
   with patch.dict(os.environ,{'DIZA_RESPONDERS':'[]'}):
    self.assertEqual(self.fn('local_contact',{'kind':'security'},'c6'),{'name':'','transfer_number':''})  # drill with no teammate: empty
  def test_transfer_logged_on_ticket(self):
@@ -194,3 +194,12 @@ class MaintenanceCall(unittest.TestCase):
    for text,want in [('building F4, room 4A','4A'),('apt #2B','2B'),('Larchmont Court 3C','3C'),('unit 12','12'),('the lobby','')]:
     self.assertEqual(B.unit_from_text(c,B.DEMO_BUILDING,text),want,text)
 if __name__=='__main__':unittest.main()
+
+class TeamIsStaff(unittest.TestCase):
+ setUp=Api.setUp;tearDown=Api.tearDown;fn=Api.fn;tickets=Api.tickets
+ def test_teammates_replace_demo_vendors(self):
+  self.c.post('/api/demo/seed?mode=building');b=self.c.get('/api/building').json()
+  ids={s['id']:s for s in b['staff']}
+  self.assertIn('tm-t1',ids);self.assertEqual((ids['tm-t1']['name'],ids['tm-t1']['role'],ids['tm-t1']['has_phone']),('Teammate One','security',True))
+  self.assertFalse({'plumb','hvac','elec','lock','security'}&set(ids))  # fictional vendors gone when a real team exists
+  self.assertTrue(all(t['assignee'] in ids for t in b['tickets'] if t['assignee']))  # demo history assigned to the team
