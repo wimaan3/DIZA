@@ -21,7 +21,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 import facility
@@ -455,10 +455,32 @@ def create_app(db_path=None, *, include_legacy=True):
         return {"code": item["code"], "facility_code": item["facility_code"], "urgency": item["urgency"], "status": item["status"],
                 "message": "Recorded for staff review. No person has accepted yet; no emergency services have been contacted."}
 
+    @app.get("/care/workspace")
+    def care_workspace():
+        return FileResponse(ROOT / "web" / "index.html")
+
     @app.get("/")
+    def home():
+        if legacy is not None:
+            return RedirectResponse("/ops", status_code=307)
+        return care_workspace()
+
     @app.get("/care")
     def dashboard():
-        return FileResponse(ROOT / "web" / "index.html")
+        if legacy is not None:
+            return operations_workspace()
+        return care_workspace()
+
+    @app.get("/ops")
+    @app.get("/building")
+    @app.get("/supporter")
+    def operations_workspace():
+        if legacy is None:
+            raise HTTPException(404, "Operations workspace requires CARE_INCLUDE_LEGACY=true")
+        entry = ROOT / "dist" / "index.html"
+        if not entry.exists():
+            raise HTTPException(503, "Build the integrated workspace with npm run build")
+        return FileResponse(entry)
 
     @app.get("/healthz")
     def health():
@@ -468,6 +490,8 @@ def create_app(db_path=None, *, include_legacy=True):
 
     facility.register_routes(app, connect, staff, building_rules)
     app.mount("/care-assets", StaticFiles(directory=ROOT / "web"), name="care-assets")
+    if legacy is not None and (ROOT / "dist" / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=ROOT / "dist" / "assets"), name="workspace-assets")
     if legacy is not None:
         # Existing /ops, /supporter, /text, /api/* and signed voice endpoints survive.
         app.mount("/", legacy)

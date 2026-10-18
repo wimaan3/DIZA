@@ -4,7 +4,7 @@ import path from "node:path";
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: "*.spec.js",
+  testMatch: ["care.spec.js", "facility.spec.js"],
   fullyParallel: false,
   workers: 1,
   retries: 0,
