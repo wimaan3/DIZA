@@ -24,6 +24,12 @@ class SecondReader(unittest.TestCase):
   self.assertNotIn('injured',self.kinds("nobody is hurt"))
   self.assertNotIn('weapon',self.kinds('칼국수 먹고 있었어요'))  # noodles, not a knife
   self.assertIn('trapped',self.kinds('no, my mom is trapped'))
+ def test_falls(self):
+  for text in ("she fell in the bathroom and can't get up",'Mi abuela se cayó','我爷爷摔倒了，起不来','할머니가 넘어졌어요','Мой сосед упал','nahulog si lola'):
+   self.assertIn('fall',self.kinds(text),text)
+  self.assertNotIn('fall',self.kinds('I fell asleep on the couch'))
+  self.assertIn('unconscious',self.kinds("he's not responding"))
+  f=O.second_reader('P2','welfare_check',O.danger_hits('我爷爷摔倒了，起不来'));self.assertEqual(f[0]['implied'],'P1')
  def test_soundalikes(self):
   h=[x for x in O.danger_hits('I think he has a kite in his hand') if x['kind']=='weapon']
   self.assertEqual(h[0]['soundalike'],'knife')
@@ -105,14 +111,15 @@ class Api(unittest.TestCase):
   d=self.wait(lambda d:sum(i['lat'] is not None for i in d['incidents'])==6)
   self.assertEqual(sorted(i['location'] for i in d['incidents'] if i['source']=='retell' and i['lat']!=1),['Kansas City','Tulsa','Wichita'])
  def test_crisis_seed_and_load_metrics(self):
-  self.assertEqual(self.c.post('/api/demo/seed?mode=crisis').json()['created'],14)
+  self.assertEqual(self.c.post('/api/demo/seed?mode=crisis').json()['created'],16)
   d=self.ops();m=d['metrics'];inc=d['incidents']
   self.assertEqual(inc[0]['effective'],'P0')
-  self.assertEqual(m['reports'],14);self.assertGreater(m['folded'],0);self.assertGreater(m['ai_only'],m['transferred']);self.assertEqual(m['transferred'],1)
+  self.assertEqual(m['reports'],16);self.assertGreater(m['folded'],0);self.assertGreater(m['ai_only'],m['transferred']);self.assertEqual(m['transferred'],1)
   self.assertGreaterEqual(m['peak_concurrent'],2);self.assertGreater(m['prefilled'],20)
   flagged={i['location'] for i in inc if i['flags']}
-  self.assertTrue({'Lincoln Ave and Woodbury Rd','Woodbury Rd near Lincoln Ave','Fair Oaks Ave and Mariposa St'}<=flagged,flagged)
-  fire=[i for i in inc if i['location']=='Lake Ave and Altadena Dr'][0]
-  self.assertEqual(fire['corroboration']['reports'],4);self.assertEqual(fire['corroboration']['independent_callers'],4)
-  self.assertTrue(any(i['lat'] is None for i in inc))  # an unlocated report stays listed
+  # The AI filed these lower than the caller's words imply: a trapped crash victim, two falls, an unconscious neighbor.
+  self.assertTrue({O.CRASH,'Hill St and College St, Chinatown','Western Ave and 6th St, Koreatown','Fairfax Ave and Santa Monica Blvd'}<=flagged,flagged)
+  crash=[i for i in inc if i['location']==O.CRASH][0]
+  self.assertEqual(crash['corroboration']['reports'],5);self.assertEqual(crash['corroboration']['independent_callers'],5)
+  self.assertEqual(sum(i['lat'] is None for i in inc),2)  # unlocated reports stay listed
 if __name__=='__main__':unittest.main()
