@@ -40,5 +40,17 @@
   "sms": {
     "chat_agent_id": "agent_0de7c1aac114fece90113208a0",
     "llm_id": "llm_bf87033e9d3b2d201b1abfd81ab1"
+  },
+  "inbound_hy": {
+    "agent_id": "agent_eee986c3c142679744653e8ce6",
+    "llm_id": "llm_4862ae90491e3f807d1da47df0e3"
+  },
+  "inbound_fa": {
+    "agent_id": "agent_ce1b0c9c81f823fd8e9c17535a",
+    "llm_id": "llm_27750e11c7b429773cb4f37c1c77"
+  },
+  "inbound_fil": {
+    "agent_id": "agent_9357eeaf2f3ba7cc62f7ab3e31",
+    "llm_id": "llm_b3a95ab1f8817891de5ff99541db"
   }
 }
