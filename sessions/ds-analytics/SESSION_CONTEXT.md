@@ -1,13 +1,16 @@
 # Session context: ds-analytics
 
 - **Session:** Codex implementation of the DIZA data science work package, requested by Deepanshu.
-- **Branch:** `ds/analysis-triage`, started from `da67553` and rebased onto `origin/main` at `5dff053`.
-- **Scope:** Installable deterministic triage and analysis package, synthetic data, evals, metric CLI, source loaders, and tests.
+- **Current branch:** `ds/emergency-overflow-hotel-use-cases`, based on `origin/main` at `12c02a0`.
+- **Earlier branch:** `ds/analysis-triage`, started from `da67553` and rebased onto `origin/main` at `5dff053`.
+- **Current scope:** Document the user's emergency overflow and hotel service product direction in a documentation-only PR.
+- **Earlier implementation:** Installable deterministic triage and analysis package, synthetic data, evals, metric CLI, source loaders, and tests.
 
 ## Files in this folder
 
 | Path | Contents |
 |---|---|
+| `PRODUCT_DIRECTION.md` | Emergency overflow and hotel service workflows, human/agent responsibilities, implementation gaps, demo examples, and open decisions |
 | `pyproject.toml` | Dependency-free package metadata and CLI entry point |
 | `diza_analysis/triage.py` | Lexicon hits, context guards, classification, priority, pools, responder ranking |
 | `diza_analysis/zones.py` | Distinct-caller space/time DBSCAN and human-controlled zone evidence |
@@ -40,9 +43,17 @@
 10. Drop free text from exported analytical rows and require consent, keyed pseudonyms, verification, delay, and at least five people per public cell.
 11. Treat the old SQLite last-four-digit identity as insufficient for consent joins; unknown consent remains excluded.
 12. Do not apply MyLA311 service-request volumes as if they measured voice-call traffic.
+13. Record the user's two operating modes: AI intake and prioritization support during emergency operator overflow, and direct handling of routine hotel service calls.
+14. Preserve individual emergency callers when grouping reports, and retain human responsibility for emergency response and dispatch.
+15. Keep this clarification documentation-only; application behavior, provider agents, and production settings are unchanged.
 
 ## Key facts verified
 
+- The user clarified the two-use-case product direction in this conversation on October 17, 2026.
+  Source: the user's emergency-overflow and hotel-service description, captured in `PRODUCT_DIRECTION.md`.
+- The current shared agent prompt and backend urgent-call handler contain instructions to hang up and dial the emergency number.
+  Sources: `agents/prompts/_shared_rules.md` and `sessions/cs2-backend/mvp/backend/app/retell_fns.py`, read at `12c02a0`.
+  The product direction calls for different handling when a caller is already inside a 911 overflow workflow.
 - The DS handoff requests triage, synthetic data, responder matching, corroboration, golden evals, privacy processing, and metric snapshots.
   Source: `sessions/planning-claude/handoff/03_DS_TRIAGE_DATA_EVALS.md` and `00_CONTRACTS.md`.
 - The conservative P0 policy, three/six-caller WATCH/ASK thresholds, and human declaration come from `sessions/planning-claude/TRIAGE.md`.
@@ -62,12 +73,15 @@
 
 ## Open questions
 
+- Which emergency center would provide the overflow integration, operator-capacity signal, approved prioritization, and disconnected-call procedure?
+- Which hotel service content, staff systems, assignment rules, and emergency procedures should be used?
 - Which reviewed tract-to-zone mappings and official polygons should replace the illustrative demo profiles?
 - Where will the host persist explicit per-call analytics consent, verified zone, human acceptance timestamps, and quality labels?
 - Which teammate owns wiring these package calls into the backend transaction flow after review?
 
 ## Not done yet
 
+- The newly documented emergency overflow and hotel workflows have not been implemented or deployed by this documentation change.
 - No live backend behavior, dashboard, shared config, agent deployment, or other session folder was changed.
 - No live callers, Retell simulations, clinical validation, or forty-label human/judge calibration were run.
 - No automatic official-feed polling, Supabase migration, embeddings/topic model, semantic answer cache, acoustic inference, or photo processing is included.
