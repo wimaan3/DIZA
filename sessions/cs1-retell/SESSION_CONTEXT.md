@@ -115,3 +115,4 @@
   - Shared P0 list now includes "someone breaking in or an intruder inside right now".
 - Retell credits are running low; the user may switch to their other workspace later (not yet).
 - Temporary Retell agent `agent_e223237ebd3847d38ed290d0e4` / LLM `llm_a43d7f522fae315217e1632c2f4d` ("zz-temp-test-caller (delete me)") is a test mirror, not bound to the number. Delete it when convenient.
+- **Final check after PR #30 deployed and the agents were pushed:** full `safety_check.py` 26/27. The one failure was a test aimed at the wrong agent (inbound no longer has `brief_security`), so it now targets crisis: 2/2. Inbound escalated that already-over break-in to crisis with "call 911", which errs on the safe side.
