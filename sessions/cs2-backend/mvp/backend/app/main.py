@@ -327,11 +327,20 @@ def retell_submit(data=Depends(signed)):
     if not call_id: raise HTTPException(422,'call.call_id required')
     args['idempotency_key']=call_id+':'+hashlib.sha256(json.dumps(args,sort_keys=True).encode()).hexdigest()
     args['source']='retell'
+    said_hazard=str(args.get('hazard') or '')  # the agent's own words, before mapping to a category
     args.setdefault('summary',args.get('hazard','Report'))
     args['hazard']=category(args.get('hazard'))
     args['immediate_danger']=bool(args.get('immediate_danger') or args.get('injured_or_trapped'))
     if args.get('vulnerability') and not args.get('evidence'):
         args['evidence']='Vulnerability: '+', '.join(args['vulnerability'])
+    # At one of our buildings: maintenance goes to the manager's /building queue; a pure maintenance problem
+    # (a bathroom leak, no heat) is not a 911 card. Danger (fire, gas, injury) stays here AND reaches the manager.
+    from .building import tickets_for_report
+    tickets,maintenance_only=tickets_for_report(session_of(data),{**args,'hazard_text':said_hazard},args['hazard'])
+    if maintenance_only:
+        codes=', '.join(t['code'] for t in tickets);unit=tickets[0]['unit']
+        return {'report_id':'','severity':'P3','priority':10,'ticket_code':tickets[0]['code'],'cluster_match':'',
+                'reason':f"Filed as a maintenance ticket ({codes}) for {unit}. The building manager will review it; updates come by text."}
     r=merge_into_p0(call_id,Report(**args)) or save_report(Report(**args))
     kick_geocode(r['id'])
     with connect() as c:

@@ -202,6 +202,56 @@ def tickets_from_recent_forms():
                 event(c, r['code'], f"Filed on /building as {t['code']} (unit {t['unit']})")
 
 
+MAINT_WORDS = (('water_leak', ('leak', 'leaking', 'dripping', 'water coming', 'flooded bathroom', 'toilet overflow')), ('no_heat', ('no heat', 'heater', 'heating')),
+               ('no_hot_water', ('hot water',)), ('lockout', ('locked out', 'lockout', 'lost my key')), ('pest', ('roach', 'mice', 'mouse', 'rats', 'bed bug', 'pest')),
+               ('appliance', ('fridge', 'stove', 'oven', 'washer', 'dryer', 'dishwasher')), ('noise', ('noise', 'loud music', 'party next door')),
+               ('electrical', ('outlet', 'no power in my', 'lights out in my', 'breaker')))
+LIFE_SAFETY = {'fire', 'smoke', 'gas', 'medical', 'safety_crime'}
+
+
+def building_match(c, text):
+    """(building, unit) only when the caller clearly means one of our buildings: they named it, or said unit/apt/room
+    plus a unit that building has. Never the 'first building' fallback: a street fire must not become a ticket."""
+    t = (text or '').lower()
+    for b in c.execute('SELECT * FROM buildings').fetchall():
+        names = set(re.findall(r'[a-z]+', b['name'].lower())) - {'the', 'apartments', 'apartment', 'building', 'court', 'demo', 'tower', 'house'}
+        if names & set(re.findall(r'[a-z]+', t)):
+            return b, unit_from_text(c, b['id'], text)
+    if re.search(r'\b(unit|apt|apartment|room|suite)\b|#\s*\d', t):
+        for b in c.execute('SELECT * FROM buildings').fetchall():
+            u = unit_from_text(c, b['id'], text)
+            if u and find_unit(c, b['id'], u):
+                return b, u
+    return None, ''
+
+
+def maintenance_issues(text):
+    t = (text or '').lower()
+    return [cat for cat, words in MAINT_WORDS if any(w in t for w in words)]
+
+
+def tickets_for_report(call, args, category):
+    """A phone report at one of our buildings also reaches the manager on /building: one ticket per maintenance problem
+    the caller named, plus an emergency ticket when it is a fire, gas, medical or safety matter. Returns (tickets, maintenance_only)."""
+    text = ' '.join(str(args.get(k) or '') for k in ('summary', 'evidence', 'hazard_text'))
+    with connect() as c:
+        c.execute('BEGIN IMMEDIATE')
+        b, unit = building_match(c, args.get('location_text', ''))
+        if not b:
+            return [], False
+        issues = maintenance_issues(text)
+        danger = bool(args.get('immediate_danger')) or category in LIFE_SAFETY or c.execute(
+            'SELECT 1 FROM reports WHERE substr(dedupe,1,?)=? AND severity=\'P0\'', (len(call['call_id']) + 1, call['call_id'] + ':')).fetchone() is not None
+        made = []
+        for cat in issues + (['gas_smell' if category == 'gas' else 'other'] if danger else []):
+            summary = (args.get('summary') or cat.replace('_', ' ')) if cat != 'water_leak' or not danger else f"Leak reported ({args.get('summary') or ''})"
+            t, _ = file_ticket(c, b, unit or args.get('location_text', ''), cat, str(summary)[:300], quote=str(args.get('evidence') or '')[:500],
+                               language=args.get('language') or 'en', hint='emergency' if danger and cat in ('other', 'gas_smell') else '',
+                               call_id=call['call_id'], caller_last4=last4(call), source='retell')
+            made.append(t)
+        return made, bool(issues) and not danger
+
+
 # --- Storage ---
 
 def init_building():
