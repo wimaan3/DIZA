@@ -1,0 +1,45 @@
+.care-urgent-count {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: #f9dfd3;
+  color: #742b20;
+  font-size: 10px;
+  font-weight: 700;
+}
+.map-state.placing .map {
+  cursor: crosshair;
+}
+.content.care-content {
+  padding: 0;
+  max-width: none;
+}
+.care-content > .title-row,
+.care-content > .notice,
+.care-content > footer {
+  display: none;
+}
+.care-workspace {
+  display: block;
+  width: 100%;
+  height: calc(100dvh - 79px);
+  min-height: 580px;
+  border: 0;
+}
+@media (max-width: 800px) {
+  .shell > aside nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .shell > aside nav button {
+    min-height: 44px;
+    padding: 10px;
+  }
+  .header-right .modeswitch button {
+    padding: 7px 9px;
+  }
+  .care-workspace {
+    height: calc(100dvh - 56px);
+  }
+}

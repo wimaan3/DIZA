@@ -1,8 +1,9 @@
 FROM node:22-slim AS original-dashboard
-WORKDIR /build
-COPY sessions/cs2-backend/mvp/dashboard/package*.json ./
+WORKDIR /build/sessions/elder-care
+COPY sessions/elder-care/package*.json ./
 RUN npm ci
-COPY sessions/cs2-backend/mvp/dashboard/ ./
+COPY sessions/cs2-backend/mvp/dashboard/ /build/sessions/cs2-backend/mvp/dashboard/
+COPY sessions/elder-care/workspace/ ./workspace/
 RUN npm run build
 
 FROM python:3.12-slim
@@ -10,7 +11,7 @@ WORKDIR /app
 COPY sessions/cs2-backend/mvp/backend/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 COPY sessions/cs2-backend/mvp/backend sessions/cs2-backend/mvp/backend
-COPY --from=original-dashboard /build/dist sessions/cs2-backend/mvp/dashboard/dist
+COPY --from=original-dashboard /build/sessions/elder-care/dist sessions/elder-care/dist
 COPY agents/forms agents/forms
 COPY agents/resources agents/resources
 COPY agents/retell.ids.json agents/retell.ids.json

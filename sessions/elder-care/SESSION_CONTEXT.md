@@ -25,6 +25,8 @@
 | `Dockerfile`, `railway.json` | Integrated care and original-engine deployment configuration |
 | `README.md` | Run instructions, configuration, demo limits, and deployment handoff |
 | `.gitignore` | Local test artifacts and virtual environment exclusions |
+| `workspace/` | Build-time extension of the original dashboard shell, preserving its operations/map/building/supporter components and adding the resident-care panel and urgent badge |
+| `playwright.workspace.config.js`, `tests/workspace.spec.js` | Integrated map, building, supporter, language, wall-view, shared-token, resident-care, and mobile browser checks |
 
 ## Decisions made
 
@@ -50,6 +52,14 @@ Care-home room records and facility tickets live in the care database, preservin
 Merge/unmerge/split preserve original reports, caller context, and escalated urgency.
 17. Maintenance review targets are demo operational thresholds, and tenancy-law clocks are excluded from care-home policy.
 18. Existing demo data is upgraded in place, with original request IDs and retry behavior preserved.
+19. The user clarified that most of Imaan's functionality must remain the base experience, with care added alongside it.
+The previous public preview used `CARE_INCLUDE_LEGACY=false`, which excluded `/ops` and caused the missing geographic map.
+The combined app now opens `/ops` by default and adds Resident care as a fourth item in the original dashboard shell.
+20. The build imports the current original dashboard directly, including PRs #34 and #35, without changing another session's source.
+Checked build-time anchors add navigation and a same-origin care panel; upstream anchor changes fail the build for review.
+21. Browser testing reproduced loss of Leaflet container classes when drawing or placing a pin.
+The adapter keeps the Leaflet-owned container stable and puts the changing cursor class on a wrapper.
+22. The care panel reuses the original operator token and keeps all five care sections and staff controls accessible on desktop and mobile.
 
 ## Key facts verified
 
@@ -71,6 +81,10 @@ The tested care screens, combined room workspace, and request/assignment dialogs
 - A copy of the active local demo database was upgraded successfully, preserving all five original request IDs and adding the shared facilities records.
 The upgraded demo contains eight care reports, three facilities tickets, and three labeled synthetic transcripts.
 - The combined Docker image builds and passes HTTP checks for `/care`, `/building`, `/ops`, `/supporter`, `/text`, and the care/building/operations APIs.
+- The expanded original backend suite at `da01400` passes all 99 tests, with the original dashboard built and each test file run in a separate process.
+- The corrected integration passes five additional browser workflows covering real map interactions, callbacks, building tools, language switching, protected wall view, shared operator access, embedded care actions, and mobile layout.
+The embedded care workspace has zero axe violations in the tested repair flow.
+- The original care suite still passes 30 backend tests and 16 standalone care/facilities browser workflows.
 
 ## Open questions
 

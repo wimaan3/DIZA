@@ -3,6 +3,8 @@ import { createFacilityWorkspace } from "./facility.js";
 const app = document.querySelector("#app");
 const dialogRoot = document.querySelector("#dialog-root");
 const announce = document.querySelector("#announcer");
+const embedded = new URLSearchParams(location.search).get("embedded") === "1";
+if (embedded) document.documentElement.classList.add("embedded-care");
 let data,
   selected,
   view = "daily",
@@ -14,7 +16,7 @@ let busy = false,
   connected = false,
   lastSuccess = 0,
   modal = null;
-let token = sessionStorage.getItem("diza-care-token") || "";
+let token = (embedded && sessionStorage.getItem("diza-token")) || sessionStorage.getItem("diza-care-token") || "";
 let retrySubmission = null;
 const labels = {
   new: "Awaiting staff",
@@ -187,7 +189,7 @@ function draw() {
     facility: "One home. A coordinated response.",
   }[view];
   app.innerHTML = `<div class="layout">
-    <aside class="sidebar"><a class="brand" href="/care" aria-label="DIZA Care home"><span class="brand-icon">${icon("heart", 23)}</span>DIZA<span>care</span></a>
+    ${embedded ? "" : `<aside class="sidebar"><a class="brand" href="/care" aria-label="DIZA Care home"><span class="brand-icon">${icon("heart", 23)}</span>DIZA<span>care</span></a>
       <div class="facility"><span class="facility-mark">WH</span><div><strong>${esc(data.facility)}</strong><small>Residential care home</small></div></div>
       <div class="nav-label">CARE WORKSPACE</div><nav aria-label="Care workspace">
         ${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("facility", "grid", "Rooms & repairs")}${nav("history", "clock", "Completed care")}
@@ -195,8 +197,8 @@ function draw() {
       <div class="sidebar-message">${icon("leaf", 29)}<strong>Small moments.<br>Thoughtful care.</strong><p>One team, looking after<br>every resident.</p></div>
       ${data.legacy_available ? `<a class="legacy-link" href="/ops">Original operations ${icon("arrow", 15)}</a>` : ""}
       <div class="sidebar-foot"><span class="avatar">${initials(staffFor(staffId)?.name || "")}</span><div><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select></div></div>
-    </aside>
-    <div class="main-wrap"><header class="topbar"><span>Care workspace <span class="slash">/</span> ${view === "facility" ? "Rooms & repairs" : view === "residents" ? "Residents" : view === "history" ? "Completed care" : view === "urgent" ? "Urgent response" : "Daily overview"}</span><div><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span><span class="date">${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: data.timezone }).format(new Date())}</span></div></header>
+    </aside>`}
+    <div class="main-wrap">${embedded ? `<div class="embedded-toolbar" role="region" aria-label="Resident care controls"><nav aria-label="Care workspace">${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("facility", "grid", "Rooms & repairs")}${nav("history", "clock", "Completed care")}</nav><div class="embedded-staff"><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span></div></div>` : `<header class="topbar"><span>Care workspace <span class="slash">/</span> ${view === "facility" ? "Rooms & repairs" : view === "residents" ? "Residents" : view === "history" ? "Completed care" : view === "urgent" ? "Urgent response" : "Daily overview"}</span><div><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span><span class="date">${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: data.timezone }).format(new Date())}</span></div></header>`}
     <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow">${esc(data.facility.toUpperCase())} / CARE TEAM</div><h1>${title}</h1><p class="subtitle">${view === "facility" ? "Coordinate shared room issues and follow through on every resident’s care." : view === "urgent" ? "Prioritize urgent needs. Confirm who is taking responsibility." : view === "residents" ? "Keep wellbeing checks personal, visible, and followed through." : view === "history" ? "Review completed requests and the people who followed through." : "A shared view of what matters, and who needs you next."}</p></div><button class="primary" data-action="new" ${disabled()}>${icon("plus", 17)} Record a request</button></div>
     ${error ? `<div role="alert" class="error-banner">${icon("alert")}<span>${esc(error)}</span><button data-action="refresh">Reconnect</button></div>` : ""}
     ${!connected && lastSuccess ? `<p class="stale">Last connected ${esc(new Date(lastSuccess).toLocaleTimeString())}. Actions are paused.</p>` : ""}
