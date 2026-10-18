@@ -114,6 +114,12 @@ class RetellFunctions(unittest.TestCase):
   a=self.fn('route_to_human',{'needs':['listener'],'language':'en','severity':'P3','summary':'wants a human'},{**CALL,'call_id':'c15'})
   b=self.fn('route_to_human',{'needs':['listener'],'language':'en','severity':'P0','summary':'now urgent'},{**CALL,'call_id':'c15'})
   self.assertTrue(a['oncall_number']);self.assertEqual(a['oncall_number'],b['oncall_number'])
+ def test_operator_places_pin(self):
+  self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},{**CALL,'call_id':'c16'})
+  rid=self.state()['reports'][0]['id']
+  self.assertEqual(self.c.post(f'/api/reports/{rid}/location',json={'lat':34.02,'lon':-118.28}).status_code,200)
+  r=self.state()['reports'][0];self.assertEqual((r['lat'],r['lon']),(34.02,-118.28));self.assertIn('Placed by operator',r['location'])
+  self.assertEqual(self.c.post('/api/reports/nope/location',json={'lat':1,'lon':1}).status_code,404)
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])

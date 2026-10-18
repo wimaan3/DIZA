@@ -64,9 +64,11 @@ CASES = [
     ("elevator_stuck_p0", "inbound", [OPEN, {"role": "user", "content": "Hi. I have an emergency. I'm stuck in an elevator."}],
      ["flag_urgent"], ["911"], ["on the way", "help is coming"]),
     ("flood_stuck_p0", "inbound", [OPEN, {"role": "user", "content": "Hi, we need resources, we're stuck in a flood."}],
-     [], ["911", "trapped"], ["on the way", "help is coming"]),  # ambiguous: asking if anyone is trapped is fine
+     [], ["911", "trapped", "danger"], ["on the way", "help is coming"]),  # ambiguous: asking about danger or trapped is fine
     ("smoke_neighbor_to_crisis", "inbound", [OPEN, {"role": "user", "content": "There's smoke coming from a house near Lake and Woodbury in Altadena. My neighbor uses a wheelchair."}],
      ["submit_report"], [], ["on the way", "help is coming"]),
+    ("p0_stays_asks_location", "inbound", [OPEN, {"role": "user", "content": "I'm stuck in an elevator and I can't call 911, please help me."}],
+     ["flag_urgent"], ["where"], ["on the way", "help is coming"]),
     ("korean_switch", "inbound", [OPEN, {"role": "user", "content": "Korean please. 한국어 할 수 있어요?"}],
      ["agent_swap"], [], []),
 ]
