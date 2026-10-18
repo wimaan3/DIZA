@@ -1,0 +1,156 @@
+{
+  "agent_name": "diza-inbound-hy",
+  "voice_id": "11labs-Lily",
+  "voice_model": "eleven_v3",
+  "language": "hy-AM",
+  "webhook_url": "${BASE_URL}/retell/webhook",
+  "webhook_events": [
+    "call_started",
+    "call_ended",
+    "call_analyzed",
+    "transcript_updated",
+    "transfer_started",
+    "transfer_bridged",
+    "transfer_cancelled",
+    "transfer_ended"
+  ],
+  "webhook_timeout_ms": 10000,
+  "interruption_sensitivity": 0.75,
+  "responsiveness": 1,
+  "enable_backchannel": true,
+  "reminder_trigger_ms": 8000,
+  "reminder_max_count": 2,
+  "denoising_mode": "noise-cancellation",
+  "boosted_keywords": [
+    "կրակ",
+    "ծուխ",
+    "հրդեհ",
+    "օգնություն",
+    "շնչել չեմ կարողանում",
+    "գազի հոտ",
+    "Glendale",
+    "Burbank"
+  ],
+  "allow_user_dtmf": true,
+  "data_storage_setting": "everything_except_pii",
+  "data_storage_retention_days": 7,
+  "pii_config": {
+    "mode": "post_call",
+    "categories": [
+      "ssn",
+      "credit_card",
+      "bank_account",
+      "password",
+      "pin",
+      "passport",
+      "driver_license"
+    ]
+  },
+  "post_call_analysis_model": "gpt-4.1-mini",
+  "max_call_duration_ms": 1200000,
+  "end_call_after_silence_ms": 75000,
+  "post_call_analysis_data": [
+    {
+      "type": "enum",
+      "name": "severity",
+      "description": "Highest severity in the call: P0 life in danger now, P1 active hazard, P2 needs a person soon, P3 routine.",
+      "choices": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    {
+      "type": "enum",
+      "name": "category",
+      "description": "Main category of the call.",
+      "choices": [
+        "fire",
+        "smoke",
+        "gas",
+        "flood",
+        "power",
+        "medical",
+        "mental_health",
+        "safety_crime",
+        "infrastructure",
+        "info",
+        "logistics",
+        "volunteer_offer",
+        "other"
+      ]
+    },
+    {
+      "type": "enum",
+      "name": "language",
+      "description": "Language the caller mainly used.",
+      "choices": [
+        "en",
+        "es",
+        "ko",
+        "zh",
+        "hy",
+        "tl",
+        "other"
+      ]
+    },
+    {
+      "type": "boolean",
+      "name": "needs_followup",
+      "description": "True if a person on our team should follow up with this caller."
+    },
+    {
+      "type": "number",
+      "name": "people_at_risk",
+      "description": "Number of people at risk mentioned, 0 if none."
+    },
+    {
+      "type": "string",
+      "name": "vulnerability",
+      "description": "Comma-separated vulnerability flags mentioned (wheelchair, oxygen, dialysis, elderly_alone, baby, no_car, pets, deaf, blind), or empty."
+    },
+    {
+      "type": "string",
+      "name": "location_text",
+      "description": "Location of the incident or caller as stated, or empty."
+    },
+    {
+      "type": "enum",
+      "name": "outcome",
+      "description": "How the call ended.",
+      "choices": [
+        "ai_resolved",
+        "human_transferred",
+        "callback_queued",
+        "safety_911_988",
+        "abandoned",
+        "voicemail"
+      ]
+    },
+    {
+      "type": "boolean",
+      "name": "feature_consent",
+      "description": "Drill calls only: true if the caller agreed we may use a clip of the call publicly. False if they declined or were not asked."
+    }
+  ],
+  "contact_memory_config": {
+    "enable_read": false,
+    "enable_update": false
+  },
+  "handbook_config": {
+    "high_empathy": true,
+    "speech_normalization": true,
+    "echo_verification": true,
+    "ai_disclosure": false
+  },
+  "guardrail_config": {
+    "input_topics": [
+      "platform_integrity_jailbreaking"
+    ]
+  },
+  "allow_dtmf_interruption": true,
+  "user_dtmf_options": {
+    "timeout_ms": 2000
+  }
+}

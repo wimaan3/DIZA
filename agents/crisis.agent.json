@@ -4,7 +4,25 @@
   "voice_model": "sonic-3",
   "language": [
     "en-US",
-    "es-419"
+    "es-419",
+    "ko-KR",
+    "zh-CN",
+    "vi-VN",
+    "ru-RU",
+    "ja-JP",
+    "ar-SA",
+    "hi-IN",
+    "th-TH",
+    "uk-UA",
+    "fr-FR",
+    "pt-BR",
+    "de-DE",
+    "it-IT",
+    "he-IL",
+    "ta-IN",
+    "id-ID",
+    "tr-TR",
+    "pl-PL"
   ],
   "webhook_url": "${BASE_URL}/retell/webhook",
   "webhook_events": [
