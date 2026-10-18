@@ -119,6 +119,14 @@
         "summary": {
           "type": "string",
           "description": "One sentence for the person taking over."
+        },
+        "transfer_failed": {
+          "type": "boolean",
+          "description": "true only if transfer_to_human just failed to connect; returns their backup."
+        },
+        "location_text": {
+          "type": "string",
+          "description": "Where the caller is, if no report was filed (picks someone who covers that area)."
         }
       },
       "required": [
