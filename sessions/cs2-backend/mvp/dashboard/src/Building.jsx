@@ -16,7 +16,7 @@ const clock=t=>new Date(t*1000).toLocaleString([],{month:'short',day:'numeric',h
 function useNow(){const[n,setN]=useState(Date.now()/1000);useEffect(()=>{const id=setInterval(()=>setN(Date.now()/1000),1000);return()=>clearInterval(id)},[]);return n}
 
 export default function Building({headers,act,onError}){
- const[data,setData]=useState(null),[sel,setSel]=useState(null),[unitFilter,setUnitFilter]=useState(''),[showClosed,setShowClosed]=useState(false),[edit,setEdit]=useState(false);
+ const[data,setData]=useState(null),[sel,setSel]=useState(null),[unitFilter,setUnitFilter]=useState(''),[catFilter,setCatFilter]=useState(''),[showClosed,setShowClosed]=useState(false),[edit,setEdit]=useState(false);
  const seen=useRef(null),[fresh,setFresh]=useState({});const now=useNow();
  async function refresh(){try{const r=await fetch('/api/building',{headers});if(!r.ok)throw Error('Building data unavailable');const d=await r.json();
   // A new ticket or a new reporter on an existing one is highlighted for 5 s (not on first load).
@@ -28,7 +28,9 @@ export default function Building({headers,act,onError}){
  const tickets=data?.tickets||[];
  const byCode=useMemo(()=>Object.fromEntries(tickets.map(t=>[t.code,t])),[data]);
  const units=data?.units||[];const unitOf=Object.fromEntries(units.map(u=>[u.unit,u]));
- const visible=tickets.filter(t=>!unitFilter||t.unit===unitFilter);
+ const visible=tickets.filter(t=>(!unitFilter||t.unit===unitFilter)&&(!catFilter||t.category===catFilter));
+ // Category chips: only categories with open tickets (counted within the unit filter), most common first.
+ const cats=Object.entries(tickets.filter(t=>t.status!=='closed'&&!t.merged_into&&(!unitFilter||t.unit===unitFilter)).reduce((a,t)=>({...a,[t.category]:(a[t.category]||0)+1}),{})).sort((a,b)=>b[1]-a[1]);
  const open=visible.filter(t=>t.status!=='closed'&&!t.merged_into);
  const groups=URG.map(u=>[u,open.filter(t=>t.urgency===u).sort((a,b)=>a.created-b.created)]);
  const closed=visible.filter(t=>t.status==='closed'&&!t.merged_into);
@@ -48,6 +50,7 @@ export default function Building({headers,act,onError}){
   </div>
   <div className="bgrid">
    <section className="panel bqueue"><div className="panel-title"><h2>Ticket queue <span>{open.length}</span></h2>{unitFilter&&<button className="chip-btn" onClick={()=>setUnitFilter('')}>Unit {unitFilter} <X size={12} aria-label="Clear unit filter"/></button>}</div>
+    {cats.length>1&&<div className="catfilter" role="group" aria-label="Filter by category"><button className={'chip-btn'+(catFilter?'':' on')} aria-pressed={!catFilter} onClick={()=>setCatFilter('')}>All</button>{cats.map(([c,n])=><button key={c} className={'chip-btn'+(catFilter===c?' on':'')} aria-pressed={catFilter===c} onClick={()=>setCatFilter(catFilter===c?'':c)}>{CAT[c]||c} <span>{n}</span></button>)}</div>}
     <p className="hint">Grouped by urgency, oldest first. <kbd>J</kbd>/<kbd>K</kbd> to move.</p>
     <div className="report-list">{groups.map(([u,list])=><div key={u}><h3 className={'ugroup '+u}><span className={'umark '+u}>{URG_MARK[u]}</span>{URG_LABEL[u]} <span>{list.length}</span><small>target {dur(data.targets[u])}</small></h3>
      {list.length?list.map(t=><TicketRow key={t.code} t={t} now={now} chosen={ticket?.code===t.code} fresh={fresh[t.code]>Date.now()} onClick={()=>setSel(t.code)} children={tickets.filter(x=>x.merged_into===t.code)}/>):<p className="none">None open.</p>}</div>)}
