@@ -68,8 +68,32 @@ def _get_json(url, deadline):
         return json.loads(r.read())
 
 
+STREET = re.compile(r"\b(st|street|ave|avenue|blvd|boulevard|dr|drive|rd|road|ln|lane|way|ct|court|pl|place|hwy|highway|fwy|freeway|pkwy|parkway|"
+                    r"ter|terrace|cir|circle|calle|avenida)\b\.?|\d", re.I)
+STATES = set("""al ak az ar ca co ct de fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy
+alabama alaska arizona arkansas california colorado connecticut delaware florida georgia hawaii idaho illinois indiana iowa kansas kentucky louisiana maine
+maryland massachusetts michigan minnesota mississippi missouri montana nebraska nevada ohio oklahoma oregon pennsylvania tennessee texas utah vermont
+virginia washington wisconsin wyoming usa us""".split()) | {'new york', 'new jersey', 'new mexico', 'new hampshire', 'north carolina', 'south carolina',
+                                                        'north dakota', 'south dakota', 'rhode island', 'west virginia'}
+
+
+def place_list(text):
+    """Several separate places in one location answer ("Kansas City, Wichita, and Tulsa") -> each place, else [].
+    Never splits an intersection or address ("Lake Ave and Altadena Dr", "123 Main St") or "City, State"."""
+    parts = [p.strip(' .') for p in re.split(r'\s*(?:;|,|&|\band\b|\by\b|\bplus\b)\s*', text or '', flags=re.I) if p.strip(' .')]
+    merged = []
+    for p in parts:
+        if merged and p.lower() in STATES:
+            merged[-1] = f'{merged[-1]}, {p}'  # "Wichita, Kansas" stays one place
+        else:
+            merged.append(p)
+    if len(merged) < 2 or any(STREET.search(p) for p in merged):
+        return []
+    return merged[:6]
+
+
 def geocode(text, deadline):
-    """(lat, lon) for an address, landmark or neighborhood in LA County, or None."""
+    """(lat, lon) for an address, landmark or neighborhood (LA County first, then anywhere), or None."""
     # Callers say "near Venice Beach" or "by the USC Village": geocode the place, not the preposition.
     text = re.sub(r'^\s*(?:near|around|by|close to|next to|at|in|on)\s+(?:the\s+)?', '', (text or '').strip(), flags=re.I)
     if not text:
@@ -84,7 +108,9 @@ def geocode(text, deadline):
     city = re.split(r'\b(?:and|&|y|at)\b|,', text)[-1].strip()  # "Lake and Woodbury, Altadena" -> "Altadena"
     if city and city.lower() != text.lower():
         attempts.append(('osm', f'{city}, Los Angeles County, CA'))
-    result = None
+    # Not in LA County ("Tulsa", "Wichita", "Madrid"): search everywhere, after the local tries so LA landmarks win.
+    attempts.append(('osm_any', text))
+    result, road = None, False
     for kind, query in attempts:
         if time.monotonic() > deadline:
             break
@@ -97,13 +123,22 @@ def geocode(text, deadline):
                     result = (m[0]['coordinates']['y'], m[0]['coordinates']['x'])
             else:
                 d = _get_json('https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode(
-                    {'q': query, 'format': 'json', 'limit': 1, 'countrycodes': 'us'}), deadline)
+                    {'q': query, 'format': 'json', 'limit': 1, **({'countrycodes': 'us'} if kind == 'osm' else {})}), deadline)
                 if d:
                     result = (float(d[0]['lat']), float(d[0]['lon']))
+                    road = d[0].get('class') == 'highway'
         except Exception:
             continue
         if result:
             break
+    # The caller named a town ("Tulsa") and the LA search only found a street called that: a real town anywhere wins.
+    if result and kind == 'osm' and road and not STREET.search(text) and time.monotonic() < deadline:
+        try:
+            d = _get_json('https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode({'q': text, 'format': 'json', 'limit': 1}), deadline)
+            if d and d[0].get('class') in ('place', 'boundary'):
+                result = (float(d[0]['lat']), float(d[0]['lon']))
+        except Exception:
+            pass
     _geo_cache[text] = result
     return result
 
