@@ -117,3 +117,8 @@ mark{background:#fbe0d6;color:#7d1d10;border-radius:3px;padding:0 2px}
 .langpick select{font-size:11px;padding:5px 7px;border:1px solid #dce3dc;border-radius:7px;background:#fff}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(max-width:800px){.region{display:none}}
 .teamd small{display:block;font-size:10px;color:#708075;margin-top:2px}.teamd span{color:#40564a;font-weight:600}
+/* New-report bar: stays until opened, so a fresh call is never lost below a long queue */
+.arrivals{position:sticky;top:8px;z-index:20;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.arrival{flex:1 1 360px;display:flex;align-items:center;gap:9px;justify-content:flex-start;text-align:left;background:#fff8e1;border:1px solid #edd58a;box-shadow:0 2px 8px #0001;padding:9px 12px;font-size:12px;animation:freshq 2s ease-out}
+.arrival .where{font-weight:600}.arrival .what{color:#5d6d62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}.arrival .go{color:#22553e;font-weight:600;white-space:nowrap}
+.arrivals .dismiss{font-size:16px;line-height:1;padding:4px 9px}
