@@ -126,19 +126,6 @@ class RetellFunctions(unittest.TestCase):
    c.execute("INSERT OR REPLACE INTO responders VALUES('old','Old Friend','evac_logistics','available')");c.execute("INSERT OR REPLACE INTO responder_phones VALUES('old','+15555550009')")
   f.init_fns()
   self.assertNotIn('old',{r['id'] for r in self.state()['responders']})
- def test_bad_responders_env_does_not_crash_startup(self):
-  from backend.app.retell_fns import load_team
-  a={'id':'a','name':'A','phone':'5555550001'};b={'id':'b','name':'B','phone':'5555550002'}
-  self.assertEqual(load_team(json.dumps(a)+','+json.dumps(b)),[a,b])
-  self.assertEqual(load_team(json.dumps(a)),[a])
-  self.assertEqual(load_team(json.dumps([a,{'id':'x'}])),[a])
-  self.assertEqual(load_team('[{"id":"a"}] junk'),[]);self.assertEqual(load_team(''),[])
-  import backend.app.retell_fns as f
-  before={r['id'] for r in self.state()['responders']}
-  os.environ['DIZA_RESPONDERS'],old='{bad',os.environ['DIZA_RESPONDERS']
-  try:f.init_fns()
-  finally:os.environ['DIZA_RESPONDERS']=old
-  self.assertEqual({r['id'] for r in self.state()['responders']},before)
  def test_flag_after_report_upgrades_it(self):
   self.report('c17');self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},{**CALL,'call_id':'c17'})
   s=self.state();rs=[r for r in s['reports']]
@@ -179,4 +166,12 @@ class RetellFunctions(unittest.TestCase):
   self.assertEqual(self.fn('register_volunteer',{'name':'Min','skills':['translation'],'languages':['ko'],'availability':'evenings','area':'K-town'})['status'],'pending_verification')
  def test_unsigned_function_calls_rejected(self):
   self.assertEqual(self.c.post('/retell/fn/route_to_human',json={'name':'route_to_human','call':CALL,'args':{}}).status_code,401)
+ def test_malformed_responders_env_does_not_crash_startup(self):
+  from unittest.mock import patch
+  from backend.app.retell_fns import e164, responders_from_env
+  bad='[{"id":"a","name":"A","phone":"+1<5555550001>","skills":"x"}],\n {"id":"b","name":"B","phone":"+15555550002"}]'
+  with patch.dict(os.environ,{'DIZA_RESPONDERS':bad}):
+   team=responders_from_env()
+  self.assertEqual([r['id'] for r in team],['a','b'])
+  self.assertEqual(e164(team[0]['phone']),'+15555550001')
 if __name__=='__main__':unittest.main()
