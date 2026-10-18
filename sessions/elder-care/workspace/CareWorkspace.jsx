@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { HeartHandshake } from "lucide-react";
 
-export function CareNav({ headers }) {
-  const [urgent, setUrgent] = useState(null);
+export function useCareData(headers) {
+  const [data, setData] = useState(null);
+  const [unavailable, setUnavailable] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     async function refresh() {
@@ -11,27 +11,32 @@ export function CareNav({ headers }) {
           headers, signal: controller.signal,
         });
         if (!response.ok) throw new Error("Care queue unavailable");
-        const data = await response.json();
-        setUrgent(data.requests.filter(
-          (item) => item.urgency === "urgent" && item.status !== "resolved",
-        ).length);
+        const snapshot = await response.json();
+        if (!controller.signal.aborted) { setData(snapshot); setUnavailable(false); }
       } catch {
-        if (!controller.signal.aborted) setUrgent(null);
+        if (!controller.signal.aborted) setUnavailable(true);
       }
     }
     refresh();
     const timer = setInterval(refresh, 5000);
     return () => { clearInterval(timer); controller.abort(); };
   }, [headers.Authorization]);
-
-  return <><HeartHandshake size={18}/><span>Resident care</span>
-    {urgent > 0 && <span className="care-urgent-count" aria-label={`${urgent} urgent care requests`}>{urgent}</span>}
-  </>;
+  return {data, unavailable};
 }
 
-export function CareWorkspace() {
+export function CareBadge({headers}) {
+  const {data, unavailable} = useCareData(headers);
+  const urgent = data?.requests.filter(
+    (item) => item.urgency === "urgent" && item.status !== "resolved",
+  ).length;
+  return !unavailable && urgent > 0
+    ? <span className="care-urgent-count" aria-label={`${urgent} urgent care requests`}>{urgent}</span>
+    : null;
+}
+
+export function CareWorkspace({view = "daily"}) {
   // Same-origin isolation preserves the care UI, dialogs, keyboard handling and
   // accessibility without allowing its styles to overwrite the operations map.
   return <iframe className="care-workspace" title="Resident care workspace"
-    src="/care/workspace?embedded=1"/>;
+    src={`/care/workspace?embedded=1&view=${encodeURIComponent(view)}`}/>;
 }

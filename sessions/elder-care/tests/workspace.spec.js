@@ -16,11 +16,11 @@ async function unlock(page, path = "/") {
   await page.goto(path);
   await page.getByPlaceholder("Operator token").fill("workspace-test-token");
   await page.getByRole("button", { name: "Unlock", exact: true }).click();
-  await expect(page.locator("aside").getByRole("button", { name: /Resident care/ })).toBeVisible();
+  await expect(page.locator("aside").getByRole("button", { name: /^Building/ })).toBeVisible();
 }
 
 function sidebar(page, name) {
-  return page.locator("aside").getByRole("button", { name, exact: true });
+  return page.locator("aside").getByRole("button", { name: name === "Building" ? /^Building/ : name, exact: true });
 }
 
 test("operations remains the default with the original map, lanes, metrics and tools", async ({ page, request }) => {
@@ -56,7 +56,7 @@ test("operations remains the default with the original map, lanes, metrics and t
     const data = await (await request.get("/api/state",{headers:auth})).json();
     return data.cases.some((c)=>c.type==="callback");
   }).toBeTruthy();
-  await page.screenshot({ path: "test-results/workspace-ops-1440.png", fullPage: true });
+  await page.screenshot({ path: "workspace-test-results/workspace-ops-1440.png", fullPage: true });
   expect(errors).toEqual([]);
 });
 
@@ -96,10 +96,15 @@ test("Imaan's building floor plan, assignment, notes and supporter inbox remain 
   await expect(page.getByRole("heading", { name: /^Live map/ })).toBeVisible();
 });
 
-test("resident care is an addition in the original shell with shared sign-in and working care actions", async ({ page, request }) => {
+test("resident care lives inside Building with shared sign-in and working care actions", async ({ page, request }) => {
   await unlock(page);
-  await page.locator("aside").getByRole("button", {name:/Resident care/}).click();
-  await expect(page).toHaveURL(/\/care$/);
+  await sidebar(page, "Building").click();
+  await expect(page.locator("aside nav").getByRole("button")).toHaveCount(3);
+  await expect(page.locator("aside").getByRole("button", {name:/Resident care/})).toHaveCount(0);
+  await expect(page.getByRole("heading", {name:/Resident care at Willow House/})).toBeVisible();
+  await page.getByRole("tab", {name:/Resident care/}).click();
+  await expect(page).toHaveURL(/\/building\?section=care/);
+  await expect(page.getByRole("tab", {name:/Resident care/})).toHaveAttribute("aria-selected", "true");
   const care = page.frameLocator('iframe[title="Resident care workspace"]');
   await expect(care.getByRole("heading", { name: "Care, in good hands." })).toBeVisible();
   await expect(care.getByLabel("Working as staff member")).toBeVisible();
@@ -116,7 +121,7 @@ test("resident care is an addition in the original shell with shared sign-in and
   await expect(care.getByRole("dialog")).not.toBeVisible();
   const data = await (await request.get("/api/care/state",{headers:auth})).json();
   expect(data.facility_workflow.tickets.find((t)=>t.unit==="101").assignee).toBe("facilities-alex");
-  await page.screenshot({ path: "test-results/workspace-care-1440.png", fullPage: true });
+  await page.screenshot({ path: "workspace-test-results/workspace-care-1440.png", fullPage: true });
   const accessibility = await new AxeBuilder({page}).include("iframe").analyze();
   expect(accessibility.violations).toEqual([]);
   await sidebar(page,"911 operations").click();
@@ -128,16 +133,52 @@ test("resident care is an addition in the original shell with shared sign-in and
 test("direct care links and mobile navigation preserve operations and all care sections", async ({page}) => {
   await page.setViewportSize({width:390,height:844});
   await unlock(page,"/care");
+  await expect(page).toHaveURL(/\/building\?section=care/);
+  await expect(page.locator("aside nav").getByRole("button")).toHaveCount(3);
   const care = page.frameLocator('iframe[title="Resident care workspace"]');
   await expect(care.getByRole("heading",{name:"Care, in good hands."})).toBeVisible();
   await care.getByRole("button",{name:"Residents & check-ins",exact:true}).click();
   await expect(care.getByRole("heading",{name:"A little attention. Every day."})).toBeVisible();
-  await page.screenshot({path:"test-results/workspace-care-390.png",fullPage:true});
+  await page.screenshot({path:"workspace-test-results/workspace-care-390.png",fullPage:true});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
   await sidebar(page,"911 operations").click();
   await expect(page.getByRole("heading",{name:/^Live map/})).toBeVisible();
-  await page.screenshot({path:"test-results/workspace-ops-390.png",fullPage:true});
+  await page.screenshot({path:"workspace-test-results/workspace-ops-390.png",fullPage:true});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
   await sidebar(page,"Building").click();
   await expect(page.getByRole("group",{name:/Building floor plan/})).toBeVisible();
+});
+
+
+test("Building care shortcuts, keyboard tabs and drafts survive switching to the floor plan", async ({page}) => {
+  await unlock(page,"/building");
+  await expect(page.getByRole("group",{name:/Building floor plan/})).toBeVisible();
+  const accessibility = await new AxeBuilder({page}).include(".building-care-summary").include(".building-tabs").analyze();
+  expect(accessibility.violations).toEqual([]);
+  await page.screenshot({path:"workspace-test-results/building-overview-1440.png",fullPage:true});
+  await page.getByRole("button",{name:/^Urgent care/}).click();
+  const care = page.frameLocator('iframe[title="Resident care workspace"]');
+  await expect(care.getByRole("heading",{name:"Every urgent need, seen."})).toBeVisible();
+  await expect(page).toHaveURL(/careView=urgent/);
+  await page.getByRole("tab",{name:/Resident care/}).focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.getByRole("tab",{name:"Repairs & floor plan"})).toHaveAttribute("aria-selected","true");
+  await expect(page.getByRole("group",{name:/Building floor plan/})).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(care.getByRole("heading",{name:"Every urgent need, seen."})).toBeVisible();
+  await care.getByRole("button",{name:"Add note",exact:true}).click();
+  await care.getByLabel("Handoff note",{exact:true}).fill("Please confirm Margaret is comfortable after the repair.");
+  await page.getByRole("tab",{name:"Repairs & floor plan"}).click();
+  await page.getByRole("tab",{name:/Resident care/}).click();
+  await expect(care.getByLabel("Handoff note",{exact:true})).toHaveValue("Please confirm Margaret is comfortable after the repair.");
+  await care.getByRole("button",{name:"Close dialog",exact:true}).click();
+  await care.getByRole("button",{name:"Residents & check-ins",exact:true}).click();
+  await page.getByRole("tab",{name:"Repairs & floor plan"}).click();
+  await page.getByRole("tab",{name:/Resident care/}).click();
+  await expect(care.getByRole("heading",{name:"A little attention. Every day."})).toBeVisible();
+  await page.getByRole("tab",{name:"Repairs & floor plan"}).click();
+  await page.getByRole("button",{name:/^Care-home repairs/}).click();
+  await expect(care.getByRole("heading",{name:"Resident rooms & shared systems"})).toBeVisible();
+  await page.reload();
+  await expect(care.getByRole("heading",{name:"Resident rooms & shared systems"})).toBeVisible();
 });

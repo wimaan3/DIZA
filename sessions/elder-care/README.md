@@ -1,6 +1,6 @@
 # DIZA Care
 
-DIZA's full operations dashboard, with resident care added as a fourth workspace section.
+DIZA's full operations dashboard, with resident care integrated into the Building tab.
 Imaan's existing dashboard remains the base experience; the care-home extension adds urgent and everyday care without replacing the original tools.
 This implementation follows the user's explicit preference for a staff dashboard only.
 All new files live in this session folder, as required by the repository's `AGENTS.md`.
@@ -14,17 +14,21 @@ All new files live in this session folder, as required by the repository's `AGEN
 - **Resident care:** the additional daily/urgent care, resident check-ins, and shared care-home repairs described below.
 
 The integrated root opens `/ops`.
-Use **Resident care** in the original sidebar to open `/care`, with all five care sections inside the same operations shell.
-Its sidebar badge shows the number of unresolved urgent care requests even while staff use the other sections.
+Open **Building** for **Repairs & floor plan** and **Resident care** in the same workspace.
+The repairs overview includes care counts and direct links to urgent care, everyday care, resident check-ins, and care-home repairs.
+The Building sidebar badge shows the number of unresolved urgent care requests even while staff use other sections.
+`/building?section=care` opens the resident-care section directly, and older `/care` links redirect there.
+The sidebar has the original three sections: Building, 911 operations, and Supporter inbox.
 The apartment-building demo, crisis-map demo, and care-home demo remain distinct datasets.
 Care-home room repair reports continue to share their resident requests and facilities tickets as described below.
 
 `workspace/entry.jsx` imports the current original dashboard source directly.
-The Vite integration adds the care route, navigation, and panel without copying the operational components or editing another session's files.
+The Vite integration extends the Building component with resident care without copying the operational components or editing another session's files.
 Every integration anchor is checked, and a changed upstream shell fails the build instead of silently dropping functionality.
 The map adapter keeps Leaflet's container classes intact when entering drawing or placement mode.
 The care panel uses a same-origin frame to preserve its forms, dialogs, keyboard handling, and style isolation.
 It reuses the operator token already entered in the parent dashboard.
+Switching between the two Building sections preserves care dialogs, unsaved drafts, the current care section, and the selected repair ticket.
 
 ## What staff can do
 
@@ -65,7 +69,7 @@ They are not clinical response guarantees.
 California tenancy-law clocks from the building dashboard are not presented as care-home policy.
 
 The original building dashboard remains available at `/building` in the integrated container.
-The care-home extension is available directly in `/care`; its room map represents the resident roster rather than the separate apartment-building sample.
+Resident care is available at `/building?section=care`; its room map represents the resident roster rather than the separate apartment-building sample.
 
 Urgent requests and medication questions require a nurse or care lead to accept them.
 Facilities staff can accept routine maintenance requests.
@@ -87,8 +91,8 @@ docker run --rm -p 127.0.0.1:8000:8000 diza-care
 ```
 
 Open <http://127.0.0.1:8000/ops> for the original map and operational tools.
-Select **Load fire-surge demo** to populate the geographic map and **Load demo week** in Building to populate its floor plan.
-Select **Resident care** in the sidebar, then **Load demo scenarios** to populate the care-home addition.
+Select **Load demo: falls & freeway crash** to populate the geographic map and **Load demo week** in Building to populate its floor plan.
+In Building, select **Resident care**, then **Load demo scenarios** to populate the care-home addition.
 The eight reports are fictional and loading them repeatedly does not duplicate care requests.
 They include a fall, everyday needs, a maintenance issue, two rooms reporting heating problems, and a repeat report that shares a repair ticket.
 Three clearly labeled synthetic call transcripts demonstrate the call-context panels.
@@ -177,6 +181,7 @@ Browser screenshots and traces are written to the ignored `test-results/` folder
 Combined-workflow tests additionally cover shared-system relationships, maintenance escalation, duplicate preservation, merge/unmerge/split, stale assignments, repair outcomes, room edits, access permission, old-demo compatibility, and unverified physical locations.
 Browser tests exercise the complete facilities workflow, room filtering, J/K navigation, resident follow-up links, call context, and desktop/mobile accessibility.
 The integrated workspace suite builds the current original dashboard and checks map drawing and pin placement, callback creation, original building notes and assignments, supporter navigation, language switching, wall view, shared token access, embedded care assignment, accessibility, and mobile layout.
+It also checks the unified Building tabs, care shortcuts, old care-link redirects, keyboard tab navigation, and unsaved handoff drafts when switching back to the floor plan.
 
 The existing backend suite was also verified in an isolated checkout with its original dashboard built.
 Run each existing test file in a separate Python process because those modules set different environment variables before importing the shared backend.

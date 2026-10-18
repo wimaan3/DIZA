@@ -25,7 +25,7 @@
 | `Dockerfile`, `railway.json` | Integrated care and original-engine deployment configuration |
 | `README.md` | Run instructions, configuration, demo limits, and deployment handoff |
 | `.gitignore` | Local test artifacts and virtual environment exclusions |
-| `workspace/` | Build-time extension of the original dashboard shell, preserving its operations/map/building/supporter components and adding the resident-care panel and urgent badge |
+| `workspace/` | Build-time extension preserving the original operations/map/building/supporter components; BuildingWorkspace combines repairs, floor plan, care summary, resident-care panel, and urgent badge |
 | `playwright.workspace.config.js`, `tests/workspace.spec.js` | Integrated map, building, supporter, language, wall-view, shared-token, resident-care, and mobile browser checks |
 
 ## Decisions made
@@ -60,6 +60,10 @@ Checked build-time anchors add navigation and a same-origin care panel; upstream
 21. Browser testing reproduced loss of Leaflet container classes when drawing or placing a pin.
 The adapter keeps the Leaflet-owned container stable and puts the changing cursor class on a wrapper.
 22. The care panel reuses the original operator token and keeps all five care sections and staff controls accessible on desktop and mobile.
+23. The user requested merging Resident care into Building instead of keeping a fourth sidebar section.
+Building now contains Repairs & floor plan and Resident care tabs, with care counts and queue shortcuts in the repairs overview.
+The Building sidebar item carries the urgent-care badge, and old `/care` links redirect into Building.
+Care panels stay mounted when switching sections so staff retain unsaved notes, dialogs, and their current care view.
 
 ## Key facts verified
 
@@ -82,9 +86,12 @@ The tested care screens, combined room workspace, and request/assignment dialogs
 The upgraded demo contains eight care reports, three facilities tickets, and three labeled synthetic transcripts.
 - The combined Docker image builds and passes HTTP checks for `/care`, `/building`, `/ops`, `/supporter`, `/text`, and the care/building/operations APIs.
 - The expanded original backend suite at `da01400` passes all 99 tests, with the original dashboard built and each test file run in a separate process.
-- The corrected integration passes five additional browser workflows covering real map interactions, callbacks, building tools, language switching, protected wall view, shared operator access, embedded care actions, and mobile layout.
+- The corrected integration passes six additional browser workflows covering real map interactions, callbacks, building tools, language switching, protected wall view, shared operator access, embedded care actions, and mobile layout.
+The unified Building checks cover care shortcuts, old care-link redirects, keyboard tabs, and unsaved handoff notes surviving a switch to the floor plan.
 The embedded care workspace has zero axe violations in the tested repair flow.
 - The original care suite still passes 30 backend tests and 16 standalone care/facilities browser workflows.
+- The six integrated browser workflows also pass after incorporating PR #39's falls/freeway demo and second-reader changes.
+Its updated operations suite passes 14 tests; the unchanged original suites and these updates account for 103 original backend tests verified across the latest main updates.
 
 ## Open questions
 

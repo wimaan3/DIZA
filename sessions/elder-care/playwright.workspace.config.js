@@ -6,6 +6,7 @@ const temp = path.join(os.tmpdir(), `diza-workspace-e2e-${process.pid}`);
 export default defineConfig({
   testDir: "./tests",
   testMatch: "workspace.spec.js",
+  outputDir: "workspace-test-results",
   workers: 1,
   retries: 0,
   reporter: "list",
