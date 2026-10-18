@@ -30,7 +30,7 @@ def init_fns():
         ''')
         # Real human-in-the-loop phones come from the environment only, never from git:
         # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics,lang:en"}]'
-        team = json.loads(os.getenv('DIZA_RESPONDERS', '[]'))
+        team = load_team(os.getenv('DIZA_RESPONDERS', ''))
         if team:  # the env list is the source of truth: someone removed from it stops getting calls
             keep = [r['id'] for r in team]
             marks = ','.join('?' * len(keep))
@@ -41,6 +41,29 @@ def init_fns():
         # A real team is configured: drop the local placeholder people so the dashboard shows only real responders.
         if c.execute('SELECT COUNT(*) FROM responder_phones').fetchone()[0]:
             c.execute('DELETE FROM responders WHERE id NOT IN (SELECT responder_id FROM responder_phones)')
+
+
+def load_team(raw):
+    # A typo in DIZA_RESPONDERS must not take the whole app down: accept a list, one object, or
+    # objects missing their [ ], and otherwise keep the responders already stored. Never log the value (phones).
+    raw = raw.strip()
+    if not raw:
+        return []
+    err = None
+    for text in (raw, f'[{raw.rstrip(",")}]'):
+        try:
+            team = json.loads(text)
+            break
+        except ValueError as e:
+            err = err or e
+    else:
+        print(f'DIZA_RESPONDERS is not valid JSON ({err.msg} at char {err.pos}); keeping stored responders')
+        return []
+    team = [team] if isinstance(team, dict) else team if isinstance(team, list) else []
+    ok = [r for r in team if isinstance(r, dict) and r.get('id') and r.get('name') and r.get('phone')]
+    if len(ok) < len(team):
+        print(f'DIZA_RESPONDERS: skipped {len(team) - len(ok)} entries missing id, name or phone')
+    return ok
 
 
 def e164(phone):
