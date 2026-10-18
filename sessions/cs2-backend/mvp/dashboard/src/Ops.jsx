@@ -20,7 +20,7 @@ const mmss=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 function useNow(){const[n,setN]=useState(Date.now()/1000);useEffect(()=>{const id=setInterval(()=>setN(Date.now()/1000),1000);return()=>clearInterval(id)},[]);return n}
 
 export default function Ops({headers,act,state,wall,onError,me,setMe}){
- const[data,setData]=useState(null),[sel,setSel]=useState(null),[merge,setMerge]=useState(false),[laneTab,setLaneTab]=useState('urgent');
+ const[data,setData]=useState(null),[sel,setSel]=useState(null),[merge,setMerge]=useState(false),[laneTab,setLaneTab]=useState('urgent'),[catFilter,setCatFilter]=useState('');
  const now=useNow(),seen=useRef(null),[fresh,setFresh]=useState({}),[arrivals,setArrivals]=useState([]);
  async function refresh(){try{const r=await fetch('/api/ops',{headers});if(!r.ok)throw Error(t('Operator queue unavailable'));const d=await r.json();
   const ids=new Set(d.incidents.map(i=>i.id));
@@ -28,12 +28,18 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
   seen.current=ids;setData(d)}catch(e){onError(e.message)}}
  useEffect(()=>{refresh();const id=setInterval(refresh,1500);return()=>clearInterval(id)},[headers.Authorization]);
  // A new report stays announced until the operator opens it: in a long queue it may land far below the fold.
- const laneOf=i=>['P0','P1'].includes(i?.effective)?'urgent':'routine';
+ const laneOf=i=>i?.request?.status==='done'?'done':['P0','P1'].includes(i?.effective)?'urgent':'routine';
  function show(id){setLaneTab(laneOf(inc.find(x=>x.id===id)));setSel(id);setArrivals(a=>a.filter(x=>x!==id));setTimeout(()=>document.getElementById('q-'+id)?.scrollIntoView({block:'center',behavior:'smooth'}),50)}
  async function run(path,body){const ok=await act(path,body);if(ok)refresh();return ok}
- const inc=data?.incidents||[];
- const urgent=inc.filter(i=>['P0','P1'].includes(i.effective)),routine=inc.filter(i=>!['P0','P1'].includes(i.effective));
- const order=[...urgent,...routine];
+ const all=data?.incidents||[];
+ // Category chips (fire, medical, power...): only categories present, most common first; the filter applies to both tabs and the map.
+ const cats=Object.entries(all.reduce((a,i)=>({...a,[i.category]:(a[i.category]||0)+1}),{})).sort((a,b)=>b[1]-a[1]);
+ const inc=catFilter?all.filter(i=>i.category===catFilter):all;
+ // Finished work (the person assigned marked it done) leaves the active lanes for the Done tab.
+ const isDone=i=>i.request?.status==='done';
+ const done=inc.filter(isDone),active=inc.filter(i=>!isDone(i));
+ const urgent=active.filter(i=>['P0','P1'].includes(i.effective)),routine=active.filter(i=>!['P0','P1'].includes(i.effective));
+ const order=[...urgent,...routine,...done];
  const cur=order.find(i=>i.id===sel)||order[0];
  const operator=me||state.responders[0]?.id||'';
  async function setPriority(i,s){
@@ -68,10 +74,11 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
    <span className="keys"><kbd>J</kbd><kbd>K</kbd> {t('move')} · <kbd>T</kbd> {t('take call')} · <kbd>M</kbd> {t('merge')} · <kbd>1</kbd>–<kbd>4</kbd> {t('priority')} · <kbd>C</kbd> {t('callback')} · <kbd>R</kbd> {t('reviewed')}</span>
    {state.demo&&<button className="small" onClick={()=>run('/api/demo/seed?mode=crisis')}>{t('Load demo: falls & freeway crash')}</button>}{!state.live&&<button className="small" onClick={()=>run('/api/demo/surge')}>{t('Simulate surge')}</button>}<a className="small linkbtn" href="/ops?wall=1" target="_blank" rel="noreferrer">{t('Wall view ↗')}</a></div>
   <div className="ops-grid">
-   <section className="panel lane queue2"><div className="lane-tabs" role="tablist">{[['urgent',t('Urgent'),urgent],['routine',t('Not urgent'),routine]].map(([k,label,list])=>
+   <section className="panel lane queue2"><div className="lane-tabs" role="tablist">{[['urgent',t('Urgent'),urgent],['routine',t('Not urgent'),routine],['done',t('Done'),done]].map(([k,label,list])=>
      <button key={k} role="tab" aria-selected={laneTab===k} className={'lane-tab '+k+(laneTab===k?' on':'')} onClick={()=>setLaneTab(k)}>{label} <span>{list.length}</span></button>)}
-     <small>{laneTab==='urgent'?t('P0–P1 · P0 pinned, then score, then wait'):t('P2–P3 · review, info, follow-ups')}</small></div>
-    <div className="report-list">{(laneTab==='urgent'?urgent:routine).length?(laneTab==='urgent'?urgent:routine).map(i=><QueueCard key={i.id} i={i} now={now} on={cur?.id===i.id} fresh={fresh[i.id]>Date.now()} pick={()=>setSel(i.id)}/>):<p className="none">{laneTab==='urgent'?t('No urgent reports right now.'):t('Nothing waiting.')}</p>}</div></section>
+     <small>{laneTab==='urgent'?t('P0–P1 · P0 pinned, then score, then wait'):laneTab==='routine'?t('P2–P3 · review, info, follow-ups'):t('Finished by the person assigned')}</small></div>
+    {cats.length>1&&<div className="catfilter" role="group" aria-label={t('Filter by category')}><button className={'chip-btn'+(catFilter?'':' on')} aria-pressed={!catFilter} onClick={()=>setCatFilter('')}>{t('All')}</button>{cats.map(([c,n])=><button key={c} className={'chip-btn'+(catFilter===c?' on':'')} aria-pressed={catFilter===c} onClick={()=>setCatFilter(catFilter===c?'':c)}>{cat(c)} <span>{n}</span></button>)}</div>}
+    <div className="report-list">{(({urgent,routine,done})[laneTab]).length?(({urgent,routine,done})[laneTab]).map(i=><QueueCard key={i.id} i={i} now={now} on={cur?.id===i.id} fresh={fresh[i.id]>Date.now()} pick={()=>setSel(i.id)}/>):<p className="none">{laneTab==='urgent'?t('No urgent reports right now.'):laneTab==='done'?t('Nothing finished yet.'):t('Nothing waiting.')}</p>}</div></section>
    {cur?<IncidentCard i={cur} all={inc} state={state} now={now} merge={merge} setMerge={setMerge} operator={operator} nameOf={nameOf}
      run={run} setPriority={setPriority} review={review} take={take} callback={callback}/>:<section className="panel detail"><div className="empty full"><Layers size={38}/><h3>{t('No reports yet.')}</h3><p>{t('Calls to the line appear here within seconds. In drill mode, load the demo (elderly falls and a freeway crash) to see a busy night.')}</p></div></section>}
   </div>
@@ -115,6 +122,7 @@ function IncidentCard({i,all,state,now,merge,setMerge,operator,nameOf,run,setPri
   </div>
   {merge&&<div className="merge-pick"><label>{t('Link this report to the incident at')}<select autoFocus defaultValue="" onChange={async e=>{if(e.target.value&&await run(`/api/reports/${i.id}/merge`,{into:e.target.value}))setMerge(false)}}><option value="" disabled>{t('Choose an incident…')}</option>{others.slice(0,30).map(x=><option key={x.id} value={x.id}>{x.effective} · {cat(x.category)} · {x.location}</option>)}</select></label>{co.reports>1&&<button className="small" onClick={()=>run(`/api/reports/${i.id}/unmerge`).then(()=>setMerge(false))}>{t('Unlink from its incident')}</button>}<small>{t('Both reports stay listed; only the grouping changes.')}</small></div>}
   {i.request?<div className="handoff"><div className="handoff-title"><h3>{t('Responsibility')}</h3><span className={'status '+i.request.status}>{t(HANDOFF[i.request.status]||i.request.status)}</span></div>
+   {i.request.status==='accepted'&&<button className="small primary" onClick={()=>run(`/api/requests/${i.request.id}/decision`,{responder_id:i.request.assignee,action:'resolve'})}>{t('Mark done')}</button>}
    {i.request.assignee&&<p>{nameOf(i.request.assignee)}{offer&&` · ${t('{n}s to accept',{n:Math.max(0,Math.ceil(offer.expires-now))})}`}</p>}
    {!['accepted','done','offered'].includes(i.request.status)&&!(i.effective==='P0'&&i.request.status==='escalated')&&<button className="small" onClick={()=>run(`/api/requests/${i.request.id}/offer`)}>{i.effective==='P0'?t('Flag for supervisor review'):t('Offer to eligible responder')}</button>}
    {i.effective==='P0'&&<p className="urgent-note">{t('Immediate danger reported. Contact emergency services directly ({num}). DIZA does not dispatch or call them.',{num:emergencyText(state.region)})}</p>}</div>
