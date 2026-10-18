@@ -432,6 +432,8 @@ from .textline import router as text_router
 app.include_router(text_router)
 from .building import router as building_router, init_building
 app.include_router(building_router)
+from .security import router as security_router
+app.include_router(security_router)
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():
