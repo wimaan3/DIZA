@@ -106,7 +106,8 @@ def offer(c,qid):
     q=c.execute('SELECT q.*,r.category,r.severity FROM requests q JOIN reports r ON r.id=q.report_id WHERE q.id=?',(qid,)).fetchone()
     if not q: raise HTTPException(404,'Request not found')
     if q['status'] in ('accepted','in_progress','done','offered'): return
-    if q['severity']=='P0':
+    from .ops import effective_severity  # a card the second reader raised to P0 ("trapped") is a P0 here too
+    if q['severity']=='P0' or effective_severity(c,c.execute('SELECT * FROM reports WHERE id=?',(q['report_id'],)).fetchone())=='P0':
         c.execute("UPDATE requests SET status='escalated',updated=? WHERE id=?",(time.time(),qid))
         event(c,qid,'Urgent supervisor review required · not routed to general helpers; DIZA never contacts emergency services')
         return
