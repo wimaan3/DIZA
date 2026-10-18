@@ -102,3 +102,16 @@
 - `campus-faq` only has verified safety/health entries. DS/biomech to add dining, buildings, printing etc.
 - Forms content review by biomech. P1/P2 items: HY/TL lines, keypad-only "network degraded" mode, backend `update-live-call` push on a missed P0 (with CS#2), sandbox-clinic receptionist agent.
 - Separate API keys (MCP / backend / webhook badge): dashboard-only.
+
+## Update 2026-10-18 (session https://claude.ai/code/session_01EYJmFgmg7GF2aUEWnqe1Eb, branch `claude/fervent-wozniak-9lex3u`)
+- **Outage 00:41–00:56 UTC fixed (PR #26).** Startup crashed on `json.loads(DIZA_RESPONDERS)`. The Railway variable has a stray `],` after the first entry and `<…>` around one number. The backend now parses it leniently and logs `WARNING: DIZA_RESPONDERS is not valid JSON`. **The variable itself still needs fixing in Railway** (the agent wasn't permitted to write secrets). Railway project moved from trial to **Hobby** (user).
+- **Transfer test:** Retell refuses a call from the line to itself, so an automated end-to-end test needs a second number (not bought: costs money). The backend half was verified live: signed `route_to_human` → valid E.164 `oncall_number`. That left responder `imaan` marked busy; set it available on the dashboard.
+- **Security routing (PRs #27, #30):**
+  - `security` responder skill.
+  - `POST /retell/fn/brief_security` (`backend/app/security.py`): DIZA phones the on-duty security person with the `security_brief` agent (`agent_49bc7a7e9e4f23405a83ec5d07`) and a fixed-text briefing. One briefing per call (`security_briefs` table). Never the person already taking the transfer. Drill mode: teammates only.
+  - `route_to_human` with need `security` triggers the same briefing in the background.
+  - Crisis + language lines: `prompts/security.md` (last in the prompt) + `brief_security` tool.
+  - **Inbound keeps its pre-PR prompt and tools.** Adding any tool to inbound flipped `flood_stuck_p0` (0/4 vs 4/4 baseline, measured on a mirror of the live agent), so inbound relies on the `route_to_human` path.
+  - Shared P0 list now includes "someone breaking in or an intruder inside right now".
+- Retell credits are running low; the user may switch to their other workspace later (not yet).
+- Temporary Retell agent `agent_e223237ebd3847d38ed290d0e4` / LLM `llm_a43d7f522fae315217e1632c2f4d` ("zz-temp-test-caller (delete me)") is a test mirror, not bound to the number. Delete it when convenient.
