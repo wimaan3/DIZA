@@ -128,7 +128,9 @@ def offer(c,qid,prefer=''):
     c.execute("UPDATE requests SET status='offered',assignee=?,updated=? WHERE id=?",(candidate['id'],time.time(),qid))
     c.execute('INSERT INTO attempts VALUES(?,?,?,?,?)',(str(uuid.uuid4()),qid,candidate['id'],'offered',time.time()+TIMEOUT))
     why=' (backup)' if prefer and candidate['id']==prefer else (lambda w:f' ({w})' if w else '')(area_match(profs.get(candidate['id'],{}),rep['location'],point))
-    event(c,qid,f"Offer visible in supporter inbox: {candidate['name']}{why} · awaiting acceptance (no phone notification sent)")
+    event(c,qid,f"Offer visible in supporter inbox: {candidate['name']}{why} · awaiting acceptance")
+    from .assign import start_call  # a teammate with a phone also gets a call about it
+    start_call(qid,candidate['id'])
 
 def backup_of(c,rid):
     from .team import profiles
@@ -158,6 +160,7 @@ async def lifespan(app):
     init_locate()
     init_building()
     init_ops()
+    init_assign()
     init_security()
     async def worker():
         while True:
@@ -324,11 +327,20 @@ def retell_submit(data=Depends(signed)):
     if not call_id: raise HTTPException(422,'call.call_id required')
     args['idempotency_key']=call_id+':'+hashlib.sha256(json.dumps(args,sort_keys=True).encode()).hexdigest()
     args['source']='retell'
+    said_hazard=str(args.get('hazard') or '')  # the agent's own words, before mapping to a category
     args.setdefault('summary',args.get('hazard','Report'))
     args['hazard']=category(args.get('hazard'))
     args['immediate_danger']=bool(args.get('immediate_danger') or args.get('injured_or_trapped'))
     if args.get('vulnerability') and not args.get('evidence'):
         args['evidence']='Vulnerability: '+', '.join(args['vulnerability'])
+    # At one of our buildings: maintenance goes to the manager's /building queue; a pure maintenance problem
+    # (a bathroom leak, no heat) is not a 911 card. Danger (fire, gas, injury) stays here AND reaches the manager.
+    from .building import tickets_for_report
+    tickets,maintenance_only=tickets_for_report(session_of(data),{**args,'hazard_text':said_hazard},args['hazard'])
+    if maintenance_only:
+        codes=', '.join(t['code'] for t in tickets);unit=tickets[0]['unit']
+        return {'report_id':'','severity':'P3','priority':10,'ticket_code':tickets[0]['code'],'cluster_match':'',
+                'reason':f"Filed as a maintenance ticket ({codes}) for {unit}. The building manager will review it; updates come by text."}
     r=merge_into_p0(call_id,Report(**args)) or save_report(Report(**args))
     kick_geocode(r['id'])
     with connect() as c:
@@ -495,6 +507,8 @@ app.include_router(building_router)
 from .security import router as security_router, init_security
 app.include_router(security_router)
 from .ops import init_ops
+from .assign import router as assign_router, init_assign
+app.include_router(assign_router)
 from .regions import region
 
 DIST=ROOT/'dashboard'/'dist'
