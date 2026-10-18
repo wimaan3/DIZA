@@ -1,3 +1,5 @@
+import { createFacilityWorkspace } from "./facility.js";
+
 const app = document.querySelector("#app");
 const dialogRoot = document.querySelector("#dialog-root");
 const announce = document.querySelector("#announcer");
@@ -87,6 +89,8 @@ const categoryIcon = (r) =>
         wellbeing: "users",
       }[r.category] || "heart";
 
+const facilityWorkspace = createFacilityWorkspace({ esc, icon, age, clock });
+
 async function api(path, body) {
   const response = await fetch(path, {
     method: body === undefined ? "GET" : "POST",
@@ -154,9 +158,16 @@ function draw() {
   const focus = document.activeElement;
   const focusId = focus?.id;
   const cursor = focus?.selectionStart;
-  const focusKey = ["action", "view", "request", "checkin"].find(
-    (key) => focus?.dataset?.[key],
-  );
+  const focusKey = [
+    "action",
+    "view",
+    "request",
+    "checkin",
+    "facilityCode",
+    "roomFilter",
+    "editRoom",
+    "facilityAction",
+  ].find((key) => focus?.dataset?.[key]);
   const focusValue = focusKey ? focus.dataset[focusKey] : null;
   if (!data) {
     app.innerHTML = `<main class="boot"><span class="brand large">${icon("heart", 30)} DIZA<span>care</span></span><h1>${error ? "Connect to your care workspace" : "Opening your care workspace"}</h1><p>${esc(error || "Loading the care queue...")}</p>${error === "Staff access token required" ? tokenForm() : '<button class="primary" data-action="refresh">Try again</button>'}</main>`;
@@ -173,25 +184,26 @@ function draw() {
     urgent: "Every urgent need, seen.",
     residents: "A little attention. Every day.",
     history: "Every handoff has a story.",
+    facility: "One home. A coordinated response.",
   }[view];
   app.innerHTML = `<div class="layout">
     <aside class="sidebar"><a class="brand" href="/care" aria-label="DIZA Care home"><span class="brand-icon">${icon("heart", 23)}</span>DIZA<span>care</span></a>
       <div class="facility"><span class="facility-mark">WH</span><div><strong>${esc(data.facility)}</strong><small>Residential care home</small></div></div>
       <div class="nav-label">CARE WORKSPACE</div><nav aria-label="Care workspace">
-        ${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("history", "clock", "Completed care")}
+        ${nav("daily", "grid", "Daily care", daily.length)}${nav("urgent", "alert", "Urgent response", urgent.length)}${nav("residents", "users", "Residents & check-ins")}${nav("facility", "grid", "Rooms & repairs")}${nav("history", "clock", "Completed care")}
       </nav>
       <div class="sidebar-message">${icon("leaf", 29)}<strong>Small moments.<br>Thoughtful care.</strong><p>One team, looking after<br>every resident.</p></div>
       ${data.legacy_available ? `<a class="legacy-link" href="/ops">Original operations ${icon("arrow", 15)}</a>` : ""}
       <div class="sidebar-foot"><span class="avatar">${initials(staffFor(staffId)?.name || "")}</span><div><label for="staff-select">Working as</label><select id="staff-select" aria-label="Working as staff member">${data.staff.map((s) => `<option value="${esc(s.id)}" ${s.id === staffId ? "selected" : ""}>${esc(s.name)} · ${roleNames[s.role]}</option>`).join("")}</select></div></div>
     </aside>
-    <div class="main-wrap"><header class="topbar"><span>Care workspace <span class="slash">/</span> ${view === "residents" ? "Residents" : view === "history" ? "Completed care" : view === "urgent" ? "Urgent response" : "Daily overview"}</span><div><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span><span class="date">${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: data.timezone }).format(new Date())}</span></div></header>
-    <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow">${esc(data.facility.toUpperCase())} / CARE TEAM</div><h1>${title}</h1><p class="subtitle">${view === "urgent" ? "Prioritize urgent needs. Confirm who is taking responsibility." : view === "residents" ? "Keep wellbeing checks personal, visible, and followed through." : view === "history" ? "Review completed requests and the people who followed through." : "A shared view of what matters, and who needs you next."}</p></div><button class="primary" data-action="new" ${disabled()}>${icon("plus", 17)} Record a request</button></div>
+    <div class="main-wrap"><header class="topbar"><span>Care workspace <span class="slash">/</span> ${view === "facility" ? "Rooms & repairs" : view === "residents" ? "Residents" : view === "history" ? "Completed care" : view === "urgent" ? "Urgent response" : "Daily overview"}</span><div><span class="connection ${connected ? "" : "offline"}"><i></i>${connected ? "Queue connected" : "Connection lost"}</span><span class="date">${new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: data.timezone }).format(new Date())}</span></div></header>
+    <main id="main" tabindex="-1"><div class="page-heading"><div><div class="eyebrow">${esc(data.facility.toUpperCase())} / CARE TEAM</div><h1>${title}</h1><p class="subtitle">${view === "facility" ? "Coordinate shared room issues and follow through on every resident’s care." : view === "urgent" ? "Prioritize urgent needs. Confirm who is taking responsibility." : view === "residents" ? "Keep wellbeing checks personal, visible, and followed through." : view === "history" ? "Review completed requests and the people who followed through." : "A shared view of what matters, and who needs you next."}</p></div><button class="primary" data-action="new" ${disabled()}>${icon("plus", 17)} Record a request</button></div>
     ${error ? `<div role="alert" class="error-banner">${icon("alert")}<span>${esc(error)}</span><button data-action="refresh">Reconnect</button></div>` : ""}
     ${!connected && lastSuccess ? `<p class="stale">Last connected ${esc(new Date(lastSuccess).toLocaleTimeString())}. Actions are paused.</p>` : ""}
     <div class="demo-note">${icon("shield", 16)} <span>${data.demo ? "Demo workspace · fictional residents and staff." : "Care coordination workspace."} Staff selection is a demo control. No calls, pages, or emergency dispatch are sent.</span>${data.demo ? `<button data-action="demo" ${disabled()}>Load demo scenarios ${icon("arrow", 14)}</button>` : ""}</div>
     ${urgent.length ? `<div class="urgent-banner"><span class="urgent-icon">${icon("alert", 22)}</span><div><strong>${urgent.length} urgent ${urgent.length === 1 ? "request needs" : "requests need"} attention</strong><p>${urgent.filter((r) => r.status === "new").length} awaiting a nurse or care lead. Follow your home's emergency procedure for immediate danger.</p></div><button data-view="urgent">Open urgent queue <span aria-hidden="true">→</span></button></div>` : ""}
-    <section class="stats" aria-label="Care overview">${stat("Urgent needs", urgent.length, urgent.length ? "Nurse or care lead required" : "No open urgent requests", "alert", "rose")}${stat("Everyday requests", daily.length, `${daily.filter((r) => r.status === "new").length} awaiting staff acceptance`, "mug", "sand")}${stat("Check-ins to review", unresolvedCheckins.length, due.length ? `${due.length} not recorded after 10 am` : "Daily check-in target: 10 am", "users", "lavender")}${stat("Care in progress", active().filter((r) => r.status === "in_progress").length, "Responsibility accepted by staff", "heart", "mint")}</section>
-    ${view === "residents" ? residentsView() : queueView()}
+    ${view !== "facility" ? `<section class="stats" aria-label="Care overview">${stat("Urgent needs", urgent.length, urgent.length ? "Nurse or care lead required" : "No open urgent requests", "alert", "rose")}${stat("Everyday requests", daily.length, `${daily.filter((r) => r.status === "new").length} awaiting staff acceptance`, "mug", "sand")}${stat("Check-ins to review", unresolvedCheckins.length, due.length ? `${due.length} not recorded after 10 am` : "Daily check-in target: 10 am", "users", "lavender")}${stat("Care in progress", active().filter((r) => r.status === "in_progress").length, "Responsibility accepted by staff", "heart", "mint")}</section>` : ""}
+    ${view === "facility" ? facilityWorkspace.render(data, staffId, disabled()) : view === "residents" ? residentsView() : queueView()}
     <footer><span>${icon("heart", 14)} Designed around people. Supported by DIZA.</span><span>${data.residents.length} residents · ${esc(data.timezone.replaceAll("_", " "))}</span></footer>
     </main></div></div>`;
   if (focusId && document.getElementById(focusId)) {
@@ -202,7 +214,7 @@ function draw() {
   } else if (focusKey && !modal) {
     app
       .querySelector(
-        `button[data-${focusKey}="${CSS.escape(focusValue)}"]:not(:disabled)`,
+        `button[data-${focusKey.replace(/([A-Z])/g, "-$1").toLowerCase()}="${CSS.escape(focusValue)}"]:not(:disabled)`,
       )
       ?.focus({ preventScroll: true });
   }
@@ -276,11 +288,19 @@ function detail(r) {
     ? ["nurse", "care_lead"].includes(staff.role)
     : staff.role !== "facilities" || r.category === "maintenance";
   return `<div class="detail-heading"><span class="eyebrow">REQUEST DETAILS</span><span class="code">${esc(r.code)}</span></div><div class="person-block"><span class="person-avatar">${initials(person.name)}</span><h2>${esc(person.name)}</h2><p>Room ${esc(person.room)} · ${esc(person.wing)} wing</p><span class="tag">${esc(person.language)} preferred</span></div>
-    <div class="detail-body"><div class="preference">${icon("heart", 17)}<p>${esc(person.preferences)}</p></div><h3>${esc(r.summary)}</h3><p class="detail-location">${esc(r.location)}</p>${r.quote ? `<blockquote><span>RESIDENT / REPORTER'S WORDS</span>“${esc(r.quote)}”</blockquote>` : '<p class="muted">No direct quote recorded.</p>'}
+    <div class="detail-body"><div class="preference">${icon("heart", 17)}<p>${esc(person.preferences)}</p></div><h3>${esc(r.summary)}</h3><p class="detail-location">Reported location: ${esc(r.location)}</p>${r.quote ? `<blockquote><span>RESIDENT / REPORTER'S WORDS</span>“${esc(r.quote)}”</blockquote>` : '<p class="muted">No direct quote recorded.</p>'}
     ${clinical ? `<div class="clinical-note ${r.urgency === "urgent" ? "danger" : ""}">${icon("shield", 17)}<div><strong>${r.urgency === "urgent" ? "Urgent human review" : "Nurse review required"}</strong><p>${esc(r.reason)}${r.urgency === "urgent" ? ". Follow the home’s emergency procedure for immediate danger. No emergency services have been contacted by DIZA." : ". Medication decisions stay with qualified staff."}</p></div></div>` : ""}
+    ${r.facility_code ? `<div class="care-incident-link"><strong>Shared room incident</strong><button class="secondary full" data-facility-code="${esc(r.facility_code)}">Open ${esc(r.facility_code)} ${icon("arrow", 14)}</button><p>Repair coordination and resident care each keep their own outcome.</p></div>` : ""}${careCallContext(r)}
     <dl class="metadata"><div><dt>Recorded by</dt><dd>${esc(r.reported_by)}</dd></div><div><dt>Responsible</dt><dd>${owner ? esc(owner.name) : "Not yet accepted"}</dd></div><div><dt>Received</dt><dd>${clock(r.created)} · ${r.source === "voice" ? "Voice intake" : "Staff entry"}</dd></div></dl>
     ${r.status !== "resolved" ? `<div class="request-actions">${r.status === "new" ? `<button class="primary full" data-action="accept" ${disabled()} ${!eligible ? "disabled" : ""}>${icon("check", 17)} Accept responsibility</button>${!eligible ? `<p class="action-hint">${clinical ? "A nurse or care lead must accept this request." : "This request requires a care team member."}</p>` : ""}` : r.assignee === staffId ? `<button class="primary full" data-action="${r.status === "accepted" ? "start" : "resolve"}" ${disabled()}>${icon(r.status === "accepted" ? "heart" : "check", 17)} ${r.status === "accepted" ? "Start care" : "Record outcome & resolve"}</button>` : `<p class="action-hint">${esc(owner?.name)} has accepted responsibility.</p>`}<div class="secondary-actions"><button class="secondary" data-action="note" ${disabled()}>${icon("note", 15)} Add note</button>${r.urgency !== "urgent" ? `<button class="text-danger" data-action="escalate" ${disabled()}>Mark urgent</button>` : ""}</div></div>` : `<div class="resolved-note">${icon("check", 17)} Resolved by staff. Outcome recorded below.</div>`}
     <div class="timeline"><h3>Handoff history</h3>${events.map((e) => `<div class="timeline-entry"><i></i><p>${esc(e.message)}</p><small>${esc(e.actor)} · ${clock(e.created)}</small></div>`).join("")}</div></div>`;
+}
+
+function careCallContext(request) {
+  const call = data.calls.find((c) => c.call_id === request.call_id);
+  return call
+    ? `<details class="call-context"><summary>Call summary & transcript</summary><p class="muted">${esc(call.source)}</p><p>${esc(call.summary || "Summary pending")}</p><pre>${esc(call.transcript || "Transcript not yet available")}</pre></details>`
+    : "";
 }
 
 function residentsView() {
@@ -300,7 +320,7 @@ function residentsView() {
 }
 
 let returnFocus;
-function openDialog(type, residentId) {
+function openDialog(type, residentId, reporterId) {
   if (modal) return;
   returnFocus = document.activeElement;
   modal = { type, residentId };
@@ -321,8 +341,26 @@ function openDialog(type, residentId) {
       )
       .join(
         "",
-      )}</select></label><label>Priority<select name="urgency"><option value="routine">Everyday care</option><option value="urgent">Urgent - needs a nurse now</option></select></label></div><label>What is needed?<input name="summary" required minlength="3" maxlength="1200" placeholder="For example, help getting ready for lunch"></label><label>Resident or reporter's exact words<textarea name="quote" maxlength="2000" rows="3" placeholder="Keep the original words, especially any urgent concerns."></textarea></label><label>Location, if away from their room<input name="location" maxlength="200" placeholder="Defaults to the resident's room and wing"></label>`;
+      )}</select></label><label>Priority<select name="urgency"><option value="routine">Everyday care</option><option value="urgent">Urgent - needs a nurse now</option></select></label></div><fieldset id="facility-fields" hidden disabled><legend>Room incident details</legend><label>Room issue type<select name="facility_category">${Object.entries(
+      data.facility_workflow.categories,
+    )
+      .map(
+        ([key, label]) =>
+          `<option value="${key}" ${key === "other" ? "selected" : ""}>${esc(label)}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><label>Permission to enter<select name="access_ok"><option value="">Not yet confirmed</option><option value="yes">Resident gave permission; knock first</option><option value="no">Do not enter; arrange access</option></select></label></fieldset><label>What is needed?<input name="summary" required minlength="3" maxlength="1200" placeholder="For example, help getting ready for lunch"></label><label>Resident or reporter's exact words<textarea name="quote" maxlength="2000" rows="3" placeholder="Keep the original words, especially any urgent concerns."></textarea></label><label>Location, if away from their room<input name="location" maxlength="200" placeholder="Defaults to the resident's room and wing"></label>`;
     submit = "Record request";
+  } else if (type.startsWith("facility-")) {
+    const config = facilityWorkspace.dialog(
+      type.slice(9),
+      residentId,
+      data,
+      reporterId,
+    );
+    modal.facility = config;
+    ({ title, description, fields, submit } = config);
   } else if (type === "checkin") {
     title = `Check in with ${personFor(residentId).name.split(" ")[0]}`;
     description =
@@ -375,7 +413,30 @@ async function submitDialog(form) {
   let path, body;
   if (type === "new") {
     path = "/api/care/requests";
+    if ("access_ok" in fields)
+      fields.access_ok =
+        fields.access_ok === "" ? null : fields.access_ok === "yes";
     body = { ...fields, reported_by: staffFor(staffId).name, source: "staff" };
+  } else if (type === "facility-edit-room") {
+    path = "/api/care/facility/rooms";
+    body = {
+      ...fields,
+      floor: Number(fields.floor),
+      room: modal.facility.room.unit,
+      version: modal.facility.room.version,
+      staff_id: staffId,
+    };
+  } else if (type.startsWith("facility-")) {
+    path = `/api/care/facility/tickets/${modal.facility.ticket.code}/actions`;
+    body = {
+      ...fields,
+      action: type.slice(9),
+      staff_id: staffId,
+      version: modal.facility.ticket.version,
+    };
+    if (body.action === "merge")
+      body.target_version = modal.facility.targetVersions[body.target_code];
+    if (body.action === "split") body.reporter_id = modal.facility.reporterId;
   } else if (type === "checkin") {
     path = `/api/care/residents/${modal.residentId}/checkins`;
     body = { ...fields, staff_id: staffId };
@@ -426,6 +487,57 @@ document.addEventListener("click", async (event) => {
     draw();
     return;
   }
+  if (button.dataset.facilityCode) {
+    view = "facility";
+    facilityWorkspace.select(button.dataset.facilityCode);
+    draw();
+    return;
+  }
+  if (button.dataset.roomFilter) {
+    facilityWorkspace.filter(button.dataset.roomFilter);
+    draw();
+    return;
+  }
+  if (button.hasAttribute("data-facility-toggle-closed")) {
+    facilityWorkspace.toggleClosed();
+    draw();
+    return;
+  }
+  if (button.dataset.openCare) {
+    const item = data.requests.find((r) => r.id === button.dataset.openCare);
+    if (item) {
+      view =
+        item.status === "resolved"
+          ? "history"
+          : item.urgency === "urgent"
+            ? "urgent"
+            : "daily";
+      selected = item.id;
+      search = "";
+      statusFilter = "open";
+      draw();
+    }
+    return;
+  }
+  if (button.dataset.editRoom) {
+    openDialog("facility-edit-room", button.dataset.editRoom);
+    return;
+  }
+  if (button.dataset.facilityAction) {
+    const action = button.dataset.facilityAction,
+      code = button.dataset.code;
+    if (["start", "notified"].includes(action)) {
+      const ticket = data.facility_workflow.tickets.find(
+        (t) => t.code === code,
+      );
+      await mutate(
+        `/api/care/facility/tickets/${code}/actions`,
+        { staff_id: staffId, version: ticket.version, action },
+        "Room incident updated.",
+      );
+    } else openDialog("facility-" + action, code, button.dataset.reporter);
+    return;
+  }
   if (button.dataset.request) {
     selected = button.dataset.request;
     draw();
@@ -467,6 +579,11 @@ document.addEventListener("click", async (event) => {
   }
 });
 document.addEventListener("change", (event) => {
+  if (event.target.name === "category") {
+    const fields = document.getElementById("facility-fields");
+    if (fields)
+      fields.hidden = fields.disabled = event.target.value !== "maintenance";
+  }
   if (event.target.id === "staff-select") {
     staffId = event.target.value;
     sessionStorage.setItem("diza-care-staff", staffId);
@@ -495,6 +612,22 @@ document.addEventListener("submit", async (event) => {
     token = new FormData(event.target).get("token");
     sessionStorage.setItem("diza-care-token", token);
     await refresh();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (
+    view !== "facility" ||
+    modal ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey ||
+    event.target.closest("input,textarea,select")
+  )
+    return;
+  if (["j", "k"].includes(event.key)) {
+    event.preventDefault();
+    facilityWorkspace.navigate(event.key === "j" ? 1 : -1);
+    draw();
   }
 });
 await refresh();

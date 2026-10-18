@@ -24,6 +24,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+import facility
 
 ROOT = Path(__file__).resolve().parent
 CATEGORIES = {
@@ -57,6 +58,9 @@ class CareInput(BaseModel):
     location: str = Field(default="", max_length=200)
     reported_by: str = Field(min_length=1, max_length=100)
     source: Literal["staff", "voice"] = "staff"
+    facility_category: Literal["water_leak", "no_heat", "no_hot_water", "electrical", "gas_smell", "lockout", "pest", "appliance", "noise", "security", "other"] = "other"
+    access_ok: bool | None = None
+    call_id: str = Field(default="", max_length=120)
 
 
 class Action(BaseModel):
@@ -85,12 +89,15 @@ def create_app(db_path=None, *, include_legacy=True):
     db_path = str(db_path or os.getenv("CARE_DB", ROOT / "care.sqlite3"))
     timezone = ZoneInfo(os.getenv("CARE_TIMEZONE", "America/Los_Angeles"))
     demo = os.getenv("DRILL_MODE", "true").lower() == "true"
-    legacy = None
-    if include_legacy:
-        # Import the existing engine without editing another session's files.
-        os.environ.setdefault("DIZA_DB", str(ROOT / "legacy.sqlite3"))
-        sys.path.insert(0, str(ROOT.parent / "cs2-backend" / "mvp"))
-        from backend.app.main import app as legacy
+    # Reuse the existing building rules even in care-only mode, without starting
+    # its workers or changing another session's source files.
+    os.environ.setdefault("DIZA_DB", str(ROOT / "legacy.sqlite3"))
+    engine_path = str(ROOT.parent / "cs2-backend" / "mvp")
+    if engine_path not in sys.path:
+        sys.path.insert(0, engine_path)
+    from backend.app.main import app as engine, connect as engine_connect
+    from backend.app import building as building_rules
+    legacy = engine if include_legacy else None
 
     @contextmanager
     def connect():
@@ -161,6 +168,11 @@ def create_app(db_path=None, *, include_legacy=True):
                 ("lead-morgan", "Morgan Ellis", "care_lead"),
                 ("facilities-alex", "Alex Chen", "facilities"),
             ])
+            columns = {row[1] for row in c.execute("PRAGMA table_info(care_requests)")}
+            for name, declaration in (("facility_code", "TEXT"), ("call_id", "TEXT NOT NULL DEFAULT ''"), ("access_ok", "INTEGER")):
+                if name not in columns:
+                    c.execute(f"ALTER TABLE care_requests ADD COLUMN {name} {declaration}")
+            facility.initialize(c, building_rules, os.getenv("CARE_FACILITY_NAME", "Willow House"))
 
     @asynccontextmanager
     async def lifespan(application):
@@ -198,7 +210,13 @@ def create_app(db_path=None, *, include_legacy=True):
         existing = c.execute("SELECT * FROM care_requests WHERE idempotency_key=?", (data.idempotency_key,)).fetchone()
         if existing:
             if existing["payload_hash"] != fingerprint:
-                raise HTTPException(409, "This submission key was already used for different details")
+                # Preserve idempotency for submissions made by the original care demo.
+                original = data.model_dump(exclude={"facility_category", "access_ok", "call_id"})
+                old_hash = hashlib.sha256(json.dumps(original, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+                unchanged = data.facility_category == "other" and data.access_ok is None and not data.call_id
+                if not unchanged or existing["payload_hash"] != old_hash:
+                    raise HTTPException(409, "This submission key was already used for different details")
+                c.execute("UPDATE care_requests SET payload_hash=? WHERE id=?", (fingerprint, existing["id"]))
             return dict(existing)
         person = resident(c, data.resident_id)
         danger = DANGER.search(data.summary + " " + data.quote)
@@ -210,12 +228,16 @@ def create_app(db_path=None, *, include_legacy=True):
         )
         rid, now = str(uuid.uuid4()), time.time()
         code = "C-" + uuid.uuid4().hex[:8].upper()
-        c.execute("INSERT INTO care_requests VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+        c.execute("INSERT INTO care_requests(id,code,idempotency_key,payload_hash,resident_id,category,urgency,reason,summary,quote,location,reported_by,source,status,assignee,created,updated,version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
             rid, code, data.idempotency_key, fingerprint, data.resident_id,
             data.category, "urgent" if urgent else "routine", reason, data.summary,
             data.quote, data.location or f'Room {person["room"]} · {person["wing"]} wing',
             data.reported_by, data.source, "new", None, now, now, 1,
         ))
+        c.execute("UPDATE care_requests SET call_id=?,access_ok=? WHERE id=?", (data.call_id, data.access_ok, rid))
+        if data.category == "maintenance":
+            item = dict(c.execute("SELECT * FROM care_requests WHERE id=?", (rid,)).fetchone())
+            facility.link_request(c, building_rules, item, data.facility_category, data.access_ok, data.location)
         audit(c, rid, data.reported_by, "Request recorded; awaiting staff acceptance. " + reason)
         return dict(c.execute("SELECT * FROM care_requests WHERE id=?", (rid,)).fetchone())
 
@@ -241,6 +263,15 @@ def create_app(db_path=None, *, include_legacy=True):
                 person["checkin"] = latest.get(person["id"])
                 person["checkin_due"] = person["checkin"] is None and now.hour >= 10
                 residents.append(person)
+            requests = [dict(row) for row in c.execute(
+                "SELECT * FROM care_requests ORDER BY CASE urgency WHEN 'urgent' THEN 0 ELSE 1 END, created"
+            )]
+            calls = {row["call_id"]: dict(row) for row in c.execute("SELECT * FROM care_call_context")}
+            call_ids = list({item["call_id"] for item in requests if item["call_id"]})
+            if legacy is not None and call_ids:
+                with engine_connect() as old:
+                    for row in old.execute(f"SELECT call_id,summary,transcript,status,duration_s FROM calls WHERE call_id IN ({','.join('?' for _ in call_ids)})", call_ids):
+                        calls[row["call_id"]] = {**dict(row), "source": "Retell call"}
             return {
                 "facility": os.getenv("CARE_FACILITY_NAME", "Willow House"),
                 "demo": demo, "timezone": str(timezone), "today": now.date().isoformat(),
@@ -248,9 +279,8 @@ def create_app(db_path=None, *, include_legacy=True):
                 "server_time": time.time(), "categories": CATEGORIES,
                 "residents": residents,
                 "staff": [dict(row) for row in c.execute("SELECT * FROM care_staff ORDER BY name")],
-                "requests": [dict(row) for row in c.execute(
-                    "SELECT * FROM care_requests ORDER BY CASE urgency WHEN 'urgent' THEN 0 ELSE 1 END, created"
-                )],
+                "requests": requests, "facility_workflow": facility.snapshot(c, building_rules),
+                "calls": list(calls.values()),
                 "events": [dict(row) for row in c.execute("SELECT * FROM care_events ORDER BY created DESC LIMIT 200")],
                 "checkins": checks,
             }
@@ -366,7 +396,21 @@ def create_app(db_path=None, *, include_legacy=True):
                 idempotency_key="demo-v1-" + resident_id, resident_id=resident_id,
                 category=category, urgency=urgency, summary=summary, quote=quote, reported_by="Demo scenario",
             ))
-        return {"ok": True, "message": "Five fictional scenarios loaded; repeated loads keep the same requests"}
+        for key, resident_id, summary, quote in [
+            ("101-a", "r1", "Heating is not working in room 101", "My room is cold. The heater isn't working."),
+            ("103-a", "r3", "Heating is not working in room 103", "The heater is not warming my room."),
+            ("101-b", "r1", "Second report of the heating problem in 101", "The room is still cold. Please check the heater."),
+        ]:
+            save_request(CareInput(idempotency_key="demo-facility-" + key, resident_id=resident_id,
+                category="maintenance", urgency="urgent", facility_category="no_heat", summary=summary, quote=quote,
+                access_ok=True, reported_by="Demo scenario", call_id="demo-call-" + key))
+            with connect() as c:
+                c.execute("INSERT OR IGNORE INTO care_call_context VALUES(?,?,?,?)", (
+                    "demo-call-" + key, summary,
+                    "Agent: Which room are you reporting?\nResident: Room " + ("101" if resident_id == "r1" else "103") + ".\nResident: " + quote,
+                    "Synthetic demo transcript",
+                ))
+        return {"ok": True, "message": "Eight fictional care reports loaded, including linked heating incidents and a duplicate report"}
 
     async def signed_voice_payload(request):
         raw = await request.body()
@@ -393,7 +437,7 @@ def create_app(db_path=None, *, include_legacy=True):
         if not isinstance(room, str) or not room.strip() or len(room) > 30:
             raise HTTPException(422, "A room number is required")
         with connect() as c:
-            row = c.execute("SELECT id,name,room,wing,language FROM residents WHERE room=?", (room.strip(),)).fetchone()
+            row = c.execute("SELECT id,name,room,wing,language FROM residents WHERE room=?", (building_rules.norm_unit(room),)).fetchone()
         return {"found": bool(row), "resident": dict(row) if row else None,
                 "message": "Read back the resident and room for confirmation" if row else "Ask staff to confirm the room; never guess a resident"}
 
@@ -403,11 +447,12 @@ def create_app(db_path=None, *, include_legacy=True):
         try:
             args["source"] = "voice"
             args["idempotency_key"] = "voice:" + hashlib.sha256((call_id + json.dumps(args, sort_keys=True)).encode()).hexdigest()
+            args["call_id"] = call_id
             validated = CareInput(**args)
         except (ValueError, KeyError, TypeError):
             raise HTTPException(422, "A call ID and valid care request details are required") from None
         item = save_request(validated)
-        return {"code": item["code"], "urgency": item["urgency"], "status": item["status"],
+        return {"code": item["code"], "facility_code": item["facility_code"], "urgency": item["urgency"], "status": item["status"],
                 "message": "Recorded for staff review. No person has accepted yet; no emergency services have been contacted."}
 
     @app.get("/")
@@ -421,6 +466,7 @@ def create_app(db_path=None, *, include_legacy=True):
             c.execute("SELECT 1 FROM residents LIMIT 1")
         return {"status": "ok"}
 
+    facility.register_routes(app, connect, staff, building_rules)
     app.mount("/care-assets", StaticFiles(directory=ROOT / "web"), name="care-assets")
     if legacy is not None:
         # Existing /ops, /supporter, /text, /api/* and signed voice endpoints survive.

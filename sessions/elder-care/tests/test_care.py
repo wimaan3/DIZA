@@ -170,7 +170,7 @@ class CareFlowTests(unittest.TestCase):
     def test_demo_is_idempotent_and_disableable(self):
         self.client.post("/api/care/demo")
         self.client.post("/api/care/demo")
-        self.assertEqual(len(self.state()["requests"]), 5)
+        self.assertEqual(len(self.state()["requests"]), 8)
         with patch.dict(os.environ, {"DRILL_MODE": "false"}):
             with TestClient(create_app(self.db, include_legacy=False)) as client:
                 self.assertEqual(client.post("/api/care/demo").status_code, 403)
