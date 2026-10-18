@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import{AlertTriangle,CheckCircle2,Circle,CircleDot,Clock,GitMerge,Headphones,Layers,MapPin,Phone,PhoneCall,Shield,Users,Zap,Languages,Timer,ArrowDownRight}from'lucide-react';
 import LiveMap,{COLOR} from './LiveMap.jsx';
-import{t,emergencyText}from'./i18n.js';
+import{t,locale,systemText,emergencyText}from'./i18n.js';
 
 // 911 mode: rules on the backend rank the queue, a second reader flags danger the AI may have missed, and every
 // reason is shown here. Errors only push up: lowering a priority asks for a reason. Nothing is hidden.
@@ -94,10 +94,10 @@ function QueueCard({i,now,on,fresh,pick}){
    {wait!=null?<span className={'timer'+(late?' late':'')}><Clock size={11}/>{mmss(wait)}</span>:<span className="timer done"><CheckCircle2 size={11}/>{i.claimed_by?t('taken'):t('handled')}</span>}</div>
   <strong>{i.location.startsWith('(')?t('Location not given yet'):i.location}</strong>
   {flag?<p className="flagline"><AlertTriangle size={12}/>{flagText(i.flags[0])}</p>:<p>{i.summary}</p>}
-  <div className="why">{[...reasons,wait!=null&&t('waiting {t}',{t:mmss(wait)})].filter(Boolean).join(' · ')||i.reason}</div>
+  <div className="why">{[...reasons,wait!=null&&t('waiting {t}',{t:mmss(wait)})].filter(Boolean).join(' · ')||t(i.reason)}</div>
   <div className="badges">{i.severity!==i.effective&&<span className="b warn">{t('raised from {s}',{s:i.severity})}</span>}{i.corroboration.independent_callers>1&&<span className="b"><Users size={11}/>{t('{n} callers',{n:i.corroboration.independent_callers})}</span>}
    {i.gps_accuracy!=null&&<span className="b ok">GPS</span>}{i.lat==null&&<span className="b warn"><MapPin size={11}/>{t('no pin')}</span>}{i.call_status==='live'&&<span className="b live">{t('on call')}</span>}
-   {i.language!=='en'&&<span className="b">{(LANG[i.language]||i.language).slice(0,3).toUpperCase()}</span>}{i.reviewed_at&&<span className="b ok">{t('reviewed')}</span>}</div>
+   {i.language!=='en'&&<span className="b">{t(LANG[i.language]||i.language)}</span>}{i.reviewed_at&&<span className="b ok">{t('reviewed')}</span>}</div>
  </button>;
 }
 
@@ -115,7 +115,7 @@ function IncidentCard({i,all,state,now,merge,setMerge,operator,nameOf,run,setPri
   {i.flags.map((f,k)=><div key={k} className={'second-reader'+(i.reviewed_at?' settled':'')} role="alert"><AlertTriangle size={17}/><div><b>{flagText(f)}</b><p>{t('Second reader')}: {flagWhy(f,i)}. {i.reviewed_at?t('Reviewed by {who}: {note}',{who:i.reviewed_by,note:i.review_note}):t('Priority raised until a person reviews it.')}</p></div></div>)}
   <div className="actions">
    <button className="primary" onClick={()=>take(i)} disabled={!operator} title="T">{taken?<><Headphones size={15}/>{t('Taken by {who}',{who:taken})}</>:<><Headphones size={15}/>{t('Take call')} <kbd>T</kbd></>}</button>
-   <div className="prio" role="group" aria-label="Set priority">{SEV.map((s,k)=><button key={s} className={'small sev-'+s+(i.severity===s?' on':'')} aria-pressed={i.severity===s} onClick={()=>setPriority(i,s)} title={`${k+1}`}>{s}</button>)}</div>
+   <div className="prio" role="group" aria-label={t("Set priority")}>{SEV.map((s,k)=><button key={s} className={'small sev-'+s+(i.severity===s?' on':'')} aria-pressed={i.severity===s} onClick={()=>setPriority(i,s)} title={`${k+1}`}>{s}</button>)}</div>
    <button className="small" onClick={()=>callback(i)} title="C"><PhoneCall size={14}/>{t('Callback')} <kbd>C</kbd></button>
    <button className="small" onClick={()=>review(i)} title="R"><CheckCircle2 size={14}/>{t('Reviewed')} <kbd>R</kbd></button>
    <button className="small" onClick={()=>setMerge(!merge)} title="M"><GitMerge size={14}/>{t('Merge')} <kbd>M</kbd></button>
@@ -127,17 +127,17 @@ function IncidentCard({i,all,state,now,merge,setMerge,operator,nameOf,run,setPri
    {!['accepted','done','offered'].includes(i.request.status)&&!(i.effective==='P0'&&i.request.status==='escalated')&&<button className="small" onClick={()=>run(`/api/requests/${i.request.id}/offer`)}>{i.effective==='P0'?t('Flag for supervisor review'):t('Offer to eligible responder')}</button>}
    {i.effective==='P0'&&<p className="urgent-note">{t('Immediate danger reported. Contact emergency services directly ({num}). DIZA does not dispatch or call them.',{num:emergencyText(state.region)})}</p>}</div>
   :<div className="association"><CheckCircle2 size={18}/><p>{t('Information request recorded. No follow-up task was created.')}</p></div>}
-  <div className="why-score"><Zap size={15}/><div><b>{t('Priority score {n}',{n:i.score})}</b><p>{i.score_reasons.map(([l,p])=>`${reasonLabel(l)} +${p}`).join(' · ')}{!i.handled&&` · ${t('waiting {t}',{t:mmss(now-i.created)})}`}</p><small>{t('Rule-based ranking · not a validated emergency triage system.')} {i.reason}</small></div></div>
-  <div className="field"><label>{t('COMPLETENESS')} {ok}/{i.checklist.length}</label><ul className="checklist">{i.checklist.map(c=><li key={c.key} className={c.state}>{c.state==='ok'?<CheckCircle2 size={15}/>:c.state==='approx'?<CircleDot size={15}/>:<Circle size={15}/>}<b>{t(c.label)}</b><span>{c.value||(c.state==='missing'?t('Not collected yet'):'')}</span></li>)}</ul></div>
+  <div className="why-score"><Zap size={15}/><div><b>{t('Priority score {n}',{n:i.score})}</b><p>{i.score_reasons.map(([l,p])=>`${reasonLabel(l)} +${p}`).join(' · ')}{!i.handled&&` · ${t('waiting {t}',{t:mmss(now-i.created)})}`}</p><small>{t('Rule-based ranking · not a validated emergency triage system.')} {t(i.reason)}</small></div></div>
+  <div className="field"><label>{t('COMPLETENESS')} {ok}/{i.checklist.length}</label><ul className="checklist">{i.checklist.map(c=><li key={c.key} className={c.state}>{c.state==='ok'?<CheckCircle2 size={15}/>:c.state==='approx'?<CircleDot size={15}/>:<Circle size={15}/>}<b>{t(c.label)}</b><span>{systemText(c.value)||(c.state==='missing'?t('Not collected yet'):'')}</span></li>)}</ul></div>
   {(i.gps_accuracy!=null||i.agency)&&<div className="gps"><MapPin size={16}/><div>{i.gps_accuracy!=null&&<><b>{t('Exact location shared by caller')}</b><p>GPS ±{Math.round(i.gps_accuracy)} m · {i.lat.toFixed(5)}, {i.lon.toFixed(5)} · <a href={`https://www.google.com/maps?q=${i.lat},${i.lon}`} target="_blank" rel="noreferrer">{t('Open in Google Maps')}</a></p></>}{i.agency&&<p>{t('Agency for this location:')} <b>{i.agency}</b></p>}</div></div>}
   <div className="field"><label>{t("CALLER'S WORDS")}</label>{i.quotes.length?i.quotes.map((q,k)=><blockquote key={k}>“{mark(q)}”</blockquote>):<blockquote>{t('No caller quote recorded.')}</blockquote>}</div>
-  {call?.transcript&&<details className="field" open={call.status==='live'}><summary>{call.status==='live'?t('LIVE TRANSCRIPT'):t('TRANSCRIPT')} · {call.agent||'agent'}</summary><div className={'transcript'+(call.status==='live'?' live':'')}>{call.transcript.trim().split('\n').slice(-30).map((l,k)=>{const[who,...rest]=l.split(':');return <p key={k}><b className={who.trim().toLowerCase()==='agent'?'ag':'us'}>{who.trim()==='Agent'?t('Agent'):t('Caller')}</b>{mark(rest.join(':'))}</p>})}{call.status==='live'&&<span className="typing">● live</span>}</div></details>}
+  {call?.transcript&&<details className="field" open={call.status==='live'}><summary>{call.status==='live'?t('LIVE TRANSCRIPT'):t('TRANSCRIPT')} · {call.agent||'agent'}</summary><div className={'transcript'+(call.status==='live'?' live':'')}>{call.transcript.trim().split('\n').slice(-30).map((l,k)=>{const[who,...rest]=l.split(':');return <p key={k}><b className={who.trim().toLowerCase()==='agent'?'ag':'us'}>{who.trim()==='Agent'?t('Agent'):t('Caller')}</b>{mark(rest.join(':'))}</p>})}{call.status==='live'&&<span className="typing">● {t('live')}</span>}</div></details>}
   <div className="field"><label>{t('CORROBORATION · shown, never used to hide a card')}</label><div className="corro">
    <Tile n={co.independent_callers} label={t('independent callers')} d={t('{n} reports in this incident',{n:co.reports})}/>
    <Tile n={co.on_scene} label={t('on scene')} d={t('{n} third party',{n:co.third_party})}/>
    <Tile n={co.gps} label={t('with GPS')} d={t('{n} stated address only',{n:co.stated_address})}/>
    <Tile n={co.callback_answered?t('Yes'):t('No')} label={t('callback answered')} d={t('an outbound call reached them')}/></div></div>
-  <div className="field"><label>{t('TIMELINE')}</label><div className="timeline">{i.timeline.length?i.timeline.map((e,k)=><div key={k}><span className="timeline-dot"/><p>{e.message}<small>{new Date(e.ts*1000).toLocaleTimeString()}</small></p></div>):<p className="none">{t('No actions yet.')}</p>}</div></div>
+  <div className="field"><label>{t('TIMELINE')}</label><div className="timeline">{i.timeline.length?i.timeline.map((e,k)=><div key={k}><span className="timeline-dot"/><p>{systemText(e.message)}<small>{new Date(e.ts*1000).toLocaleTimeString(locale())}</small></p></div>):<p className="none">{t('No actions yet.')}</p>}</div></div>
  </div></section>;
 }
 const Tile=({n,label,d})=><div className="ctile"><strong>{n}</strong><b>{label}</b><small>{d}</small></div>;
@@ -152,8 +152,8 @@ function LoadStrip({m,big,charts}){
   {hint:t('Median time from the call being answered to its card appearing, ranked, in this queue.'),icon:<Zap/>,label:t('Call to ranked card (median)'),value:m.median_to_card_s==null?'–':mmss(m.median_to_card_s),detail:t('from pickup to a card in this queue')},
   {hint:t('Information questions answered from verified sources plus follow-ups queued (callbacks, forms): calls that never needed an emergency operator.'),icon:<ArrowDownRight/>,label:t('Handled outside 911'),value:m.diverted,detail:t('info answered + follow-ups queued')},
  ];
- return <section className={'loadstrip'+(big?' big':'')} aria-label={charts?'Trends, last hour and 24 hours':'Load taken off operators, last 24 hours'}>{!charts&&<div className="load-tiles">{tiles.map(x=><div className="stat" key={x.label} title={x.hint} tabIndex={0} aria-label={`${x.label}: ${x.value}. ${x.hint}`}><div className="stat-label">{x.label}{x.icon}</div><strong>{x.value}{x.of&&<em> {x.of}</em>}</strong><small>{x.detail}</small></div>)}</div>}
-  {charts&&<div className="load-charts"><Surge buckets={m.buckets}/><Bars title={t('What callers report')} rows={m.categories.map(c=>({k:cat(c.category),v:c.count}))}/><Bars title={t('Languages')} rows={m.languages.map(c=>({k:LANG[c.language]||c.language,v:c.count}))}/></div>}
+ return <section className={'loadstrip'+(big?' big':'')} aria-label={t(charts?'Trends, last hour and 24 hours':'Load taken off operators, last 24 hours')}>{!charts&&<div className="load-tiles">{tiles.map(x=><div className="stat" key={x.label} title={x.hint} tabIndex={0} aria-label={`${x.label}: ${x.value}. ${x.hint}`}><div className="stat-label">{x.label}{x.icon}</div><strong>{x.value}{x.of&&<em> {x.of}</em>}</strong><small>{x.detail}</small></div>)}</div>}
+  {charts&&<div className="load-charts"><Surge buckets={m.buckets}/><Bars title={t('What callers report')} rows={m.categories.map(c=>({k:cat(c.category),v:c.count}))}/><Bars title={t('Languages')} rows={m.languages.map(c=>({k:t(LANG[c.language]||c.language),v:c.count}))}/></div>}
   {!charts&&(m.waiting_p0>0||m.flags>0)&&<p className="load-alert"><AlertTriangle size={14}/>{m.waiting_p0>0&&t('{n} life-threat reports with nobody on them.',{n:m.waiting_p0})+' '}{m.flags>0&&t('{n} possible missed dangers to review.',{n:m.flags})}</p>}</section>;
 }
 
@@ -171,7 +171,7 @@ function Surge({buckets}){
     return <g key={k} onMouseEnter={()=>setHover(k)} onMouseLeave={()=>setHover(null)}>{parts.map((s,j)=>{const h=y(b[s]),top=j===parts.length-1;base-=h;const r=<path key={s} d={top?`M${x},${base+h} V${base+Math.min(4,h)} Q${x},${base} ${x+Math.min(4,w/2)},${base} H${x+w-Math.min(4,w/2)} Q${x+w},${base} ${x+w},${base+Math.min(4,h)} V${base+h} Z`:`M${x},${base+h} V${base} H${x+w} V${base+h} Z`} fill={COLOR[s]} stroke="#fcfcfb" strokeWidth="1"/>;return r})}
      <rect x={pad+k*bw} y={0} width={bw} height={H-12} fill="transparent"/></g>})}
    <text x={pad} y={H-1} className="tick">{t('−60 min')}</text><text x={W} y={H-1} className="tick" textAnchor="end">{t('now')}</text></svg>
-   {hover!=null&&<div className="tip" style={{left:`${(pad+hover*bw+bw/2)/W*100}%`}}><b>{new Date(buckets[hover].start*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}–{new Date((buckets[hover].start+300)*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</b>{SEV.map(s=><span key={s}><i style={{background:COLOR[s]}}/>{s} {buckets[hover][s]}</span>)}</div>}</div>
+   {hover!=null&&<div className="tip" style={{left:`${(pad+hover*bw+bw/2)/W*100}%`}}><b>{new Date(buckets[hover].start*1000).toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})}–{new Date((buckets[hover].start+300)*1000).toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})}</b>{SEV.map(s=><span key={s}><i style={{background:COLOR[s]}}/>{s} {buckets[hover][s]}</span>)}</div>}</div>
   <div className="legend">{SEV.map(s=><span key={s}><i style={{background:COLOR[s]}}/>{s}</span>)}</div></figure>;
 }
 
