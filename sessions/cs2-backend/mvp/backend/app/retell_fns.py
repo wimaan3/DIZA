@@ -30,7 +30,12 @@ def init_fns():
         ''')
         # Real human-in-the-loop phones come from the environment only, never from git:
         # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics,lang:en"}]'
-        for r in json.loads(os.getenv('DIZA_RESPONDERS', '[]')):
+        team = json.loads(os.getenv('DIZA_RESPONDERS', '[]'))
+        if team:  # the env list is the source of truth: someone removed from it stops getting calls
+            keep = [r['id'] for r in team]
+            marks = ','.join('?' * len(keep))
+            c.execute(f'DELETE FROM responder_phones WHERE responder_id NOT IN ({marks})', keep)
+        for r in team:
             c.execute('INSERT OR REPLACE INTO responders VALUES(?,?,?,?)', (r['id'], r['name'], r.get('skills', 'general'), 'available'))
             c.execute('INSERT OR REPLACE INTO responder_phones VALUES(?,?)', (r['id'], e164(r['phone'])))
         # A real team is configured: drop the local placeholder people so the dashboard shows only real responders.
