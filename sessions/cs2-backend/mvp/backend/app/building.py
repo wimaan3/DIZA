@@ -696,8 +696,12 @@ DEMO_TICKETS = [
 def demo_seed(mode: str = 'building'):
     if not DEMO:
         raise HTTPException(403, 'Demo data is only available in drill mode')
-    if mode != 'building':
+    if mode not in ('building', 'crisis'):
         raise HTTPException(400, 'mode must be building or crisis')
+    if mode == 'crisis':
+        from .ops import seed_crisis
+        with connect() as c:
+            return {'created': seed_crisis(c), 'simulated': True}
     now = time.time()
     made = []
     with connect() as c:
