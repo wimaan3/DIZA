@@ -5,7 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import outlines from '../../cs2-backend/mvp/dashboard/src/offline-la.json';
 import {FACILITIES,PRESETS,pointFeatures,zoneFeatures,position} from './data.js';
 setWorkerUrl(workerUrl);
-const STYLE='https://tiles.openfreemap.org/styles/liberty';
+import {CITY_STYLE as STYLE,configureBuildings} from '../../cs2-backend/mvp/dashboard/src/city-map-data.js';
 const offlineStyle = {
   version:8,sources:{outlines:{type:'geojson',data:outlines,attribution:'US Census Bureau TIGERweb · outline only'}},
   layers:[{id:'background',type:'background',paint:{'background-color':'#e9eee8'}},
@@ -49,15 +49,7 @@ export default function CityMap({incidents,zones,selected,onSelect,view,threeD,l
       map.on('load',()=>{
         clearTimeout(warningTimer);
         if(disposed)return;
-        // Keep the operational map readable; facility pins have their own curated layer.
-        for(const layer of map.getStyle().layers) if(layer['source-layer']==='poi') map.setLayoutProperty(layer.id,'visibility','none');
-        // The base style stops flat footprints at zoom 14. Keep them available in 2D.
-        if(map.getLayer('building')) map.setLayerZoomRange('building',13,24);
-        // Keep mapped or provider-estimated heights; never manufacture a landmark model.
-        if(map.getLayer('building-3d')) {
-          map.setPaintProperty('building-3d','fill-extrusion-color',['interpolate',['linear'],['coalesce',['get','render_height'],0],0,'#c8d5c7',50,'#a5bba8',150,'#709e8d',300,'#396f60']);
-          map.setPaintProperty('building-3d','fill-extrusion-opacity',0.92);
-        }
+        configureBuildings(map,latest.current.threeD);
         overlays(map,latest.current);applyView(map,latest.current);
         latest.current.onStatus(offline?'Offline outline · no 3D buildings':'3D map ready');
         for(const id of ['facilities','incidents']) {

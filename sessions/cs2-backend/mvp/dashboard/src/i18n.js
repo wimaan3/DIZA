@@ -14,6 +14,11 @@ export function t(key,vars={}){
 const DICT={
  zh:{
   'New report':'新报告','Show':'查看','Dismiss':'关闭',
+  'All reports':'查看全部事件','Care locations':'养老设施','Jump to':'跳转至','Deployment area':'服务区域','Facility website':'机构官网',
+  'Approximate address position. Verify facility availability.':'地址位置为近似值，请向机构核实服务情况。',
+  '3D buildings appear when zoomed in. Heights may be estimated.':'放大后可见 3D 建筑，部分高度为估计值。',
+  'Map loading slowly. Try Offline map.':'地图加载较慢，可切换离线地图。','Map data unavailable. Try Offline map.':'地图数据暂不可用，可切换离线地图。',
+  '3D graphics unavailable. Event cards remain available below.':'3D 图形不可用，仍可使用下方事件卡片。',
   'off duty':'下班','Covers':'负责区域','{n} km around home':'住处周边 {n} 公里','Hours':'值班时间','Backup':'后备人员','evac logistics':'疏散后勤','mental health':'心理支持',listener:'倾听',logistics:'后勤',security:'安保',safety:'安全',facilities:'设施',volunteer:'志愿者',general:'通用',
   police:'报警',ambulance:'急救','LIVE LINE · DRILL':'在线 · 演练','LIVE LINE':'在线','SIMULATION':'模拟','Live · connected to Retell':'在线 · 已连接 Retell',
   'Backend connected · no phone line':'后端已连接 · 无电话线路','Not connected':'未连接','Simulation (no Retell key)':'模拟（无 Retell 密钥）','New demo report':'新建演示报告',
@@ -84,6 +89,11 @@ const DICT={
  },
  es:{
   'New report':'Nuevo reporte','Show':'Ver','Dismiss':'Cerrar',
+  'All reports':'Todos los informes','Care locations':'Centros para mayores','Jump to':'Ir a','Deployment area':'Área de servicio','Facility website':'Sitio del centro',
+  'Approximate address position. Verify facility availability.':'Ubicación aproximada. Confirme la disponibilidad con el centro.',
+  '3D buildings appear when zoomed in. Heights may be estimated.':'Amplíe para ver edificios 3D. Las alturas pueden ser estimadas.',
+  'Map loading slowly. Try Offline map.':'El mapa tarda en cargar. Pruebe el mapa sin conexión.','Map data unavailable. Try Offline map.':'Datos del mapa no disponibles. Pruebe el mapa sin conexión.',
+  '3D graphics unavailable. Event cards remain available below.':'Gráficos 3D no disponibles. Puede usar las tarjetas de incidentes.',
   'off duty':'fuera de turno','Covers':'Cubre','{n} km around home':'{n} km alrededor de casa','Hours':'Horario','Backup':'Respaldo','evac logistics':'logística de evacuación','mental health':'salud mental',listener:'escucha',logistics:'logística',security:'seguridad',safety:'seguridad',facilities:'instalaciones',volunteer:'voluntario',general:'general',
   police:'policía',ambulance:'ambulancia','LIVE LINE · DRILL':'LÍNEA EN VIVO · SIMULACRO','LIVE LINE':'LÍNEA EN VIVO','SIMULATION':'SIMULACIÓN','Live · connected to Retell':'En vivo · conectado a Retell',
   'Backend connected · no phone line':'Servidor conectado · sin línea telefónica','Not connected':'Sin conexión','Simulation (no Retell key)':'Simulación (sin clave de Retell)','New demo report':'Nuevo reporte de prueba',
