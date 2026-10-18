@@ -5,6 +5,7 @@ import CityMap from './CityMap.jsx';
 import {FACILITIES,PRESETS,position,severity,SEVERITY_COLORS} from './data.js';
 import {useOps} from './useOps.js';
 import './styles.css';
+import {logoLight,logoLightStill} from '../../elder-care/branding/logo.js';
 const EMPTY=[];
 function App() {
   const [mode,setMode]=useState('demo'), [token,setToken]=useState(''),[draftToken,setDraftToken]=useState(''),[retry,setRetry]=useState(0);
@@ -25,7 +26,7 @@ function App() {
   const Icon=tab==='facilities'?HeartHandshake:Radio;
   return <div className="app-shell">
     <header className="topbar">
-      <a className="brand" href="/" aria-label="DIZA dashboard"><span className="brand-mark"><Globe2 size={22}/></span>DIZA<span className="brand-divider"/><span className="product-name">Community operations</span></a>
+      <a className="brand" href="/" aria-label="DIZA dashboard"><picture><source media="(prefers-reduced-motion: reduce)" srcSet={logoLightStill}/><img className="diza-logo" src={logoLight} alt="DIZA" width="431" height="128"/></picture><span className="brand-divider"/><span className="product-name">Community operations</span></a>
       <div className="topbar-right"><span className="region-label">LOS ANGELES, CA</span><a className="dashboard-link" href="/">Operations dashboard <ArrowUpRight size={14}/></a></div>
     </header>
     <main className="workspace">

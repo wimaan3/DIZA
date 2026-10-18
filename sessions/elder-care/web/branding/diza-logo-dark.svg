@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 431 128" width="431" height="128" role="img" aria-labelledby="t">
+<title id="t">DIZA</title>
+<style>
+.bob{animation:bob 3.2s ease-in-out infinite}
+.ant{transform-box:fill-box;transform-origin:50% 100%;animation:wig 2.8s ease-in-out infinite}
+.blink{transform-box:fill-box;transform-origin:center;animation:blink 4.5s ease-in-out infinite}
+.w1{animation:wave 1.6s ease-in-out infinite}
+.w2{animation:wave 1.6s ease-in-out .4s infinite}
+.glow{animation:glow 1.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes wig{0%,50%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+@keyframes blink{0%,44%,52%,100%{transform:scaleY(1)}48%{transform:scaleY(.1)}}
+@keyframes wave{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<g transform="translate(4 8)">
+<g class="bob">
+<g class="ant">
+<path class="w1" d="M49 5Q44 13 49 21" fill="none" stroke="#d2e6a1" stroke-width="3.2" stroke-linecap="round"/>
+<path class="w1" d="M71 5Q76 13 71 21" fill="none" stroke="#d2e6a1" stroke-width="3.2" stroke-linecap="round"/>
+<path class="w2" d="M42 0Q34 13 42 26" fill="none" stroke="#d2e6a1" stroke-width="3.2" stroke-linecap="round"/>
+<path class="w2" d="M78 0Q86 13 78 26" fill="none" stroke="#d2e6a1" stroke-width="3.2" stroke-linecap="round"/>
+<line x1="60" y1="38" x2="60" y2="18" stroke="#d2e6a1" stroke-width="4" stroke-linecap="round"/>
+<circle class="glow" cx="60" cy="13" r="6" fill="#d2e6a1"/>
+</g>
+<rect x="12" y="34" width="96" height="80" rx="34" fill="#d2e6a1"/>
+<g class="blink">
+<ellipse cx="45" cy="70" rx="6.5" ry="8.5" fill="#163b2d"/>
+<ellipse cx="75" cy="70" rx="6.5" ry="8.5" fill="#163b2d"/>
+<circle cx="47.4" cy="66.6" r="2.3" fill="#ffffff"/>
+<circle cx="77.4" cy="66.6" r="2.3" fill="#ffffff"/>
+</g>
+<ellipse cx="32" cy="83" rx="7.5" ry="4.5" fill="#f4a08a"/>
+<ellipse cx="88" cy="83" rx="7.5" ry="4.5" fill="#f4a08a"/>
+<path d="M53.5 83Q60 92 66.5 83Z" fill="#163b2d" stroke="#163b2d" stroke-width="2" stroke-linejoin="round"/>
+</g>
+</g>
+<path d="M151.78 122V42H177.67Q178.61 42 181.56 42.06Q184.5 42.11 187.22 42.44Q196.89 43.61 203.61 49.17Q210.33 54.72 213.83 63.28Q217.33 71.83 217.33 82Q217.33 92.17 213.83 100.72Q210.33 109.28 203.61 114.83Q196.89 120.39 187.22 121.56Q184.5 121.89 181.56 121.94Q178.61 122 177.67 122ZM167.11 107.78H177.67Q179.17 107.78 181.72 107.69Q184.28 107.61 186.33 107.22Q191.56 106.17 194.86 102.33Q198.17 98.5 199.75 93.11Q201.33 87.72 201.33 82Q201.33 76 199.69 70.61Q198.06 65.22 194.72 61.5Q191.39 57.78 186.33 56.78Q184.28 56.33 181.72 56.28Q179.17 56.22 177.67 56.22H167.11ZM227.33 122V42H242.44V122ZM252.44 122V120.11L290.44 56.11H255.78V42H316.89V43.89L279.11 107.78H315.78V122ZM320.22 122 344.67 42H367.22L391.67 122H376.11L354.33 51.44H357.22L335.78 122ZM334.89 105.33V91.22H377.11V105.33Z" fill="#f6f7f3"/>
+<path d="M399.67 122V106.89H414.78V122Z" fill="#d2e6a1"/>
+</svg>

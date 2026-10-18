@@ -129,6 +129,33 @@ The checked map integration was updated for the new container and pinned MapLibr
 All eight integrated browser tests pass after this update, including 3D/2D controls, offline rendering, drawing zones and placing an unlocated report.
 The updated eight-test resources suite passes and the integrated Docker image builds successfully.
 
+## Animated website logo
+
+Current branding branch: `codex/animated-diza-logo`.
+The user supplied an untracked root `diza-logo.zip` and requested its animated logo on the website with a pushed change.
+`web/branding/` contains byte-for-byte copies of both animated wordmarks and their supplied static alternatives, plus shared responsive sizing CSS.
+`branding/logo.js` exports the Vite asset URLs and shared CSS for the dashboard and city explorer.
+`branding/README.md` records the asset source and reduced-motion behavior.
+The standalone care page uses the animated dark logo and an explicit static picture source for reduced motion.
+The care build adapter was aligned with main's current Building management label and quoted title strings so it builds successfully.
+
+The deployed root Railway configuration currently builds `sessions/la-3d/Dockerfile`, which builds both the main dashboard and the city explorer.
+The proposed website wiring changes only branding imports/markup in the dashboard and city entry points, plus asset-copy instructions in their Docker builds.
+A folder-rule exception was requested because these entry points belong to other teammates' session folders.
+The user then instructed pushing the logo branch, authorizing completion of the prepared website integration.
+The narrowly scoped logo imports, accessible picture markup and Docker asset-copy changes are applied to the dashboard, city explorer and backend deployment Dockerfile.
+The canonical assets remain in this session folder.
+
+An isolated production Docker build succeeds with the proposed wiring.
+The local preview runs at `http://127.0.0.1:8772/ops` in container `diza-logo-review`, with no live credentials and a disposable database.
+Browser verification covers `/ops`, `/building`, `/supporter`, wall view and `/city-3d/`, including desktop/mobile layout and zero JavaScript errors.
+Frame comparison confirms animation normally and static output after the reduced-motion preference changes.
+An explicit picture source is necessary because the embedded animated SVG's media rule alone did not reliably stop motion after changing that preference.
+The applied repository change also passes the production Docker build and the care frontend build and syntax check.
+The standalone care page was checked on mobile, including its explicit static reduced-motion source and zero JavaScript errors.
+The complete branding change is committed on `codex/animated-diza-logo` for a pushed PR to main.
+Production deployment and merging this branding PR remain outside this change.
+
 ## Open questions
 
 - Facility-specific emergency procedure, escalation contacts, staff roster, operating policy, and resident import remain deployment inputs.
