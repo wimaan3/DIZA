@@ -1,0 +1,14 @@
+{
+  "name": "diza-elder-care",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "check": "node --check web/app.js"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@playwright/test": "1.61.1"
+  }
+}
