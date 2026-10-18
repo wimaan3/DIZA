@@ -65,10 +65,26 @@ class NamedTown(unittest.TestCase):
   church={'class':'amenity','name':'First Church','display_name':'First Church, Pasadena','lat':'34.1','lon':'-118.1'}
   self.assertIsNone(self.geo('near the church',church,{}))  # only generic words: better no pin than a random church
   road={'class':'highway','name':'Lake Avenue','display_name':'Lake Avenue, Altadena, Los Angeles County','lat':'34.19','lon':'-118.13'}
-  self.assertEqual(self.geo('Lake Ave and Altadena Dr',road,{}),(34.19,-118.13))
+  self.assertEqual(self.geo('Lake Avenue in Altadena',road,{}),(34.19,-118.13))  # a word the caller said is in the match
  def test_local_place_with_the_exact_name_stays(self):
   beach={'class':'natural','name':'Venice Beach','lat':'33.98','lon':'-118.47'}
   self.assertEqual(self.geo('Venice Beach',beach,{'class':'place','name':'Venice Beach','lat':'27.0','lon':'-82.4'}),(33.98,-118.47))
   lib={'class':'amenity','name':'Altadena Main Library','lat':'34.19','lon':'-118.14'}
   self.assertEqual(self.geo('Altadena Library',lib,{'class':'amenity','name':'Altadena Main Library','lat':'34.19','lon':'-118.14'}),(34.19,-118.14))
+class Corners(unittest.TestCase):
+ # Offline: two crossing streets give their exact corner; an unverified corner gives no pin, never a guess.
+ def test_crossing_point(self):
+  ns=[[(34.00,-118.50),(34.04,-118.50)]];ew=[[(34.02,-118.52),(34.02,-118.48)]]
+  self.assertEqual(resources._crossing(ns,ew),(34.02,-118.5))
+  self.assertIsNone(resources._crossing(ns,[[(34.10,-118.52),(34.10,-118.48)]]))
+ def test_corner_or_nothing(self):
+  ns=[[(34.00,-118.50),(34.04,-118.50)]];ew=[[(34.02,-118.52),(34.02,-118.48)]]
+  resources._geo_cache.clear()
+  with patch.object(resources,'_street_lines',lambda st,place,dl,box=None:ns if '11th' in st else ew),patch.object(resources,'_inside',lambda *a:True):
+   self.assertEqual(resources.geocode('11th St and Broadway, Santa Monica',__import__('time').monotonic()+5),(34.02,-118.5))
+  resources._geo_cache.clear()
+  with patch.object(resources,'_street_lines',lambda *a,**k:ns),patch.object(resources,'_inside',lambda *a:True),patch.object(resources,'_get_json',lambda *a:[{'class':'highway','name':'Western Avenue','display_name':'Western Avenue','lat':'34','lon':'-118.47'}]):
+   self.assertIsNone(resources.geocode('Western Ave and 6th St',__import__('time').monotonic()+5))  # no city: no corner, no guess
+ def test_cross_needs_two_streets(self):
+  self.assertIsNone(resources.intersection('Kansas City and Tulsa, Oklahoma',__import__('time').monotonic()+1))
 if __name__=='__main__':unittest.main()
