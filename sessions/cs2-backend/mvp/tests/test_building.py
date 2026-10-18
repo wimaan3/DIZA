@@ -139,7 +139,7 @@ class Api(unittest.TestCase):
   if r.status_code==404:self.skipTest('dashboard/dist not built')
   self.assertIn('<div id="root"></div>',r.text)
  def test_seed_and_insights(self):
-  out=self.c.post('/api/demo/seed?mode=building').json();self.assertEqual(out['created'],11)
+  out=self.c.post('/api/demo/seed?mode=building').json();self.assertEqual(out['created'],12)
   s=self.c.get('/api/building').json();i=s['insights']
   self.assertEqual(i['top_repeats'][0],{'problem':'leak','where':'on stack B','count':3})
   self.assertGreaterEqual(i['duplicates_merged_week'],1);self.assertIn('es',i['language_mix'])
@@ -160,6 +160,16 @@ class MaintenanceCall(unittest.TestCase):
   self.assertEqual((t['unit'],t['category']),('4A','water_leak'));self.assertTrue(any(start['case_code'] in e['message'] for e in t['timeline']))
   self.fn('submit_form',{'case_code':start['case_code'],'confirmed':True},'call_mf')  # a retry never files twice
   self.assertEqual(len(self.tickets()),len(before)+1)
+ def test_resident_care_reaches_the_manager(self):
+  self.c.post('/api/demo/reset');self.c.post('/api/demo/seed?mode=building');before=set(self.tickets())
+  with patch('backend.app.main.kick_geocode',lambda rid:None):
+   out=self.report('c_care',summary="Haven't seen my elderly neighbor in 3E for two days, can someone check on her",location_text='Larchmont Court Apartments, unit 3E')
+   t=self.tickets()[out['ticket_code']];self.assertEqual((t['unit'],t['category'],t['urgency']),('3E','resident_care','urgent'))
+   # A fall is still a 911 card, and the building gets one resident-care emergency ticket (no second generic one).
+   self.fn('flag_urgent',{'reason':'fall','keyword':'fell'},'c_fall')
+   out=self.report('c_fall',hazard='medical',summary='My grandmother fell and cannot get up',location_text='Larchmont Court Apartments, unit 2C',immediate_danger=True)
+   new=[t for k,t in self.tickets().items() if k not in before and t['unit']=='2C']
+   self.assertEqual([(t['category'],t['urgency']) for t in new],[('resident_care','emergency')]);self.assertTrue(out['report_id'])
  def report(self,call_id,**a):
   return self.fn('submit_report',{'hazard':'other','summary':'x','location_text':'','language':'en',**a},call_id)
  def test_reports_at_our_building_reach_the_manager(self):
