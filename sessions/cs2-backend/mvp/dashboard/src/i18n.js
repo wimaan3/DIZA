@@ -13,6 +13,7 @@ export function t(key,vars={}){
 }
 const DICT={
  zh:{
+  'New report':'新报告','Show':'查看','Dismiss':'关闭',
   'off duty':'下班','Covers':'负责区域','{n} km around home':'住处周边 {n} 公里','Hours':'值班时间','Backup':'后备人员','evac logistics':'疏散后勤','mental health':'心理支持',listener:'倾听',logistics:'后勤',security:'安保',safety:'安全',facilities:'设施',volunteer:'志愿者',general:'通用',
   police:'报警',ambulance:'急救','LIVE LINE · DRILL':'在线 · 演练','LIVE LINE':'在线','SIMULATION':'模拟','Live · connected to Retell':'在线 · 已连接 Retell',
   'Backend connected · no phone line':'后端已连接 · 无电话线路','Not connected':'未连接','Simulation (no Retell key)':'模拟（无 Retell 密钥）','New demo report':'新建演示报告',
@@ -82,6 +83,7 @@ const DICT={
   'linked reports':'份关联报告','GPS from caller ±{m} m':'来电者 GPS ±{m} 米','Use the bundled outline map (works without map tiles)':'使用内置轮廓地图（无需在线地图）',
  },
  es:{
+  'New report':'Nuevo reporte','Show':'Ver','Dismiss':'Cerrar',
   'off duty':'fuera de turno','Covers':'Cubre','{n} km around home':'{n} km alrededor de casa','Hours':'Horario','Backup':'Respaldo','evac logistics':'logística de evacuación','mental health':'salud mental',listener:'escucha',logistics:'logística',security:'seguridad',safety:'seguridad',facilities:'instalaciones',volunteer:'voluntario',general:'general',
   police:'policía',ambulance:'ambulancia','LIVE LINE · DRILL':'LÍNEA EN VIVO · SIMULACRO','LIVE LINE':'LÍNEA EN VIVO','SIMULATION':'SIMULACIÓN','Live · connected to Retell':'En vivo · conectado a Retell',
   'Backend connected · no phone line':'Servidor conectado · sin línea telefónica','Not connected':'Sin conexión','Simulation (no Retell key)':'Simulación (sin clave de Retell)','New demo report':'Nuevo reporte de prueba',

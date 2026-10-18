@@ -59,6 +59,13 @@ class NamedTown(unittest.TestCase):
   town={'class':'boundary','name':'Bakersfield','lat':'35.37','lon':'-119.02'}
   self.assertEqual(self.geo('Bakersfield',bldg,town),(35.37,-119.02))
   self.assertEqual(self.geo('Tulsa',{'class':'highway','name':'Tulsa','lat':'34.27','lon':'-118.46'},{'class':'place','name':'Tulsa','lat':'36.16','lon':'-95.99'}),(36.16,-95.99))
+ def test_no_pin_when_the_match_shares_no_word_with_the_caller(self):
+  plant={'class':'landuse','name':'County of Los Angeles Central Heating and Refrigeration Plant','display_name':'County of Los Angeles Central Heating and Refrigeration Plant, Los Angeles','lat':'34.05','lon':'-118.24'}
+  self.assertIsNone(self.geo('unit 4C',plant,{}))
+  church={'class':'amenity','name':'First Church','display_name':'First Church, Pasadena','lat':'34.1','lon':'-118.1'}
+  self.assertIsNone(self.geo('near the church',church,{}))  # only generic words: better no pin than a random church
+  road={'class':'highway','name':'Lake Avenue','display_name':'Lake Avenue, Altadena, Los Angeles County','lat':'34.19','lon':'-118.13'}
+  self.assertEqual(self.geo('Lake Ave and Altadena Dr',road,{}),(34.19,-118.13))
  def test_local_place_with_the_exact_name_stays(self):
   beach={'class':'natural','name':'Venice Beach','lat':'33.98','lon':'-118.47'}
   self.assertEqual(self.geo('Venice Beach',beach,{'class':'place','name':'Venice Beach','lat':'27.0','lon':'-82.4'}),(33.98,-118.47))
