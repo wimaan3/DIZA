@@ -144,6 +144,19 @@ def flag_urgent(p=Depends(parse)):
     reason, keyword = args.get('reason', 'urgent'), args.get('keyword', '')
 
     def make():
+        # The agent may file the full report first (tools run in parallel): upgrade that report instead of adding a blank P0 card.
+        with connect() as c:
+            c.execute('BEGIN IMMEDIATE')
+            mine = c.execute('SELECT id,evidence FROM reports WHERE substr(dedupe,1,?)=? ORDER BY created DESC LIMIT 1',
+                             (len(call['call_id']) + 1, call['call_id'] + ':')).fetchone()
+            if mine:
+                c.execute("UPDATE reports SET severity='P0',reason=?,evidence=? WHERE id=?",
+                          (f'P0 flagged by phone agent: {reason}', ' · '.join(x for x in (mine['evidence'], keyword[:500]) if x)[:2000], mine['id']))
+                q = c.execute('SELECT id FROM requests WHERE report_id=?', (mine['id'],)).fetchone()
+                if q:
+                    offer(c, q['id'])
+        if mine:
+            return urgent_instruction(reason)
         r = save_report(Report(idempotency_key=f"{call['call_id']}:p0:{reason}", location_text=f"(location not yet given · call {call['call_id'][-6:]})", hazard='other',
                                summary=f'P0 flagged by phone agent: {reason}', evidence=keyword[:2000], immediate_danger=True, source='retell'))
         with connect() as c:
@@ -151,10 +164,14 @@ def flag_urgent(p=Depends(parse)):
             q = c.execute('SELECT id FROM requests WHERE report_id=?', (r['id'],)).fetchone()
             if q:
                 offer(c, q['id'])  # P0 → escalated to the supervisor, never offered to helpers
-        if reason == 'self_harm':
-            return {'instruction': 'Offer the 988 Suicide and Crisis Lifeline transfer now. If there is immediate danger, tell them to call 911. Never route to a volunteer.'}
-        return {'instruction': 'Tell the caller to hang up and call 911 now. If they cannot, offer a person on our team. A supervisor has been alerted.'}
+        return urgent_instruction(reason)
     return once('flag_urgent', call, args, make)
+
+
+def urgent_instruction(reason):
+    if reason == 'self_harm':
+        return {'instruction': 'Offer the 988 Suicide and Crisis Lifeline transfer now. If there is immediate danger, tell them to call 911. Never route to a volunteer.'}
+    return {'instruction': 'Tell the caller to hang up and call 911 now. If they cannot, offer a person on our team. A supervisor has been alerted.'}
 
 
 @router.post('/route_to_human')
