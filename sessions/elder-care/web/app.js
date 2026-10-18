@@ -4,10 +4,11 @@ const app = document.querySelector("#app");
 const dialogRoot = document.querySelector("#dialog-root");
 const announce = document.querySelector("#announcer");
 const embedded = new URLSearchParams(location.search).get("embedded") === "1";
+const requestedView = new URLSearchParams(location.search).get("view");
 if (embedded) document.documentElement.classList.add("embedded-care");
 let data,
   selected,
-  view = "daily",
+  view = ["daily", "urgent", "residents", "facility", "history"].includes(requestedView) ? requestedView : "daily",
   statusFilter = "open",
   search = "",
   staffId = sessionStorage.getItem("diza-care-staff") || "nurse-jordan";

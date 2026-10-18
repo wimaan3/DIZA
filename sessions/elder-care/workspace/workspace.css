@@ -11,19 +11,101 @@
 .map-state.placing .map {
   cursor: crosshair;
 }
-.content.care-content {
+/* The care workspace belongs to Building, with the same global navigation. */
+.content:has(.building-workspace[data-section="care"]) {
   padding: 0;
   max-width: none;
 }
-.care-content > .title-row,
-.care-content > .notice,
-.care-content > footer {
+.content:has(.building-workspace[data-section="care"]) > .title-row,
+.content:has(.building-workspace[data-section="care"]) > .notice,
+.content:has(.building-workspace[data-section="care"]) > footer {
   display: none;
+}
+.building-workspace [hidden] {
+  display: none !important;
+}
+.building-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #dce3dc;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+}
+.building-tabs [role="tab"] {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 12px;
+}
+.building-tabs [aria-selected="true"] {
+  color: #fff;
+  background: #22553e;
+  border-color: #22553e;
+}
+.building-workspace[data-section="care"] > .building-tabs {
+  padding: 14px 26px;
+  margin: 0;
+  background: #fff;
+}
+.building-care-summary {
+  padding: 20px;
+  margin-bottom: 24px;
+  background: #fff;
+  border: 1px solid #dce3dc;
+  border-radius: 12px;
+}
+.building-care-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.building-care-heading h2 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.building-care-heading p,
+.building-care-summary > p {
+  color: #5f6f63;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+}
+.building-care-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.building-care-metrics button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 16px;
+  gap: 8px;
+  min-width: 0;
+  background: #f7f9f4;
+  font-size: 12px;
+}
+.building-care-metrics strong {
+  font-size: 28px;
+  line-height: 1;
+}
+.building-care-metrics small {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #5f6f63;
+}
+.building-care-metrics .urgent-care {
+  background: #fcf0ea;
+  border-color: #edc7b8;
+  color: #873925;
 }
 .care-workspace {
   display: block;
   width: 100%;
-  height: calc(100dvh - 79px);
+  height: calc(100dvh - 152px);
   min-height: 580px;
   border: 0;
 }
@@ -40,6 +122,22 @@
     padding: 7px 9px;
   }
   .care-workspace {
-    height: calc(100dvh - 56px);
+    height: calc(100dvh - 129px);
+  }
+}
+
+@media (max-width: 800px) {
+  .building-care-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .building-care-summary {
+    padding: 16px;
+  }
+  .building-tabs [role="tab"] {
+    padding: 10px;
+    font-size: 11px;
+  }
+  .building-workspace[data-section="care"] > .building-tabs {
+    padding: 14px 16px;
   }
 }

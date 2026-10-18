@@ -468,7 +468,7 @@ def create_app(db_path=None, *, include_legacy=True):
     @app.get("/care")
     def dashboard():
         if legacy is not None:
-            return operations_workspace()
+            return RedirectResponse("/building?section=care", status_code=307)
         return care_workspace()
 
     @app.get("/ops")

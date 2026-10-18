@@ -8,26 +8,21 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const upstream = path.resolve(root, "../../cs2-backend/mvp/dashboard/src/main.jsx");
 const upstreamMap = path.resolve(root, "../../cs2-backend/mvp/dashboard/src/LiveMap.jsx");
 const careModule = path.join(root, "CareWorkspace.jsx");
+const buildingModule = path.join(root, "BuildingWorkspace.jsx");
 
 // Extend the upstream shell at build time rather than forking Imaan's dashboard
 // or changing another session's files. Each anchor must occur exactly once.
 // An upstream shell change fails the build explicitly instead of dropping tools.
 function extendShell(source) {
   const edits = [
-    ["const PATHS={ops:'/ops',supporter:'/supporter',building:'/building'};",
-      "const PATHS={ops:'/ops',supporter:'/supporter',building:'/building',care:'/care'};"],
-    ["</nav><div className=\"sidebar-note\">",
-      "<button className={view==='care'?'active':''} onClick={()=>nav('care')}><CareNav headers={headers}/></button></nav><div className=\"sidebar-note\">"],
-    ["view==='building'?t('Building'):t('Night operations')",
-      "view==='care'?'Resident care':view==='building'?t('Building'):t('Night operations')"],
-    ["className={view!=='building'?'on':''} aria-pressed={view!=='building'}",
-      "className={view==='ops'||view==='supporter'?'on':''} aria-pressed={view==='ops'||view==='supporter'}"],
-    ["</div>{data.region&&<span className=\"region\"",
-      "<button className={view==='care'?'on':''} aria-pressed={view==='care'} onClick={()=>nav('care')}>Care</button></div>{data.region&&<span className=\"region\""],
-    ["<div className=\"content\"><div className=\"title-row\">",
-      "<div className={'content'+(view==='care'?' care-content':'')}><div className=\"title-row\">"],
-    ["{!online?null:view==='building'?<Building",
-      "{!online?null:view==='care'?<CareWorkspace key={token}/>:view==='building'?<Building"],
+    ["import Building from './Building.jsx';",
+      `import Building from ${JSON.stringify(buildingModule)};`],
+    ["<Building2 size={18}/>{t('Building')}",
+      "<Building2 size={18}/><span>{t('Building')}</span><CareBadge headers={headers}/>"],
+    ["'BUILDING MODE / TENANT TICKETS'", "'BUILDING / REPAIRS & RESIDENT CARE'"],
+    ["'Every tenant call, ranked and linked.'", "'One building. Every resident looked after.'"],
+    ["'Rules set urgency, merge duplicates and link related problems. You assign, decide and close.'",
+      "'Coordinate repairs, review the floor plan, and follow through on urgent and everyday resident care.'"],
   ];
   for (const [before, after] of edits) {
     if (source.split(before).length !== 2) {
@@ -35,7 +30,7 @@ function extendShell(source) {
     }
     source = source.replace(before, after);
   }
-  return `import {CareWorkspace, CareNav} from ${JSON.stringify(careModule)};\n${source}`;
+  return `import {CareBadge} from ${JSON.stringify(careModule)};\n${source}`;
 }
 
 function preserveMapClasses(source) {
