@@ -2,6 +2,8 @@
 
 InnovateLA × Dual-Use Hackathon (USC, Oct 16–18 2026). **Resilience Comms track (Retell AI).**
 
+**Live app:** https://diza-production.up.railway.app (911 operations: `/ops` · Building management: `/building`) · **Call the line:** +1 978-915-3497
+
 A multilingual Retell voice line with two lives:
 - **Ordinary day:** a campus and community concerns line, plus wellness check-ins.
 - **Crisis night:** surge triage, corroboration, skills-based handoff to humans, and callback ladders.
