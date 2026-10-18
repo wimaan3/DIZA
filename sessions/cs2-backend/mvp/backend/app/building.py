@@ -204,7 +204,8 @@ def tickets_from_recent_forms():
 
 MAINT_WORDS = (('water_leak', ('leak', 'leaking', 'dripping', 'water coming', 'flooded bathroom', 'toilet overflow')), ('no_heat', ('no heat', 'heater', 'heating')),
                ('no_hot_water', ('hot water',)), ('lockout', ('locked out', 'lockout', 'lost my key')), ('pest', ('roach', 'mice', 'mouse', 'rats', 'bed bug', 'pest')),
-               ('appliance', ('fridge', 'stove', 'oven', 'washer', 'dryer', 'dishwasher')), ('noise', ('noise', 'loud music', 'party next door')),
+               ('appliance', ('fridge', 'stove', 'oven', 'washer', 'dryer', 'dishwasher')), ('noise', ('noise', 'loud music', 'party next door', 'disturbance', 'disturbing', 'yelling', 'screaming', 'shouting', 'fighting', 'arguing', 'banging')),
+               ('security', ('stranger', 'suspicious', 'break-in', 'broke in', 'breaking in', 'trespass', 'harass', 'someone in the hallway', 'won\'t leave')),
                ('electrical', ('outlet', 'no power in my', 'lights out in my', 'breaker')))
 LIFE_SAFETY = {'fire', 'smoke', 'gas', 'medical', 'safety_crime'}
 
@@ -242,6 +243,8 @@ def tickets_for_report(call, args, category):
         issues = maintenance_issues(text)
         danger = bool(args.get('immediate_danger')) or category in LIFE_SAFETY or c.execute(
             'SELECT 1 FROM reports WHERE substr(dedupe,1,?)=? AND severity=\'P0\'', (len(call['call_id']) + 1, call['call_id'] + ':')).fetchone() is not None
+        if not issues and not danger:
+            issues = ['other']  # anything reported at one of our buildings reaches the manager, even in words we don't recognize
         made = []
         for cat in issues + (['gas_smell' if category == 'gas' else 'other'] if danger else []):
             summary = (args.get('summary') or cat.replace('_', ' ')) if cat != 'water_leak' or not danger else f"Leak reported ({args.get('summary') or ''})"
