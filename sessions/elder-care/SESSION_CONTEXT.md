@@ -2,18 +2,22 @@
 
 - **Session:** Codex implementation of DIZA Care for an elderly residential care home.
 - **Branch:** `codex/elder-care-dual-use`.
-- **Scope:** staff dashboard for urgent response and non-urgent daily care, with persistent records, check-ins, audit history, an optional signed voice adapter, and a container deployment handoff.
+- **Scope:** combined care-home staff workflow for urgent response, daily care, and shared facilities incidents, with persistent records, check-ins, audit history, an optional signed voice adapter, and a container deployment handoff.
 
 ## Files in this folder
 
 | File | Contents |
 | --- | --- |
 | `app.py` | FastAPI care API, SQLite storage, role-aware workflow rules, check-ins, signed voice functions, and original-engine mounting |
+| `facility.py` | Adapter reusing Imaan's building rules and ticket helpers for care-home rooms, shared repairs, role-aware actions, and room editing |
 | `web/index.html` | Staff workspace entry point |
 | `web/app.js` | Daily and urgent queues, resident roster, check-ins, request dialogs, assignment and care outcomes |
 | `web/style.css` | Responsive staff dashboard, visible focus states, and accessible text contrast |
+| `web/facility.js`, `web/facility.css` | Combined room map, facilities queue, original reports, call context, vendor coordination, and repair dialogs |
 | `tests/test_care.py` | Care backend workflow and integration checks |
+| `tests/test_facility.py` | Shared care/repair transactions, grouping, role enforcement, conservative permissions, version checks, and upgrade compatibility |
 | `tests/care.spec.js` | Browser workflows, mobile checks, accessibility scans, and connection recovery |
+| `tests/facility.spec.js` | Room filtering, repair assignment and outcomes, merge/unmerge/split, transcript links, room editing, and combined-workspace accessibility |
 | `playwright.config.js` | Isolated local browser-test server and temporary database |
 | `package.json`, `package-lock.json` | Browser-test dependencies and scripts |
 | `requirements.txt` | Reuses the existing backend's Python dependency versions |
@@ -35,6 +39,17 @@
 9. Request updates use versions and SQLite write transactions to prevent stale or conflicting staff actions.
 10. Check-in concerns create follow-up work atomically, and later check-ins never silently resolve those requests.
 11. The live phone agents and shared root deployment configuration are unchanged; new signed care tools and a container configuration are included for review.
+12. The user then requested combining Imaan's workflow with the care-home workflow.
+Imaan is `wimaan3`; the relevant sources are building backend PR #24, dashboard PR #25, and security PR #27.
+13. The feature branch incorporates current main, including the existing building dashboard and newer operations endpoints.
+14. Physical repairs share tickets, while resident care requests retain independent acceptance and resolution.
+Repair completion never silently closes resident care.
+15. Shared facilities incidents use the existing `building.file_ticket`, urgency, cross-reference, timeline, and insights helpers directly.
+Care-home room records and facility tickets live in the care database, preserving separation from the legacy apartment/disaster data.
+16. Facilities and care leads coordinate repairs; nurse/care-lead acceptance still governs urgent resident requests.
+Merge/unmerge/split preserve original reports, caller context, and escalated urgency.
+17. Maintenance review targets are demo operational thresholds, and tenancy-law clocks are excluded from care-home policy.
+18. Existing demo data is upgraded in place, with original request IDs and retry behavior preserved.
 
 ## Key facts verified
 
@@ -48,8 +63,14 @@
 Their combined discovery runner has pre-existing environment-state collisions between modules.
 - Rebased onto `425b6db`, which added security briefing support, and verified its 6 additional tests in an isolated process.
 The integrated container was rebuilt and checked against that revision.
-- Final care validation: 17 backend tests and 9 Chromium browser tests pass, including axe checks with zero violations on the tested screens and dialog.
+- Initial care validation: 17 backend tests and 9 Chromium browser tests passed, including axe checks with zero violations on the tested screens and dialog.
 - The integrated Docker image builds successfully and serves the care workspace, original operations/supporter/text screens, original APIs, and signed voice endpoints.
+- Combined-workflow validation: 30 backend tests and 16 Chromium browser tests pass.
+The tested care screens, combined room workspace, and request/assignment dialogs have zero axe violations.
+- The latest isolated main export (`cfc6e82`) passes all 85 existing backend tests, run one file per process.
+- A copy of the active local demo database was upgraded successfully, preserving all five original request IDs and adding the shared facilities records.
+The upgraded demo contains eight care reports, three facilities tickets, and three labeled synthetic transcripts.
+- The combined Docker image builds and passes HTTP checks for `/care`, `/building`, `/ops`, `/supporter`, `/text`, and the care/building/operations APIs.
 
 ## Open questions
 

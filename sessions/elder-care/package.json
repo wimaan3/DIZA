@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test:e2e": "playwright test",
-    "check": "node --check web/app.js"
+    "check": "node --check web/app.js && node --check web/facility.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",

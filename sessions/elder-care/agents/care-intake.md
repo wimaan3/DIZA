@@ -29,6 +29,10 @@ Ask what is needed and preserve the caller's words in `quote`.
 Use the returned resident ID and the most suitable category: `personal_care`, `medication`, `meal`, `companionship`, `maintenance`, or `wellbeing`.
 Medication questions go to a nurse; do not answer them yourself.
 Record a location override only if the resident is away from their room.
+For maintenance, confirm the physical location of the problem and choose a `facility_category`.
+Ask permission before recording that staff may enter a room; omit `access_ok` if permission is unknown.
+The returned `facility_code` identifies the shared repair work, while the care code identifies this resident's follow-up.
+Neither code confirms that a person has accepted responsibility or that a contractor was contacted.
 Use `reported_by` to describe who is reporting, without collecting a phone number.
 Read back the request and get confirmation before submitting everyday requests.
 Use urgency `urgent` if the caller or staff says it is urgent, even if it appears routine.

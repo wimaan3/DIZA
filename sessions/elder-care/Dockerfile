@@ -15,6 +15,7 @@ COPY agents/forms agents/forms
 COPY agents/resources agents/resources
 COPY agents/retell.ids.json agents/retell.ids.json
 COPY sessions/elder-care/app.py sessions/elder-care/app.py
+COPY sessions/elder-care/facility.py sessions/elder-care/facility.py
 COPY sessions/elder-care/web sessions/elder-care/web
 ENV CARE_DB=/data/care.sqlite3 DIZA_DB=/data/diza.sqlite3 PYTHONUNBUFFERED=1
 RUN mkdir -p /data
