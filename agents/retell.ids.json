@@ -52,5 +52,9 @@
   "inbound_fil": {
     "agent_id": "agent_9357eeaf2f3ba7cc62f7ab3e31",
     "llm_id": "llm_b3a95ab1f8817891de5ff99541db"
+  },
+  "security_brief": {
+    "agent_id": "agent_49bc7a7e9e4f23405a83ec5d07",
+    "llm_id": "llm_2c7f85b204c262f37b0e2a6da806"
   }
 }
