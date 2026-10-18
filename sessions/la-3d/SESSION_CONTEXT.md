@@ -1,7 +1,7 @@
 # Session context: la-3d
 
 - **Session:** Codex with Zoe; Los Angeles community map.
-- **Branch:** `codex/la-3d`.
+- **Branch:** `3d-map` (requested by the user; originally `codex/la-3d`).
 - **Scope:** User requested pulling main and making the map 3D, then clarified city-scale LA (Downtown / USC first, also west LA, with some care facilities), rather than a single senior residence.
 
 ## Files in this folder
