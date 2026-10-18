@@ -120,6 +120,13 @@ def offer(c,qid,prefer=''):
     eligible=[r for r in rows if skill in r['skills'].split(',') and on_duty(profs.get(r['id'],{}).get('hours'))]
     eligible.sort(key=lambda r:(r['id']!=prefer,not area_match(profs.get(r['id'],{}),rep['location'],point)))
     candidate=eligible[0] if eligible else None
+    unskilled=False
+    if not candidate:  # we are the staff: nobody with the exact skill on duty -> the best available teammate, said on the card
+        others=[r for r in rows if r['id'] in profs and on_duty(profs[r['id']].get('hours'))
+                and not (q['severity'] in ('P0','P1') and 'volunteer' in r['skills'].split(','))]  # volunteers never get urgent work
+        others.sort(key=lambda r:(r['id']!=prefer,not area_match(profs.get(r['id'],{}),rep['location'],point)))
+        candidate=others[0] if others else None
+        unskilled=bool(candidate)
     if not candidate:
         c.execute("UPDATE requests SET status='escalated',assignee=NULL,updated=? WHERE id=?",(time.time(),qid))
         event(c,qid,'No eligible responder available · supervisor action required')
@@ -127,7 +134,7 @@ def offer(c,qid,prefer=''):
     c.execute("UPDATE responders SET status='reserved' WHERE id=?",(candidate['id'],))
     c.execute("UPDATE requests SET status='offered',assignee=?,updated=? WHERE id=?",(candidate['id'],time.time(),qid))
     c.execute('INSERT INTO attempts VALUES(?,?,?,?,?)',(str(uuid.uuid4()),qid,candidate['id'],'offered',time.time()+TIMEOUT))
-    why=' (backup)' if prefer and candidate['id']==prefer else (lambda w:f' ({w})' if w else '')(area_match(profs.get(candidate['id'],{}),rep['location'],point))
+    why=f' (no one with {skill} on duty; next available)' if unskilled else ' (backup)' if prefer and candidate['id']==prefer else (lambda w:f' ({w})' if w else '')(area_match(profs.get(candidate['id'],{}),rep['location'],point))
     event(c,qid,f"Offer visible in supporter inbox: {candidate['name']}{why} · awaiting acceptance")
     from .assign import start_call  # a teammate with a phone also gets a call about it
     start_call(qid,candidate['id'])
