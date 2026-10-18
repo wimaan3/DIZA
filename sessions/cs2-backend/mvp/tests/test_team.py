@@ -83,4 +83,14 @@ class Api(unittest.TestCase):
   with connect() as c:
    self.assertEqual(c.execute('SELECT assignee FROM requests WHERE id=?',(q,)).fetchone()[0],'ben')
    self.assertTrue(any('Ben (backup)' in e[0] for e in c.execute('SELECT message FROM events WHERE request_id=?',(q,))))
+ def test_no_skill_match_still_reaches_a_teammate(self):
+  # We are the staff: a power outage needs 'facilities', which nobody has; it goes to an on-duty teammate, never a dead end.
+  from backend.app.main import save_report,Report
+  r=save_report(Report(idempotency_key='pw1',location_text='Pasadena',hazard='power',summary='power out, oxygen machine',needs_assistance=True))
+  with connect() as c:q=c.execute('SELECT id FROM requests WHERE report_id=?',(r['id'],)).fetchone()[0]
+  self.c.post(f'/api/requests/{q}/offer')
+  with connect() as c:
+   row=c.execute('SELECT status,assignee FROM requests WHERE id=?',(q,)).fetchone()
+   self.assertEqual(row['status'],'offered');self.assertNotIn(row['assignee'],('dee','vol'))  # off duty and volunteers excluded
+   self.assertTrue(any('no one with facilities on duty' in e[0] for e in c.execute('SELECT message FROM events WHERE request_id=?',(q,))))
 if __name__=='__main__':unittest.main()

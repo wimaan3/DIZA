@@ -275,6 +275,7 @@ def init_building():
             c.execute('UPDATE staff_vendors SET phone=? WHERE id=?', (e164(phone), sid))
         if os.getenv('DIZA_BUILDING_AFTER_HOURS'):
             c.execute('UPDATE buildings SET after_hours_phone=? WHERE id=?', (e164(os.environ['DIZA_BUILDING_AFTER_HOURS']), DEMO_BUILDING))
+        sync_team_staff(c)
         line = os.getenv('DIZA_BUILDING_LINE') or os.getenv('RETELL_FROM_NUMBER', '')
         if line:
             c.execute('UPDATE buildings SET line_number=? WHERE id=?', (e164(line), DEMO_BUILDING))
@@ -300,6 +301,44 @@ def seed_building(c):
                 c.execute('INSERT INTO units VALUES(?,?,?,?,?,?)', (DEMO_BUILDING, unit, floor, stack, 'West' if stack in 'ABC' else 'East', LANGS.get(unit)))
     for sid, name, role, skills in STAFF:
         c.execute('INSERT OR IGNORE INTO staff_vendors(id,building_id,name,role,phone,skills) VALUES(?,?,?,?,?,?)', (sid, DEMO_BUILDING, name, role, '', skills))
+
+
+TEAM_ROLES = (('security', 'security', 'security,noise,general'), ('facilities', 'maintenance', 'general,water_leak,no_heat,no_hot_water,electrical,appliance,pest,lockout'),
+              ('logistics', 'maintenance', 'general,water_leak,no_heat,no_hot_water,electrical,appliance,pest,lockout'), ('medical', 'medical', 'general'))
+
+
+def team_staff_id(rid):
+    return f'tm-{rid}'
+
+
+def sync_team_staff(c):
+    """Our team (DIZA_RESPONDERS) is the buildings' real staff: each teammate becomes assignable with their own phone and a
+    role from their skills. The fictional demo vendors are only for local runs with no team; their tickets move to a teammate."""
+    team = c.execute('SELECT r.id,r.name,r.skills,p.phone FROM responders r JOIN responder_phones p ON p.responder_id=r.id ORDER BY r.id').fetchall()
+    if not team:
+        return
+    for b in c.execute('SELECT id FROM buildings').fetchall():
+        keep = []
+        for r in team:
+            skills = (r['skills'] or '').split(',')
+            role, cats = next(((role, cats) for skill, role, cats in TEAM_ROLES if skill in skills), ('staff', 'general'))
+            sid = team_staff_id(r['id']) if b['id'] == DEMO_BUILDING else f"{team_staff_id(r['id'])}@{b['id']}"
+            keep.append(sid)
+            c.execute('INSERT OR REPLACE INTO staff_vendors(id,building_id,name,role,phone,skills) VALUES(?,?,?,?,?,?)', (sid, b['id'], r['name'], role, r['phone'], cats))
+        for old in c.execute("SELECT * FROM staff_vendors WHERE building_id=? AND id NOT LIKE 'tm-%' AND id!='mgr'", (b['id'],)).fetchall():
+            to = next((x for x in keep if c.execute('SELECT role FROM staff_vendors WHERE id=?', (x,)).fetchone()['role'] ==
+                       ('security' if old['role'] == 'security' else 'maintenance')), keep[0])
+            c.execute('UPDATE tickets SET assignee=? WHERE assignee=?', (to, old['id']))
+            c.execute('DELETE FROM staff_vendors WHERE id=?', (old['id'],))
+        marks = ','.join('?' * len(keep))
+        c.execute(f"DELETE FROM staff_vendors WHERE building_id=? AND id LIKE 'tm-%' AND id NOT IN ({marks})", (b['id'], *keep))
+
+
+def staff_for(c, category, fallback):
+    """The teammate (or demo vendor) best suited to a category, for the demo week's sample history."""
+    rows = c.execute('SELECT id,name,role,skills FROM staff_vendors WHERE building_id=? ORDER BY id', (DEMO_BUILDING,)).fetchall()
+    hit = next((r for r in rows if category in (r['skills'] or '').split(',')), None) or next((r for r in rows if r['id'] == fallback), None)
+    return hit or (rows[0] if rows else None)
 
 
 def tlog(c, code, kind, message, actor='system', ts=None):
@@ -816,8 +855,10 @@ def demo_seed(mode: str = 'building'):
         made = [code for _, code in sorted(made)]
         # A little history so the queue shows real states: the oldest leak was assigned, the heater is waiting on parts.
         first, heater = made[0], made[10]
-        c.execute("UPDATE tickets SET status='in_progress',assignee='plumb',first_human_action_at=? WHERE code=?", (now - 47 * 3600, first))
-        tlog(c, first, 'assign', 'Assigned to Westside Plumbing (demo vendor) (plumber)', 'manager', now - 47 * 3600)
-        c.execute("UPDATE tickets SET status='waiting_tenant',assignee='hvac',first_human_action_at=? WHERE code=?", (now - 24 * 31 * 3600, heater))
+        sync_team_staff(c)  # the sample history is assigned to the real team when there is one
+        plumber, hvac = staff_for(c, 'water_leak', 'plumb'), staff_for(c, 'no_heat', 'hvac')
+        c.execute("UPDATE tickets SET status='in_progress',assignee=?,first_human_action_at=? WHERE code=?", (plumber['id'], now - 47 * 3600, first))
+        tlog(c, first, 'assign', f"Assigned to {plumber['name']} ({plumber['role']})", 'manager', now - 47 * 3600)
+        c.execute("UPDATE tickets SET status='waiting_tenant',assignee=?,first_human_action_at=? WHERE code=?", (hvac['id'], now - 24 * 31 * 3600, heater))
         tlog(c, heater, 'note', 'Part ordered; waiting for the tenant to confirm an entry time.', 'manager', now - 24 * 31 * 3600)
     return {'created': len(set(made)), 'codes': made, 'simulated': True}
