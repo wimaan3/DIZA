@@ -62,14 +62,14 @@ class TicketCalls(unittest.TestCase):
   self.c.post('/api/demo/seed?mode=building')
   t=[x for x in self.c.get('/api/building').json()['tickets'] if x['status']=='new'][0];return t['code'],t['unit']
  def test_assigning_a_ticket_calls_the_person_and_yes_starts_it(self):
-  code,unit=self.ticket();self.assertEqual(self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'plumb'}).status_code,200);self.wait_calls(1)
-  v=PLACED[0]['retell_llm_dynamic_variables'];self.assertEqual((v['assignment_id'],PLACED[0]['to_number']),(code,'+15555550001'))  # demo vendor: a teammate stands in
+  code,unit=self.ticket();self.assertEqual(self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'tm-ana'}).status_code,200);self.wait_calls(1)
+  v=PLACED[0]['retell_llm_dynamic_variables'];self.assertEqual((v['assignment_id'],PLACED[0]['to_number'],v['responder_name']),(code,'+15555550001','Ana'))  # the teammate, directly
   self.assertIn(f'unit {unit}',v['briefing'])
   self.assertEqual(self.answer(code,'accept','+15555550001'),{'ok':True})
   t=[x for x in self.c.get('/api/building').json()['tickets'] if x['code']==code][0];self.assertEqual(t['status'],'in_progress')
-  self.assertTrue(any('stand-in for Westside Plumbing' in e['message'] for e in t['timeline']))
+  self.assertTrue(any('DIZA is calling Ana' in e['message'] for e in t['timeline']))
  def test_no_puts_the_ticket_back(self):
-  code,_=self.ticket();self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'plumb'});self.wait_calls(1)
+  code,_=self.ticket();self.c.post(f'/api/tickets/{code}/assign',json={'assignee':'tm-ana'});self.wait_calls(1)
   self.assertFalse(self.answer(code,'decline','+15555550002')['ok'])  # someone else's phone can't answer
   self.assertEqual(self.answer(code,'decline','+15555550001'),{'ok':True})
   t=[x for x in self.c.get('/api/building').json()['tickets'] if x['code']==code][0];self.assertEqual((t['status'],t['assignee']),('new',None))

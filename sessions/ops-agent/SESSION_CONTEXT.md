@@ -87,6 +87,11 @@
 
     In each call, "yes" or "no" updates the dashboard. The `assignment_brief` agent was pushed to Retell on 2026-10-18 (`agent_940d2514…`) and is recorded in `agents/retell.ids.json`.
 
+16. **The team is the staff, on both sides** (user, 2026-10-18).
+    - **Building:** every `DIZA_RESPONDERS` teammate is building staff (`tm-<id>`) with their real phone. Role comes from skills: security → security; facilities/logistics → maintenance; medical → medical; else staff.
+    - The fictional demo vendors are removed whenever a real team exists, and their tickets move to a teammate. The demo week assigns its sample history to the team.
+    - **911:** when nobody on duty has the exact skill, an offer goes to the best available on-duty teammate (never a volunteer for P0/P1), and the card says so.
+
 ## Requests to phone-agent session
 1. **Wire `update_incident`** (`{field, value}`, field in location, callback, relationship, what, people, hazards, access_needs). It returns `{ok, missing:[…]}`; ask next for the first item in `missing`. Call it as each fact comes in, so the operator's card fills live.
 2. **When a caller names several places,** pass them all in `location_text` ("Kansas City, Wichita, and Tulsa"). The backend splits them into one card per place.
