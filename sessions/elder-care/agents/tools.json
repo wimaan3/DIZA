@@ -1,0 +1,71 @@
+[
+  {
+    "type": "custom",
+    "name": "lookup_care_resident",
+    "description": "Look up a care-home resident by room. Read back the returned identity and confirm before creating a request.",
+    "url": "https://YOUR_CARE_HOST/retell/fn/lookup_care_resident",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "room": {
+          "type": "string",
+          "description": "Confirmed room number, for example 101"
+        }
+      },
+      "required": ["room"],
+      "additionalProperties": false
+    }
+  },
+  {
+    "type": "custom",
+    "name": "create_care_request",
+    "description": "Record a confirmed resident care request for staff review. Does not call, page, transfer, or dispatch anyone.",
+    "url": "https://YOUR_CARE_HOST/retell/fn/create_care_request",
+    "method": "POST",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "resident_id": {
+          "type": "string",
+          "description": "ID returned by lookup_care_resident and confirmed by the caller"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "urgent_help",
+            "personal_care",
+            "medication",
+            "meal",
+            "companionship",
+            "maintenance",
+            "wellbeing"
+          ]
+        },
+        "urgency": { "type": "string", "enum": ["routine", "urgent"] },
+        "summary": { "type": "string" },
+        "quote": {
+          "type": "string",
+          "description": "Original caller words, verbatim where available"
+        },
+        "location": {
+          "type": "string",
+          "description": "Only if away from their room; otherwise empty"
+        },
+        "reported_by": {
+          "type": "string",
+          "description": "Resident, visitor, or staff reporting; no phone numbers"
+        }
+      },
+      "required": [
+        "resident_id",
+        "category",
+        "urgency",
+        "summary",
+        "quote",
+        "reported_by"
+      ],
+      "additionalProperties": false
+    }
+  }
+]
