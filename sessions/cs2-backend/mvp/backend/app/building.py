@@ -15,7 +15,7 @@ from .retell_fns import e164, last4, once, parse, responders_from_env
 
 router = APIRouter()
 TZ = ZoneInfo('America/Los_Angeles')
-CATEGORIES = ('water_leak', 'no_heat', 'no_hot_water', 'electrical', 'gas_smell', 'lockout', 'pest', 'appliance', 'noise', 'security', 'other')
+CATEGORIES = ('water_leak', 'no_heat', 'no_hot_water', 'electrical', 'gas_smell', 'lockout', 'pest', 'appliance', 'noise', 'security', 'resident_care', 'other')
 URGENCIES = ('emergency', 'urgent', 'routine')
 STATUSES = ('new', 'assigned', 'in_progress', 'waiting_tenant', 'closed')
 MERGE_WINDOW = 2 * 3600
@@ -83,6 +83,8 @@ def urgency(category, text='', now=None, hint=''):
         level, reason = 'urgent', 'No hot water'
     elif category == 'lockout' and night(now):
         level, reason = 'urgent', 'Locked out at night (8 PM - 7 AM)'
+    elif category == 'resident_care':
+        level, reason = 'urgent', 'Resident wellbeing: someone checks on them in person today'
     elif category == 'electrical':
         level, reason = 'urgent', 'Electrical problem' + (f' ("{ELECTRICAL_HAZARD.search(text).group(0)}")' if ELECTRICAL_HAZARD.search(text) else '')
     else:
@@ -98,7 +100,7 @@ def ordinal(n):
 
 
 NOUN = {'water_leak': 'leak', 'no_heat': 'no-heat', 'no_hot_water': 'no-hot-water', 'electrical': 'electrical', 'gas_smell': 'gas-smell',
-        'lockout': 'lockout', 'pest': 'pest', 'appliance': 'appliance', 'noise': 'noise', 'security': 'security', 'other': 'similar'}
+        'lockout': 'lockout', 'pest': 'pest', 'appliance': 'appliance', 'noise': 'noise', 'security': 'security', 'resident_care': 'resident-care', 'other': 'similar'}
 CAUSE = {('water_leak', 'stack'): 'likely the same pipe', ('water_leak', 'unit'): 'likely the same fixture or pipe',
          ('water_leak', 'floor'): 'check for a shared pipe on this floor', ('no_heat', 'hvac_zone'): 'likely the same heating system',
          ('no_hot_water', 'hvac_zone'): 'likely the same water heater or boiler', ('no_hot_water', 'stack'): 'likely the same riser',
@@ -206,7 +208,11 @@ MAINT_WORDS = (('water_leak', ('leak', 'leaking', 'dripping', 'water coming', 'f
                ('no_hot_water', ('hot water',)), ('lockout', ('locked out', 'lockout', 'lost my key')), ('pest', ('roach', 'mice', 'mouse', 'rats', 'bed bug', 'pest')),
                ('appliance', ('fridge', 'stove', 'oven', 'washer', 'dryer', 'dishwasher')), ('noise', ('noise', 'loud music', 'party next door', 'disturbance', 'disturbing', 'yelling', 'screaming', 'shouting', 'fighting', 'arguing', 'banging')),
                ('security', ('stranger', 'suspicious', 'break-in', 'broke in', 'breaking in', 'trespass', 'harass', 'someone in the hallway', 'won\'t leave')),
-               ('electrical', ('outlet', 'no power in my', 'lights out in my', 'breaker')))
+               ('electrical', ('outlet', 'no power in my', 'lights out in my', 'breaker')),
+               # Care-home needs (from the elder-care session): a person checks on the resident; a fall or injury also stays an emergency.
+               ('resident_care', ('check on', 'wellness check', 'welfare check', "haven't seen", 'have not seen', 'medication', 'missed her pills', 'missed his pills',
+                                  'caregiver', 'she fell', 'he fell', 'i fell', 'fell down', 'has fallen', 'had a fall', "can't get up", 'cannot get up',
+                                  'confused', 'not eating', 'not answering the door', 'dementia', 'se cayó', 'se cayo')))
 LIFE_SAFETY = {'fire', 'smoke', 'gas', 'medical', 'safety_crime'}
 
 
@@ -246,10 +252,12 @@ def tickets_for_report(call, args, category):
         if not issues and not danger:
             issues = ['other']  # anything reported at one of our buildings reaches the manager, even in words we don't recognize
         made = []
-        for cat in issues + (['gas_smell' if category == 'gas' else 'other'] if danger else []):
+        # A fall or medical emergency a resident-care ticket already covers needs no second, generic emergency ticket.
+        extra = ['gas_smell' if category == 'gas' else 'other'] if danger and not (category in ('medical', 'other', '') and 'resident_care' in issues) else []
+        for cat in issues + extra:
             summary = (args.get('summary') or cat.replace('_', ' ')) if cat != 'water_leak' or not danger else f"Leak reported ({args.get('summary') or ''})"
             t, _ = file_ticket(c, b, unit or args.get('location_text', ''), cat, str(summary)[:300], quote=str(args.get('evidence') or '')[:500],
-                               language=args.get('language') or 'en', hint='emergency' if danger and cat in ('other', 'gas_smell') else '',
+                               language=args.get('language') or 'en', hint='emergency' if danger and cat in ('other', 'gas_smell', 'resident_care') else '',
                                call_id=call['call_id'], caller_last4=last4(call), source='retell')
             made.append(t)
         return made, bool(issues) and not danger
@@ -304,7 +312,7 @@ def seed_building(c):
 
 
 TEAM_ROLES = (('security', 'security', 'security,noise,general'), ('facilities', 'maintenance', 'general,water_leak,no_heat,no_hot_water,electrical,appliance,pest,lockout'),
-              ('logistics', 'maintenance', 'general,water_leak,no_heat,no_hot_water,electrical,appliance,pest,lockout'), ('medical', 'medical', 'general'))
+              ('logistics', 'maintenance', 'general,water_leak,no_heat,no_hot_water,electrical,appliance,pest,lockout'), ('medical', 'medical', 'general,resident_care'))
 
 
 def team_staff_id(rid):
@@ -379,7 +387,7 @@ def category_of(text):
     for cat, words in (('gas_smell', ('gas',)), ('no_hot_water', ('hot_water', 'hot water')), ('water_leak', ('leak', 'water', 'flood', 'drip')),
                        ('no_heat', ('heat', 'heater', 'cold')), ('electrical', ('electric', 'power', 'outlet', 'light')), ('lockout', ('lock', 'key')),
                        ('pest', ('pest', 'roach', 'mice', 'mouse', 'rat', 'bug', 'bed bug')), ('appliance', ('fridge', 'stove', 'oven', 'washer', 'dryer', 'dishwasher', 'appliance')),
-                       ('noise', ('noise', 'loud', 'music', 'party')), ('security', ('security', 'break', 'stranger', 'door', 'theft', 'stolen'))):
+                       ('noise', ('noise', 'loud', 'music', 'party')), ('resident_care', ('resident_care', 'care', 'medication', 'wellness', 'welfare', 'check on', 'fell', 'fall')), ('security', ('security', 'break', 'stranger', 'door', 'theft', 'stolen'))):
         if any(w in t for w in words):
             return cat
     return 'other'
@@ -828,6 +836,7 @@ DEMO_TICKETS = [
     (2, '1E', 'appliance', 'Fridge not cooling', '冰箱不冷了，食物会坏。', 'zh', True, '0133'),
     (26, '3A', 'noise', 'Loud music late at night from upstairs', 'Música muy fuerte del piso de arriba después de medianoche.', 'es', None, '0146'),
     (24 * 33, '2D', 'no_heat', 'Wall heater does not turn on', 'My wall heater has not worked since last month.', 'en', True, '0112'),
+    (1.5, '3E', 'resident_care', 'Elderly neighbor not seen for two days, please check on her', "I haven't seen Mrs. Park in 3E for two days and she lives alone, can someone check on her?", 'en', None, '0171'),
     (24 * 3, '1A', 'other', 'Hallway light out on floor 1', 'The light by the mailboxes is out.', 'en', None, '0190'),
 ]
 
