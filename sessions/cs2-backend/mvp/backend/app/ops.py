@@ -433,7 +433,10 @@ def take_call(rid: str, t: Take):
             c.execute('INSERT INTO routings VALUES(?,?,?)', (cid, who['id'], time.time()))
         c.execute("UPDATE responders SET status='busy' WHERE id=?", (who['id'],))
         c.execute('UPDATE reports SET claimed_by=? WHERE id=?', (who['id'], rid))
-        log(c, r, f"{who['name']} took this call" + ('' if cid else ' (no live call attached)'))
+        live = cid and (c.execute('SELECT status FROM calls WHERE call_id=?', (cid,)).fetchone() or {'status': ''})['status'] == 'live'
+        log(c, r, f"{who['name']} took this call" + ('' if live else ' · the call has ended, so DIZA will connect them by phone' if cid else ' (no call attached)'))
+    if cid and not live:  # the caller already hung up: taking it means calling them back
+        queue_callback(rid, Callback(responder_id=who['id']))
     return {'ok': True}
 
 
@@ -461,8 +464,13 @@ def unmerge_report(rid: str):
     return {'ok': True}
 
 
+class Callback(BaseModel):
+    responder_id: str = Field(default='', max_length=100)
+
+
 @app.post('/api/reports/{rid}/callback')
-def queue_callback(rid: str):
+def queue_callback(rid: str, cb: Callback | None = None):
+    """Queue a callback; when a teammate is named, DIZA phones them with the caller's number (fetched from Retell, never stored)."""
     with connect() as c:
         r = report_row(c, rid)
         cid = call_of(r)
@@ -472,6 +480,9 @@ def queue_callback(rid: str):
         c.execute('INSERT INTO cases VALUES(?,?,?,?,?,?,?,?,?)', (code, 'callback', 'queued', 'operator', cid, last['caller_last4'] if last else '',
                                                                   json.dumps({'report_id': rid}), now, now))
         log(c, r, f'Callback {code} queued by an operator')
+    if cb and cb.responder_id and cid:
+        from .assign import start_callback
+        start_callback(code, rid, cb.responder_id)
     return {'ok': True, 'code': code}
 
 

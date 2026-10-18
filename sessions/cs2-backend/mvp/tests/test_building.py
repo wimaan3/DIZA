@@ -104,7 +104,7 @@ class Api(unittest.TestCase):
   self.assertEqual(self.c.post(f'/api/tickets/{code}/status',json={'status':'gone'}).status_code,400)
   self.c.post(f'/api/tickets/{code}/status',json={'status':'closed'});t=self.tickets()[code]
   self.assertIsNotNone(t['closed_at']);self.assertIsNotNone(t['tenant_notified_at'])
-  self.assertEqual([e['kind'] for e in t['timeline']],['created','assign','note','notified','status'])
+  self.assertEqual([e['kind'] for e in t['timeline'] if e['kind']!='call'],['created','assign','note','notified','status'])  # 'call': the phone call to the assignee
  def test_manual_merge_unmerge_and_split(self):
   a=self.ticket('4B',call_id='c1')['code'];b=self.ticket('5A','pest',call_id='c2')['code']
   self.c.post(f'/api/tickets/{b}/merge',json={'into':a});t=self.tickets();self.assertEqual(t[b]['merged_into'],a)
