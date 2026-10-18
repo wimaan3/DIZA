@@ -1,0 +1,74 @@
+{
+  "agent_name": "diza-security-brief-outbound",
+  "voice_id": "cartesia-Cleo",
+  "voice_model": "sonic-3",
+  "webhook_url": "${BASE_URL}/retell/webhook",
+  "webhook_events": [
+    "call_started",
+    "call_ended",
+    "call_analyzed",
+    "transcript_updated",
+    "transfer_started",
+    "transfer_bridged",
+    "transfer_cancelled",
+    "transfer_ended"
+  ],
+  "webhook_timeout_ms": 10000,
+  "interruption_sensitivity": 0.5,
+  "responsiveness": 1,
+  "denoising_mode": "noise-and-background-speech-cancellation",
+  "data_storage_setting": "everything_except_pii",
+  "data_storage_retention_days": 7,
+  "pii_config": {
+    "mode": "post_call",
+    "categories": [
+      "ssn",
+      "credit_card",
+      "bank_account",
+      "password",
+      "pin",
+      "passport",
+      "driver_license"
+    ]
+  },
+  "post_call_analysis_model": "gpt-4.1-mini",
+  "contact_memory_config": {
+    "enable_read": false,
+    "enable_update": false
+  },
+  "guardrail_config": {
+    "input_topics": [
+      "platform_integrity_jailbreaking"
+    ]
+  },
+  "begin_message_delay_ms": 800,
+  "language": "en-US",
+  "enable_backchannel": false,
+  "max_call_duration_ms": 120000,
+  "end_call_after_silence_ms": 15000,
+  "voicemail_option": {
+    "action": {
+      "type": "static_text",
+      "text": "This is the ${LINE_NAME} with a security briefing for {{security_name}}. {{drill_prefix}}{{briefing}} The full report is on the DIZA dashboard."
+    }
+  },
+  "post_call_analysis_data": [
+    {
+      "type": "boolean",
+      "name": "acknowledged",
+      "description": "True if the security person heard the briefing live and acknowledged it."
+    },
+    {
+      "type": "enum",
+      "name": "outcome",
+      "description": "How the call ended.",
+      "choices": [
+        "acknowledged",
+        "questions_only",
+        "wrong_person",
+        "voicemail",
+        "no_answer"
+      ]
+    }
+  ]
+}
