@@ -94,7 +94,7 @@ export default function LiveMap({reports=[],places=[],zones=[],selected,onSelect
   };
  },[offline,language()]);
  useEffect(()=>{
-  const m=map.current;if(!ready||!m)return;
+  const m=map.current;if(!ready||!m||!m.getSource('zones'))return;
   const ids=new Set(located.map(r=>r.id));
   markers.current.forEach((value,id)=>{if(!ids.has(id)){value.marker.remove();markers.current.delete(id);}});
   for(const r of located){
@@ -127,7 +127,7 @@ export default function LiveMap({reports=[],places=[],zones=[],selected,onSelect
  },[reports,selected,draw,ready,language()]);
  const placeSignature=JSON.stringify(places);
  useEffect(()=>{
-  const m=map.current;if(!ready||!m)return;
+  const m=map.current;if(!ready||!m||!m.getSource('zones'))return;
   placeMarkers.current.forEach(x=>x.remove());placeMarkers.current=[];placePopups.current.forEach(x=>x.remove());placePopups.current=[];
   for(const p of [...places,...(care?FACILITIES:[])].filter(position)){
    const button=document.createElement('button');button.type='button';button.className='ops3d-place'+(p.kind==='facility'?' care':'');button.setAttribute('aria-label',p.name);button.title=p.name;
@@ -138,7 +138,7 @@ export default function LiveMap({reports=[],places=[],zones=[],selected,onSelect
   }
  },[placeSignature,care,ready,language()]);
  useEffect(()=>{
-  const m=map.current;if(!ready||!m)return;
+  const m=map.current;if(!ready||!m||!m.getSource('zones'))return;
   m.getSource('zones').setData(fc(zones.map(z=>polygon(z.points,{name:z.name,kind:z.kind,color:(ZONE[z.kind]||ZONE.note).color})).filter(Boolean)));
   const coords=(draw||[]).map(p=>[p[1],p[0]]);if(coords.length>2)coords.push(coords[0]);
   m.getSource('draft').setData(fc(coords.length>1?[{type:'Feature',geometry:{type:'LineString',coordinates:coords},properties:{}}]:[]));
