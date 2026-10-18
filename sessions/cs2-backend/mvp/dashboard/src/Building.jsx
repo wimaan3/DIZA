@@ -7,7 +7,7 @@ import{Building2,Clock,Users,Link2,Languages,Wrench,AlertTriangle,CheckCircle2,P
 const URG=['emergency','urgent','routine'];
 const URG_LABEL={emergency:'Emergency repair',urgent:'Urgent',routine:'Routine'};
 const URG_MARK={emergency:'!!',urgent:'!',routine:'·'};
-const CAT={water_leak:'Water leak',no_heat:'No heat',no_hot_water:'No hot water',electrical:'Electrical',gas_smell:'Gas smell',lockout:'Lockout',pest:'Pests',appliance:'Appliance',noise:'Noise',security:'Security',other:'Other'};
+const CAT={water_leak:'Water leak',no_heat:'No heat',no_hot_water:'No hot water',electrical:'Electrical',gas_smell:'Gas smell',lockout:'Lockout',pest:'Pests',appliance:'Appliance',noise:'Noise',security:'Security',resident_care:'Resident care',other:'Other'};
 const STATUS={new:'New',assigned:'Assigned',in_progress:'In progress',waiting_tenant:'Waiting on tenant',closed:'Closed'};
 const LANG={en:'English',es:'Spanish',ko:'Korean',zh:'Chinese',vi:'Vietnamese',ru:'Russian',hy:'Armenian',fa:'Persian',tl:'Tagalog',fil:'Filipino'};
 const REL={unit:'same unit',stack:'stack',hvac_zone:'HVAC zone',floor:'floor'};
