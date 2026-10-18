@@ -129,16 +129,18 @@ def geocode(text, deadline):
                     {'q': query, 'format': 'json', 'limit': 1, **({'countrycodes': country_code().lower()} if kind == 'osm' else {})}), deadline)
                 if d:
                     result = (float(d[0]['lat']), float(d[0]['lon']))
-                    road = d[0].get('class') == 'highway'
+                    # A street called "Tulsa", or a building whose name only contains "Bakersfield": not the town the caller named.
+                    hit_name = (d[0].get('name') or '').strip().lower()
+                    road = d[0].get('class') == 'highway' or (d[0].get('class') not in ('place', 'boundary') and hit_name != text.strip().lower())
         except Exception:
             continue
         if result:
             break
-    # The caller named a town ("Tulsa") and the LA search only found a street called that: a real town anywhere wins.
+    # The caller named a town ("Tulsa", "Bakersfield") and the local search found a street or a building instead: a town with exactly that name, anywhere, wins.
     if result and kind == 'osm' and road and not STREET.search(text) and time.monotonic() < deadline:
         try:
             d = _get_json('https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode({'q': text, 'format': 'json', 'limit': 1}), deadline)
-            if d and d[0].get('class') in ('place', 'boundary'):
+            if d and d[0].get('class') in ('place', 'boundary') and (d[0].get('name') or '').strip().lower() == text.strip().lower():
                 result = (float(d[0]['lat']), float(d[0]['lon']))
         except Exception:
             pass
