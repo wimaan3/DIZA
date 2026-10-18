@@ -7,7 +7,7 @@ All implementation files live in this session folder.
 
 ## Shared experience
 
-The integrated root opens `/ops`, preserving the existing geographic map, report pins, urgent and non-urgent lanes, incident cards, callbacks, handoffs, zone drawing, offline map, metrics, call activity, responders, and wall view.
+The integrated root opens `/ops`, preserving the existing 3D/2D geographic map, report pins, urgent and non-urgent lanes, incident cards, callbacks, handoffs, zone drawing, offline map, metrics, call activity, responders, and wall view.
 The original Supporter inbox, region controls, languages, responder coverage and backup details remain available.
 Open **Building** at `/building` for the shared residential workflow.
 Older `/care` links redirect to the same screen.
@@ -31,7 +31,7 @@ Its urgent badge uses the same grouped-request counting as the Building queue.
 A checked Vite adapter supplies the shared Building implementation without editing another session's files.
 A same-origin frame isolates workspace styles and dialogs while reusing the operator access token.
 Every integration anchor is checked at build time.
-The map adapter preserves Leaflet's container classes when drawing or placing reports.
+The map adapter preserves MapLibre's container classes when drawing or placing reports.
 
 ## What staff can do
 

@@ -124,6 +124,11 @@ No existing legacy apartment API data is deleted or reinterpreted as another fac
 The correction passes 33 backend tests, four grouped-request model tests, 16 compatibility browser workflows and eight integrated browser workflows.
 The integrated tests exercise adding an apartment resident to the shared map, repair assignment, optional check-ins, complete maintenance and resident outcomes, preserved drafts, original operations tools and zero axe violations on tested desktop/mobile screens.
 
+The required pre-push rebase incorporated main `ff4d7a0`, including PR #42's MapLibre 3D Operations map and PR #41's stricter geocoding.
+The checked map integration was updated for the new container and pinned MapLibre 6.14.0, replacing the unused Leaflet dependency.
+All eight integrated browser tests pass after this update, including 3D/2D controls, offline rendering, drawing zones and placing an unlocated report.
+The updated eight-test resources suite passes and the integrated Docker image builds successfully.
+
 ## Open questions
 
 - Facility-specific emergency procedure, escalation contacts, staff roster, operating policy, and resident import remain deployment inputs.

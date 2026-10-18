@@ -42,7 +42,7 @@ export function CareWorkspace({view = "daily"}) {
       const top = Math.max(0, element.getBoundingClientRect().top);
       element.style.height = `${Math.max(240, window.innerHeight - top)}px`;
     }
-    // The actual space differs on mobile as the sidebar and building selector
+    // The actual space differs on mobile as the sidebar and header
     // wrap. Keep dialogs inside the visible frame rather than below the screen.
     const observer = new ResizeObserver(resize);
     observer.observe(frame.current.parentElement.parentElement);
