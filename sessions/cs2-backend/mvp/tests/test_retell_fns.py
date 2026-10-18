@@ -166,4 +166,12 @@ class RetellFunctions(unittest.TestCase):
   self.assertEqual(self.fn('register_volunteer',{'name':'Min','skills':['translation'],'languages':['ko'],'availability':'evenings','area':'K-town'})['status'],'pending_verification')
  def test_unsigned_function_calls_rejected(self):
   self.assertEqual(self.c.post('/retell/fn/route_to_human',json={'name':'route_to_human','call':CALL,'args':{}}).status_code,401)
+ def test_malformed_responders_env_does_not_crash_startup(self):
+  from unittest.mock import patch
+  from backend.app.retell_fns import e164, responders_from_env
+  bad='[{"id":"a","name":"A","phone":"+1<5555550001>","skills":"x"}],\n {"id":"b","name":"B","phone":"+15555550002"}]'
+  with patch.dict(os.environ,{'DIZA_RESPONDERS':bad}):
+   team=responders_from_env()
+  self.assertEqual([r['id'] for r in team],['a','b'])
+  self.assertEqual(e164(team[0]['phone']),'+15555550001')
 if __name__=='__main__':unittest.main()

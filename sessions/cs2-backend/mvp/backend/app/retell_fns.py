@@ -30,7 +30,7 @@ def init_fns():
         ''')
         # Real human-in-the-loop phones come from the environment only, never from git:
         # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics,lang:en"}]'
-        team = json.loads(os.getenv('DIZA_RESPONDERS', '[]'))
+        team = responders_from_env()
         if team:  # the env list is the source of truth: someone removed from it stops getting calls
             keep = [r['id'] for r in team]
             marks = ','.join('?' * len(keep))
@@ -41,6 +41,30 @@ def init_fns():
         # A real team is configured: drop the local placeholder people so the dashboard shows only real responders.
         if c.execute('SELECT COUNT(*) FROM responder_phones').fetchone()[0]:
             c.execute('DELETE FROM responders WHERE id NOT IN (SELECT responder_id FROM responder_phones)')
+
+
+def responders_from_env():
+    """DIZA_RESPONDERS as a list. A hand-edited value with a stray bracket or comma must not take the whole
+    site down at startup, so fall back to reading each {...} entry on its own and warn in the logs."""
+    raw = (os.getenv('DIZA_RESPONDERS') or '').strip()
+    if not raw:
+        return []
+    try:
+        team = json.loads(raw)
+        return team if isinstance(team, list) else [team]
+    except ValueError:
+        pass
+    team, i, dec = [], 0, json.JSONDecoder()
+    while (i := raw.find('{', i)) != -1:
+        try:
+            obj, i = dec.raw_decode(raw, i)
+        except ValueError:
+            i += 1
+            continue
+        if isinstance(obj, dict) and obj.get('id') and obj.get('phone'):
+            team.append(obj)
+    print(f'WARNING: DIZA_RESPONDERS is not valid JSON; read {len(team)} entries one by one. Fix the variable.', flush=True)
+    return team
 
 
 def e164(phone):
