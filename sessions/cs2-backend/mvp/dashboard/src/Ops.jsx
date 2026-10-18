@@ -21,12 +21,14 @@ function useNow(){const[n,setN]=useState(Date.now()/1000);useEffect(()=>{const i
 
 export default function Ops({headers,act,state,wall,onError,me,setMe}){
  const[data,setData]=useState(null),[sel,setSel]=useState(null),[merge,setMerge]=useState(false);
- const now=useNow(),seen=useRef(null),[fresh,setFresh]=useState({});
+ const now=useNow(),seen=useRef(null),[fresh,setFresh]=useState({}),[arrivals,setArrivals]=useState([]);
  async function refresh(){try{const r=await fetch('/api/ops',{headers});if(!r.ok)throw Error(t('Operator queue unavailable'));const d=await r.json();
   const ids=new Set(d.incidents.map(i=>i.id));
-  if(seen.current){const hot=[...ids].filter(i=>!seen.current.has(i));if(hot.length){const until=Date.now()+5000;setFresh(f=>({...f,...Object.fromEntries(hot.map(i=>[i,until]))}))}}
+  if(seen.current){const hot=[...ids].filter(i=>!seen.current.has(i));if(hot.length){const until=Date.now()+5000;setFresh(f=>({...f,...Object.fromEntries(hot.map(i=>[i,until]))}));setArrivals(a=>[...hot,...a.filter(x=>!hot.includes(x))].slice(0,3))}}
   seen.current=ids;setData(d)}catch(e){onError(e.message)}}
  useEffect(()=>{refresh();const id=setInterval(refresh,1500);return()=>clearInterval(id)},[headers.Authorization]);
+ // A new report stays announced until the operator opens it: in a long queue it may land far below the fold.
+ function show(id){setSel(id);setArrivals(a=>a.filter(x=>x!==id));setTimeout(()=>document.getElementById('q-'+id)?.scrollIntoView({block:'center',behavior:'smooth'}),50)}
  async function run(path,body){const ok=await act(path,body);if(ok)refresh();return ok}
  const inc=data?.incidents||[];
  const urgent=inc.filter(i=>['P0','P1'].includes(i.effective)),routine=inc.filter(i=>!['P0','P1'].includes(i.effective));
@@ -52,12 +54,14 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
  }window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key)},[cur?.id,order.length,operator]);
  if(!data)return <div className="empty"><Clock size={30}/><h3>{t('Loading the operator queue…')}</h3></div>;
  const m=data.metrics;
+ const newBar=arrivals.length>0&&<div className="arrivals" role="status" aria-live="polite">{arrivals.map(id=>{const i=inc.find(x=>x.id===id);return i&&<button key={id} className="arrival" onClick={()=>show(id)}><span className={'severity '+i.effective}>{SEV_MARK[i.effective]} {i.effective}</span><b>{t('New report')}</b><span className="where">{i.location.startsWith('(')?t('Location not given yet'):i.location}</span><span className="what">{i.summary}</span><span className="go">{t('Show')} →</span></button>})}<button className="small dismiss" onClick={()=>setArrivals([])} aria-label={t('Dismiss')}>×</button></div>;
  const map=<LiveMap reports={inc} places={state.places} zones={data.zones} center={state.region?.center} selected={cur?.id} onSelect={setSel} tall={wall}
   onPlace={(id,lat,lon)=>run(`/api/reports/${id}/location`,{lat,lon})} onZone={z=>run('/api/zones',{...z,by:nameOf(operator)})} onDeleteZone={id=>run(`/api/zones/${id}/delete`)}/>;
  const lane=(title,list,hint,cls)=><section className={'panel lane '+cls}><div className="panel-title"><h2>{title} <span>{list.length}</span></h2><small>{hint}</small></div>
   <div className="report-list">{list.length?list.map(i=><QueueCard key={i.id} i={i} now={now} on={cur?.id===i.id} fresh={fresh[i.id]>Date.now()} pick={()=>setSel(i.id)}/>):<p className="none">{cls==='urgent'?t('No urgent reports right now.'):t('Nothing waiting.')}</p>}</div></section>;
- if(wall)return <div className="wall"><LoadStrip m={m} big/><div className="wall-grid">{map}{lane(t('Urgent'),urgent,t('P0 pinned on top, then score, then wait'),'urgent')}</div></div>;
+ if(wall)return <div className="wall">{newBar}<LoadStrip m={m} big/><div className="wall-grid">{map}{lane(t('Urgent'),urgent,t('P0 pinned on top, then score, then wait'),'urgent')}</div></div>;
  return <>
+  {newBar}
   <LoadStrip m={m}/>
   <div className="ops-toolbar"><label>{t('I am')} <select value={operator} onChange={e=>setMe(e.target.value)}>{state.responders.map(r=><option key={r.id} value={r.id}>{r.name} · {t(r.status)}</option>)}</select></label>
    <span className="keys"><kbd>J</kbd><kbd>K</kbd> {t('move')} · <kbd>T</kbd> {t('take call')} · <kbd>M</kbd> {t('merge')} · <kbd>1</kbd>–<kbd>4</kbd> {t('priority')} · <kbd>C</kbd> {t('callback')} · <kbd>R</kbd> {t('reviewed')}</span>

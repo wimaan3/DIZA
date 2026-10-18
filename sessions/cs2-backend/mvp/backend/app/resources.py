@@ -93,6 +93,19 @@ def place_list(text):
     return merged[:6]
 
 
+GENERIC = set('unit apt apartment suite ste room floor fl building bldg house home near by the at in on of and a an my our st ave rd dr blvd '
+              'church school park store shop market station hospital corner street road freeway highway mall bank restaurant hotel '
+              'old new big little here there outside inside'.split())
+
+
+def said_in(text, hit):
+    """The match must contain a word the caller said. We add the service area to every query, so "unit 4C" otherwise
+    matches a "County of Los Angeles" plant and lands a pin downtown; better no pin than a wrong one."""
+    words = [w for w in re.findall(r'\w+', text.lower()) if w not in GENERIC and len(w) >= 2]
+    place = ((hit.get('display_name') or '') + ' ' + (hit.get('name') or '')).lower()
+    return bool(words) and any(w in place for w in words)
+
+
 def geocode(text, deadline):
     """(lat, lon) for an address, landmark or neighborhood (LA County first, then anywhere), or None."""
     # Callers say "near Venice Beach" or "by the USC Village": geocode the place, not the preposition.
@@ -127,7 +140,7 @@ def geocode(text, deadline):
             else:
                 d = _get_json('https://nominatim.openstreetmap.org/search?' + urllib.parse.urlencode(
                     {'q': query, 'format': 'json', 'limit': 1, **({'countrycodes': country_code().lower()} if kind == 'osm' else {})}), deadline)
-                if d:
+                if d and said_in(text, d[0]):
                     result = (float(d[0]['lat']), float(d[0]['lon']))
                     # A street called "Tulsa", or a building whose name only contains "Bakersfield": not the town the caller named.
                     hit_name = (d[0].get('name') or '').strip().lower()
