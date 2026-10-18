@@ -1,0 +1,6 @@
+node_modules/
+dist/
+__pycache__/
+.artifacts/
+*.sqlite3*
+.pytest_cache/
