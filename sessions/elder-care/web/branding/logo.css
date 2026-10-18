@@ -1,0 +1,4 @@
+.diza-logo {display:block;width:166px;max-width:100%;height:auto;flex-shrink:0}
+.wallshell .diza-logo {width:132px}
+.app-shell .topbar .diza-logo {width:140px}
+@media(max-width:800px){.diza-logo {width:148px}}
