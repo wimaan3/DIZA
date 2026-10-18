@@ -24,6 +24,9 @@ router = APIRouter(prefix='/retell/fn')
 SECURITY_AGENT_ID = 'agent_49bc7a7e9e4f23405a83ec5d07'  # security_brief in agents/retell.ids.json
 
 
+from .team import on_duty, profiles
+
+
 def init_security():
     with connect() as c:
         c.execute('CREATE TABLE IF NOT EXISTS security_briefs(call_id TEXT PRIMARY KEY,security_name TEXT,status TEXT,created REAL)')
@@ -32,7 +35,7 @@ def init_security():
 def on_duty_security(c, call, exclude=()):
     """(name, phone, why) of the person to brief, or None. Never a police or 911 number."""
     rows = [r for r in c.execute("SELECT r.id,r.name,r.skills,p.phone FROM responders r JOIN responder_phones p ON p.responder_id=r.id "
-                                 "WHERE r.status='available' ORDER BY r.id").fetchall() if r['id'] not in exclude]
+                                 "WHERE r.status='available' ORDER BY r.id").fetchall() if r['id'] not in exclude and on_duty(profiles(c).get(r['id'], {}).get('hours'))]
     for r in rows:
         if 'security' in (r['skills'] or '').lower().split(','):
             return r['name'], r['phone'], 'on-duty security'

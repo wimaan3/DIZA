@@ -34,7 +34,7 @@ class RetellFunctions(unittest.TestCase):
   self.assertIn('988',self.fn('flag_urgent',{'reason':'self_harm','keyword':'hurt myself'},{**CALL,'call_id':'c9'})['instruction'])
  def test_route_to_human_matches_skill_and_language_then_frees_on_call_end(self):
   out=self.fn('route_to_human',{'needs':['evac_logistics'],'language':'es','severity':'P1','summary':'Smoke, wheelchair'})
-  self.assertEqual(out['oncall_number'],'+15555550001');self.assertIn('evac_logistics',out['match_reason'])
+  self.assertEqual(out['oncall_number'],'+15555550001');self.assertIn('evac logistics',out['match_reason'])
   again=self.fn('route_to_human',{'needs':['evac_logistics'],'language':'es','severity':'P1','summary':'Smoke, wheelchair'})
   self.assertEqual(again,out)  # Retell retry: same answer, nobody else reserved
   other=self.fn('route_to_human',{'needs':['evac_logistics'],'language':'es','severity':'P1','summary':'x'},{**CALL,'call_id':'c2'})
