@@ -69,7 +69,7 @@ header{background:#153f32;color:#fff;padding:14px 16px}header b{font-size:17px}h
 .a a{color:#22553e}form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #e0e5dc;background:#fff}input{flex:1;font-size:16px;padding:12px;border:1px solid #dce4d4;border-radius:10px}
 button{font-size:16px;padding:0 18px;border:0;border-radius:10px;background:#22553e;color:#fff}button:disabled{opacity:.5}.t{font-size:12px;color:#8b957f;align-self:flex-start}
 </style></head><body><header><b>Text the DIZA Community Line</b><p>Automated assistant · English, Español, 한국어, 中文 · USC student project</p></header>
-<div class="warn"><b>In danger right now?</b> Call 911 (or text 911 if you can't call). DIZA cannot send police, fire or an ambulance.</div>
+<div class="warn"><b>In danger right now?</b> Call %EMERGENCY%%TEXT911%. DIZA cannot send police, fire or an ambulance.</div>
 <div id="log" aria-live="polite"><div class="m a">Hi, this is the DIZA Community Line (automated). What's going on? You can write in any language.</div></div>
 <form id="f"><input id="i" placeholder="Type a message" autocomplete="off" aria-label="Message"><button id="b">Send</button></form>
 <script>
@@ -80,10 +80,11 @@ document.getElementById('f').onsubmit=async e=>{e.preventDefault();const t=i.val
  const typing=document.createElement('div');typing.className='t';typing.textContent='DIZA is typing…';log.append(typing);
  try{if(!chat){const r=await fetch('/text/api/start',{method:'POST'});const j=await r.json();if(!r.ok)throw Error(j.detail);chat=j.chat_id}
   const r=await fetch('/text/api/'+chat,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:t})});const j=await r.json();if(!r.ok)throw Error(j.detail);
-  j.replies.forEach(x=>add(x,'a'))}catch(err){add((err.message||'Something went wrong.')+' If this is an emergency, call 911.','a')}finally{typing.remove();b.disabled=false;i.focus()}};
+  j.replies.forEach(x=>add(x,'a'))}catch(err){add((err.message||'Something went wrong.')+' If this is an emergency, call %EMERGENCY%.','a')}finally{typing.remove();b.disabled=false;i.focus()}};
 </script></body></html>"""
 
 
 @router.get('/text', response_class=HTMLResponse)
 def page():
-    return PAGE
+    from .regions import code, region
+    return PAGE.replace('%EMERGENCY%', region()['emergency_spoken']).replace('%TEXT911%', " (or text 911 if you can't call)" if code() == 'US' else '')

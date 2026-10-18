@@ -14,6 +14,9 @@
 | `sessions/cs2-backend/mvp/dashboard/src/LiveMap.jsx` | Map: severity pins, zones and polygon drawing, unlocated list, offline fallback |
 | `sessions/cs2-backend/mvp/dashboard/src/offline-la.json` | Offline basemap: LA-area freeways + city/CDP outlines, US Census TIGERweb (public domain), lazy-loaded |
 | `sessions/cs2-backend/mvp/tests/test_ops.py` | 12 tests |
+| `sessions/cs2-backend/mvp/backend/app/regions.py` | Country table (emergency numbers per service, map centre, geocoder area, UI language), caller country from calling code, agent variables |
+| `sessions/cs2-backend/mvp/dashboard/src/i18n.js` | Dashboard text in English / 中文 / Español (English sentence = key; falls back to English) |
+| `sessions/cs2-backend/mvp/tests/test_regions.py` | 6 tests |
 
 ## Decisions
 1. **Rules, not AI**, with every reason on screen.
@@ -37,7 +40,27 @@
 8. **Railway outage 2026-10-18** was a malformed `DIZA_RESPONDERS` env var, not code. Fixed by PR #26 (other session).
    - The variable is still malformed (logs: "read 4 entries one by one"). The user needs to fix its value in Railway.
 
+9. **Global (hackathon twist):** one setting per deployment, `DIZA_COUNTRY` (+ optional `DIZA_AREA`, `DIZA_UI_LANGUAGE`).
+   - The emergency number follows where the line runs, not the caller's phone (a +86 tourist in LA still needs 911). The caller's country code is only a language hint (`caller_country`).
+   - `/retell/inbound` sets `emergency_number`, `crisis_line_*`, `service_area` and `country` per call. The prompts already use `{{emergency_number}}`, so no agent edit is needed.
+   - Countries with separate numbers are spoken in full ("119 for fire, 120 for an ambulance, or 110 for police").
+   - Crisis lines are set only where verified (US/CA 988). Elsewhere the agent gives the emergency number, never a US hotline.
+   - The dashboard has a language switch (region default, remembered per browser) and a region badge with the local numbers. Caller quotes and transcripts are never translated.
+   - The geocoder biases to the region's area and country; the Census geocoder is used only in the US.
+   - Not translated yet: backend-generated text (reasons, timeline, AI summaries), the `/building` page (other session), and the `/text` and `/l` pages beyond the emergency number.
+
+## Pitch notes: "how would firefighters in China use it?"
+- **What stays:** the rules engine (ranking, second reader, merge, checklist) and the dashboard. Both are model-agnostic and run on any server.
+- **What changes per country (config, not code):** emergency numbers by service (CN 119 fire, 120 ambulance, 110 police), map centre, geocoder area, and the default dashboard language. The second reader already has Chinese danger words.
+- **What a China deployment must swap:**
+  - Telephony: a local carrier or SIP trunk. Retell numbers are US/CA.
+  - Voice/LLM: an in-country model (e.g. Qwen), because US model APIs aren't available there.
+  - Hosting: in-country servers. PIPL limits sending personal data abroad.
+  - Maps: Chinese basemaps (Amap, Baidu) use the GCJ-02 offset, so raw GPS lands a few hundred metres off unless converted.
+- **One line:** "The AI that listens is replaceable; the rules that rank and the screen that shows them travel unchanged."
+
 ## Key facts verified
+- Emergency numbers: Wikipedia "List of emergency telephone numbers", read 2026-10-18 [S]. Before live use in a country, check the national government page.
 - Retell has no live web search during calls. Knowledge-base URLs auto-refresh every 24 h, with up to 500 URLs per KB plus auto-crawl ([docs](https://docs.retellai.com/build/knowledge-base), read 2026-10-18).
 - Live check of the geocoder: Kansas City → 39.10, −94.58; Wichita → 37.69, −97.34; Tulsa → 36.16, −95.99; Venice and Altadena still resolve in LA.
 
@@ -50,4 +73,4 @@
 - Web search beyond the knowledge base: which provider (needs a key on Railway), or not at all?
 
 ## Not done yet
-- Global support: country from the caller's number, emergency number per country (not hard-coded 911), dashboard text in other languages.
+- Translating backend-generated text; more dashboard languages (ko, vi, fa, hy, tl); a GCJ-02 conversion for a China basemap; per-country offline maps (LA only).
