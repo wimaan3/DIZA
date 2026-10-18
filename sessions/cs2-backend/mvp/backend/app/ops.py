@@ -36,7 +36,7 @@ LEXICON = [
       r"չի շնչում", r"չեմ կարողանում շնչել", r"نفس نمی‌?کش\w*", r"نفسم بالا نمیاد", r"hindi (makahinga|humihinga)"],
      ['숨을 못', '숨을 안 쉬', '不能呼吸', '喘不过气', '没有呼吸']),
     ('unconscious', 'P0', {'medical'},
-     [r"unconscious", r"passed out", r"unresponsive", r"won'?t wake up", r"inconsciente", r"desmayad[oa]", r"no responde",
+     [r"unconscious", r"passed out", r"unresponsive", r"won'?t wake up", r"not responding", r"inconsciente", r"desmayad[oa]", r"no responde",
       r"bất tỉnh", r"ngất", r"без сознания", r"потерял\w* сознание", r"ուշագնաց", r"անգիտակից", r"بیهوش", r"walang malay", r"nawalan ng malay"],
      ['의식이 없', '의식을 잃', '昏迷', '不省人事', '晕倒']),
     ('weapon', 'P0', {'safety_crime'},
@@ -44,6 +44,10 @@ LEXICON = [
       r"súng", r"cầm dao", r"bị đâm", r"пистолет", r"оружие", r"стрельб\w*", r"нож\w*", r"զենք", r"ատրճանակ", r"դանակ", r"կրակոց",
       r"اسلحه", r"تفنگ", r"چاقو", r"تیراندازی", r"baril", r"binaril", r"kutsilyo", r"sinaksak"],
      ['총을', '총이', '총 들', '칼을', '칼이', '칼 들', '흉기', '有枪', '开枪', '拿枪', '枪声', '持刀', '拿刀', '有刀', '凶器']),
+    ('fall', 'P1', {'medical'},
+     [r"fell (down|over|in|on|and|off)", r"has fallen", r"took a fall", r"can'?t get up", r"cannot get up", r"se cay[óo]", r"no (se )?puede levantar(se)?",
+      r"no puedo levantarme", r"bị ngã", r"té ngã", r"упал\w*", r"ընկել\w*", r"زمین خورد\w*", r"nahulog", r"natumba", r"nadapa"],
+     ['넘어졌', '넘어지', '摔倒', '跌倒', '起不来']),
     ('bleeding', 'P1', {'medical'},
      [r"bleeding", r"blood everywhere", r"lots of blood", r"sangr\w+", r"chảy máu", r"кров\w+", r"արյուն\w*", r"خون‌?ریزی", r"خون میاد", r"dumudugo", r"duguan"],
      ['피가 많이', '피를 흘', '流血', '大出血']),
@@ -114,7 +118,7 @@ def second_reader(severity, category, hits):
 
 
 # --- Ranking ------------------------------------------------------------------------------------------------
-POINTS = {'trapped': 40, 'breathing': 35, 'unconscious': 35, 'weapon': 30, 'bleeding': 20, 'injured': 20, 'fire': 10, 'smoke': 5, 'flood': 10}
+POINTS = {'fall': 25, 'trapped': 40, 'breathing': 35, 'unconscious': 35, 'weapon': 30, 'bleeding': 20, 'injured': 20, 'fire': 10, 'smoke': 5, 'flood': 10}
 NUM_WORDS = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'dos': 2, 'tres': 3, 'cuatro': 4, 'cinco': 5}
 
 
@@ -504,23 +508,27 @@ def delete_zone(zid: str):
     return {'ok': True}
 
 
-# --- Crisis demo (drill mode only): a fire surge in Altadena, fictional callers ------------------------------
+# --- Demo (drill mode only): a freeway pile-up and elderly falls across LA, plus other kinds of calls. Fictional callers;
+# real intersections, no real facilities named. Any kind of report works on the live line; this is only sample data.
 # (minutes ago, location, lat, lon, category, danger flag, summary, caller's words, language, last4, relationship, gps ±m, transferred)
+CRASH = '110 Fwy northbound at Exposition Blvd'
 CRISIS = [
-    (14, 'Lake Ave and Altadena Dr', 34.1897, -118.1311, 'fire', False, 'Flames on the hillside behind the houses', 'There are flames on the hill right behind our houses, it is moving fast.', 'en', '0142', 'on_scene', None, False),
-    (13, 'Lake Ave and Altadena Dr', 34.1893, -118.1318, 'fire', False, 'Neighbor reports fire behind homes', 'My neighbor just called me, she says the hill behind Lake is on fire.', 'en', '0377', 'third_party', None, False),
-    (12, 'Lake Ave and Altadena Dr', 34.1901, -118.1305, 'fire', False, 'Fire behind houses, family evacuating', 'Hay fuego detrás de las casas, somos 4 personas y nos vamos ahora.', 'es', '0921', 'on_scene', None, False),
-    (11, 'Fair Oaks Ave and Mariposa St', 34.1856, -118.1503, 'medical', True, "Father can't breathe in heavy smoke", "My father can't breathe, the smoke is so thick. He uses a wheelchair and oxygen.", 'en', '0555', 'on_scene', 9, True),
-    (10, 'Lincoln Ave and Woodbury Rd', 34.1745, -118.1593, 'power', False, 'Power out on the block', 'The power is out and my grandmother is trapped upstairs, she uses a wheelchair.', 'en', '0610', 'on_scene', None, False),
-    (9, None, None, None, 'other', True, 'P0 flagged by phone agent: caller in a car between fires', '차 안에 갇혔어요. 양쪽에 불이 났어요.', 'ko', '0733', 'on_scene', None, False),
-    (8, 'New York Dr near Allen Ave', 34.1712, -118.1149, 'smoke', False, 'Heavy smoke, family of five needs to leave', '很多烟雾, 我们需要撤离, 5 people including two kids.', 'zh', '0288', 'on_scene', None, False),
-    (7, 'Mariposa St near the old church', None, None, 'infrastructure', False, 'Tree down blocking the road', 'A big tree is down across Mariposa, cars cannot get through.', 'en', '0419', 'on_scene', None, False),
-    (6, 'Lake Ave and Altadena Dr', 34.1899, -118.1322, 'fire', False, 'Large fire near home', 'Cháy lớn gần nhà tôi.', 'vi', '0802', 'third_party', None, False),
-    (5, 'Altadena Library', 34.1872, -118.1378, 'info', False, 'Asked where the nearest shelter is', 'Where is the nearest evacuation shelter?', 'en', '0111', 'on_scene', None, False),
-    (4, 'Woodbury Rd near Lincoln Ave', 34.1752, -118.1581, 'safety_crime', False, 'Someone going through evacuated houses', 'There is a man going into the empty houses, I think he has a kite in his hand.', 'en', '0964', 'on_scene', None, False),
-    (3, 'Altadena Dr east of Lake Ave', 34.1895, -118.1290, 'fire', False, 'Fire spreading east along Altadena Dr', 'Calling again, the fire is spreading east now, embers on the roofs.', 'en', '0142', 'on_scene', 15, False),
-    (2, 'Fair Oaks Ave and Mariposa St', 34.1859, -118.1497, 'medical', False, 'Neighbor collapsed outside', 'Мой сосед без сознания, он лежит на улице.', 'ru', '0347', 'third_party', None, False),
-    (1, 'Pasadena', 34.1478, -118.1445, 'info', False, 'Asked if the 210 freeway is closed', '¿Está cerrada la autopista 210?', 'es', '0195', 'on_scene', None, False),
+    (14, '1st St and Soto St, Boyle Heights', 34.0446, -118.2096, 'medical', False, 'Mother, 84, fell in the bathroom', "My mother is 84, she fell in the bathroom and she can't get up. She's breathing but in a lot of pain.", 'en', '0555', 'on_scene', None, False),
+    (13, 'Hill St and College St, Chinatown', 34.0657, -118.2386, 'welfare_check', False, 'Grandfather may need a check', '我爷爷摔倒了，起不来。他一个人住。', 'zh', '0288', 'third_party', None, False),
+    (12, CRASH, 34.0187, -118.2803, 'medical', False, 'Multi-car crash, people hurt', 'Big crash on the 110 at Exposition, at least four cars, people are hurt.', 'en', '0142', 'on_scene', None, False),
+    (11, CRASH, 34.0190, -118.2800, 'medical', False, 'Crash on the 110, woman injured', 'Choque grande en la 110, hay una señora atrapada en su carro y está sangrando.', 'es', '0921', 'on_scene', None, False),
+    (11, CRASH, 34.0184, -118.2806, 'medical', False, 'Crash seen from the freeway', 'My husband just called, he saw a crash on the 110 by USC, he says it looks bad.', 'en', '0377', 'third_party', None, False),
+    (10, CRASH, 34.0189, -118.2798, 'medical', False, 'Many injured in freeway crash', '110번 고속도로에서 큰 사고가 났어요. 사람들이 다쳤어요.', 'ko', '0733', 'on_scene', None, False),
+    (9, CRASH, 34.0186, -118.2801, 'medical', True, 'Driver stuck in car, smells gasoline', "I'm stuck in my car on the 110, the door won't open and I smell gasoline.", 'en', '0610', 'on_scene', 8, True),
+    (8, 'Exposition Blvd and Figueroa St', None, None, 'infrastructure', False, 'Traffic backed up after the freeway crash', 'Traffic is stopped on Exposition, there was an accident up on the freeway.', 'en', '0964', 'third_party', None, False),
+    (7, 'Fairfax Ave and Santa Monica Blvd', 34.0905, -118.3614, 'medical', False, 'Neighbor fell and is unconscious', 'Мой сосед упал и он без сознания.', 'ru', '0347', 'on_scene', None, False),
+    (6, 'Adams Blvd and Normandie Ave, West Adams', 34.0330, -118.3003, 'medical', False, 'Grandmother fell in the kitchen', 'Mi abuela se cayó en la cocina y no se puede levantar.', 'es', '0802', 'on_scene', None, False),
+    (5, 'Western Ave and 6th St, Koreatown', 34.0637, -118.3089, 'other', False, 'Grandmother needs help at home', '할머니가 넘어졌어요. 혼자 일어나지 못하세요.', 'ko', '0419', 'on_scene', None, False),
+    (5, 'Crenshaw Blvd and Jefferson Blvd', 34.0255, -118.3354, 'power', False, 'Power out; neighbor on home oxygen', "The power's been out for an hour and my neighbor uses an oxygen machine.", 'en', '0517', 'third_party', None, False),
+    (4, None, None, None, 'other', True, "P0 flagged by phone agent: father fell down the stairs", "My dad fell down the stairs and he's not responding.", 'en', '0111', 'on_scene', None, False),
+    (3, 'Sunset Blvd and Vermont Ave', 34.0977, -118.2917, 'gas', False, 'Gas smell in apartment hallway', 'I smell gas in the hallway of my building. My neighbor is elderly and lives alone.', 'en', '0628', 'on_scene', None, False),
+    (2, 'Wilshire Blvd and Westwood Blvd', 34.0590, -118.4440, 'info', False, 'Asked for a ride to dialysis', 'Can my mom get a ride to her dialysis appointment tomorrow?', 'en', '0195', 'on_scene', None, False),
+    (1, 'Santa Monica', 34.0195, -118.4912, 'info', False, 'Asked for a cooling center for seniors', '¿Hay un centro de enfriamiento abierto para personas mayores en Santa Monica?', 'es', '0234', 'on_scene', None, False),
 ]
 AGENT_LINE = {'en': 'DIZA here. What is happening and where are you?', 'es': 'Habla DIZA. ¿Qué está pasando y dónde está?', 'ko': 'DIZA입니다. 무슨 일이고 어디에 계세요?',
               'zh': '这里是 DIZA。发生了什么, 您在哪里?', 'vi': 'Đây là DIZA. Chuyện gì đang xảy ra và bạn ở đâu?', 'ru': 'Это DIZA. Что случилось и где вы?'}
@@ -554,12 +562,12 @@ def seed_crisis(c):
             c2.execute('INSERT OR REPLACE INTO incident_fields VALUES(?,?,?,?)', (cid, 'relationship', rel, now))
             if moved and mate:
                 event(c2, cid, f"Warm transfer to {mate['name']} (P0) · you match medical")
-        c2.execute('INSERT INTO zones VALUES(?,?,?,?,?,?)', (str(uuid.uuid4()), 'Evacuation warning: north of Altadena Dr (demo)', 'evacuation_warning',
-                                                             json.dumps([[34.2005, -118.1450], [34.2005, -118.1150], [34.1880, -118.1150], [34.1880, -118.1450]]), now, 'demo'))
+        c2.execute('INSERT INTO zones VALUES(?,?,?,?,?,?)', (str(uuid.uuid4()), 'Crash scene: 110 Fwy closed northbound at Exposition (demo)', 'hazard',
+                                                             json.dumps([[34.0225, -118.2830], [34.0225, -118.2775], [34.0150, -118.2775], [34.0150, -118.2830]]), now, 'demo'))
         for x in range(4):  # questions answered from verified info, no operator involved
             c2.execute('INSERT OR REPLACE INTO calls(call_id,direction,agent,caller_last4,status,started,ended,duration_s,summary,updated) VALUES(?,?,?,?,?,?,?,?,?,?)',
                        (f'{tag}-info-{x}', 'inbound', 'inbound', f'02{x}{x}', 'ended', now - (20 - x * 3) * 60, now - (20 - x * 3) * 60 + 60, 60,
-                        'Caller asked about shelters and road closures; answered from verified information.', now))
+                        'Caller asked about road closures and senior services; answered from verified information.', now))
     return len(made)
 
 

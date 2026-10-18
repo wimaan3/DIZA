@@ -61,12 +61,12 @@ export default function Ops({headers,act,state,wall,onError,me,setMe}){
   <LoadStrip m={m}/>
   <div className="ops-toolbar"><label>{t('I am')} <select value={operator} onChange={e=>setMe(e.target.value)}>{state.responders.map(r=><option key={r.id} value={r.id}>{r.name} · {t(r.status)}</option>)}</select></label>
    <span className="keys"><kbd>J</kbd><kbd>K</kbd> {t('move')} · <kbd>T</kbd> {t('take call')} · <kbd>M</kbd> {t('merge')} · <kbd>1</kbd>–<kbd>4</kbd> {t('priority')} · <kbd>C</kbd> {t('callback')} · <kbd>R</kbd> {t('reviewed')}</span>
-   {state.demo&&<button className="small" onClick={()=>run('/api/demo/seed?mode=crisis')}>{t('Load fire-surge demo')}</button>}{!state.live&&<button className="small" onClick={()=>run('/api/demo/surge')}>{t('Simulate surge')}</button>}<a className="small linkbtn" href="/ops?wall=1" target="_blank" rel="noreferrer">{t('Wall view ↗')}</a></div>
+   {state.demo&&<button className="small" onClick={()=>run('/api/demo/seed?mode=crisis')}>{t('Load demo: falls & freeway crash')}</button>}{!state.live&&<button className="small" onClick={()=>run('/api/demo/surge')}>{t('Simulate surge')}</button>}<a className="small linkbtn" href="/ops?wall=1" target="_blank" rel="noreferrer">{t('Wall view ↗')}</a></div>
   {map}
   <div className="ops-grid">
    <div className="lanes">{lane(t('Urgent'),urgent,t('P0–P1 · P0 pinned, then score, then wait'),'urgent')}{lane(t('Not urgent'),routine,t('P2–P3 · review, info, follow-ups'),'routine')}</div>
    {cur?<IncidentCard i={cur} all={inc} state={state} now={now} merge={merge} setMerge={setMerge} operator={operator} nameOf={nameOf}
-     run={run} setPriority={setPriority} review={review} take={take} callback={callback}/>:<section className="panel detail"><div className="empty full"><Layers size={38}/><h3>{t('No reports yet.')}</h3><p>{t('Calls to the line appear here within seconds. In drill mode, load the fire-surge demo to see a busy night.')}</p></div></section>}
+     run={run} setPriority={setPriority} review={review} take={take} callback={callback}/>:<section className="panel detail"><div className="empty full"><Layers size={38}/><h3>{t('No reports yet.')}</h3><p>{t('Calls to the line appear here within seconds. In drill mode, load the demo (elderly falls and a freeway crash) to see a busy night.')}</p></div></section>}
   </div><div className="trends"><LoadStrip m={m} charts/></div></>;
 }
 
