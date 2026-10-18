@@ -5,7 +5,7 @@ Supervisor-approved answers (kb_items) win over resource matching. Geocoding: Ce
 street addresses, OpenStreetMap Nominatim for landmarks/neighborhoods (cached, polite UA), with a
 hard time budget so the agent's 5 s function timeout is never hit. Never claims a shelter is open.
 """
-import json, math, os, re, time, urllib.parse, urllib.request
+import json, math, os, re, threading, time, urllib.parse, urllib.request
 from pathlib import Path
 
 GEOCODE_BUDGET_S = 3.0
@@ -53,7 +53,15 @@ def approved_answer(conn, question):
     return best[1] if best else None
 
 
+_osm_lock = threading.Lock()
+_osm_last = [0.0]
+
+
 def _get_json(url, deadline):
+    if 'nominatim' in url:  # OpenStreetMap's usage policy: at most one request per second, shared across threads
+        with _osm_lock:
+            time.sleep(max(0.0, 1.05 - (time.monotonic() - _osm_last[0])))
+            _osm_last[0] = time.monotonic()
     timeout = max(0.3, deadline - time.monotonic())
     req = urllib.request.Request(url, headers={'User-Agent': UA})
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -62,7 +70,8 @@ def _get_json(url, deadline):
 
 def geocode(text, deadline):
     """(lat, lon) for an address, landmark or neighborhood in LA County, or None."""
-    text = (text or '').strip()
+    # Callers say "near Venice Beach" or "by the USC Village": geocode the place, not the preposition.
+    text = re.sub(r'^\s*(?:near|around|by|close to|next to|at|in|on)\s+(?:the\s+)?', '', (text or '').strip(), flags=re.I)
     if not text:
         return None
     if text in _geo_cache:

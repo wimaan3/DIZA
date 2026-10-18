@@ -306,6 +306,7 @@ def retell_submit(data=Depends(signed)):
     if args.get('vulnerability') and not args.get('evidence'):
         args['evidence']='Vulnerability: '+', '.join(args['vulnerability'])
     r=merge_into_p0(call_id,Report(**args)) or save_report(Report(**args))
+    kick_geocode(r['id'])
     with connect() as c:
         others=c.execute('SELECT COUNT(*) FROM reports WHERE cluster_id=? AND id!=?',(r['cluster_id'],r['id'])).fetchone()[0]
     # Read aloud by the agent, so only say something when other callers reported the same thing.
@@ -353,11 +354,32 @@ def log_call(data):
              (transcript or '')[-6000:] or None))
 
 def geocode_pending():
-    # Map pins: geocode new report locations off the call path (Census/OSM, cached), a few at a time.
+    # Fallback sweep; new reports are geocoded right away by kick_geocode().
+    with connect() as c:
+        rows=c.execute("SELECT id FROM reports WHERE geo_tried=0 ORDER BY created DESC LIMIT 10").fetchall()
+    for r in rows:
+        geocode_report(r['id'])
+
+def kick_geocode(rid):
+    # Pin a new report within a second or two, in parallel with other calls, without slowing the agent's reply.
+    import threading
+    threading.Thread(target=geocode_report,args=(rid,),daemon=True).start()
+
+def geocode_report(rid):
+    try:
+        _geocode_report(rid)
+    except Exception as e:  # never leave a report stuck 'in progress' (geo_tried=2)
+        print('geocode failed:', e)
+        with connect() as c:
+            c.execute('UPDATE reports SET geo_tried=1 WHERE id=? AND geo_tried=2',(rid,))
+
+def _geocode_report(rid):
     from . import resources
     with connect() as c:
-        rows=c.execute("SELECT id,location,dedupe FROM reports WHERE geo_tried=0 ORDER BY created DESC LIMIT 3").fetchall()
-    for r in rows:
+        if not c.execute('UPDATE reports SET geo_tried=2 WHERE id=? AND geo_tried=0',(rid,)).rowcount:
+            return  # someone else is on it, or it already has a position
+        r=c.execute('SELECT id,location,dedupe FROM reports WHERE id=?',(rid,)).fetchone()
+    for r in [r]:
         loc=r['location'] or ''
         with connect() as c:
             gps=gps_for_call(c,r['dedupe'].split(':')[0])  # a location the caller shared beats geocoding what they said

@@ -70,7 +70,7 @@ class RetellFunctions(unittest.TestCase):
   try:
    self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},{**CALL,'call_id':'c10'});m.geocode_pending()
    r=self.state()['reports'][0];self.assertIsNone(r['lat'])  # placeholder location is never geocoded
-   self.report('c10');m.geocode_pending();r=self.state()['reports'][0]
+   self.report('c10');m.geocode_pending();self.wait_pinned();r=self.state()['reports'][0]
    self.assertEqual((r['lat'],r['lon']),(34.18,-118.13))
   finally:res.geocode=real
   self.assertTrue(all(p['lat'] is not None for p in self.state()['places']))
@@ -93,7 +93,7 @@ class RetellFunctions(unittest.TestCase):
   self.assertIn('Share my location',self.c.get(f'/l/{token}').text)
   self.assertEqual(self.c.post(f'/l/{token}',json={'lat':34.0219,'lon':-118.2859,'accuracy':12}).status_code,200)
   r=self.state()['reports'][0];self.assertEqual((r['lat'],r['lon'],r['gps_accuracy']),(34.0219,-118.2859,12))
-  import backend.app.main as m;self.report('c13');m.geocode_pending()  # the full report keeps the GPS pin, not a geocode
+  import backend.app.main as m;self.report('c13');m.geocode_pending();self.wait_pinned()  # the full report keeps the GPS pin, not a geocode
   r=self.state()['reports'][0];self.assertEqual((r['lat'],r['gps_accuracy']),(34.0219,12))
   self.assertEqual(self.c.post('/l/nope',json={'lat':1,'lon':1}).status_code,410)
  def test_location_without_report_still_pins(self):
@@ -126,6 +126,29 @@ class RetellFunctions(unittest.TestCase):
    c.execute("INSERT OR REPLACE INTO responders VALUES('old','Old Friend','evac_logistics','available')");c.execute("INSERT OR REPLACE INTO responder_phones VALUES('old','+15555550009')")
   f.init_fns()
   self.assertNotIn('old',{r['id'] for r in self.state()['responders']})
+ def test_flag_after_report_upgrades_it(self):
+  self.report('c17');self.fn('flag_urgent',{'reason':'trapped','keyword':'stuck'},{**CALL,'call_id':'c17'})
+  s=self.state();rs=[r for r in s['reports']]
+  self.assertEqual(len(rs),1);self.assertEqual(rs[0]['severity'],'P0');self.assertEqual(rs[0]['location'],'Lake Ave and Altadena Dr')
+ def test_four_parallel_callers_all_pinned(self):
+  import backend.app.main as m, backend.app.resources as res, time as t
+  spots={'Santa Monica':(34.02,-118.49),'Venice Beach':(33.99,-118.47),'Pasadena':(34.15,-118.14),'Burbank':(34.18,-118.31)}
+  real=res.geocode;res.geocode=lambda text,deadline:next((v for k,v in spots.items() if k in text),None)
+  try:
+   from concurrent.futures import ThreadPoolExecutor
+   def one(i_loc):
+    i,loc=i_loc;return self.fn('submit_report',{'hazard':'fire','location_text':loc,'people_at_risk':1,'injured_or_trapped':False,'vulnerability':[],'language':'en'},{**CALL,'call_id':f'p{i}'})
+   with ThreadPoolExecutor(4) as ex: list(ex.map(one,enumerate(['Santa Monica','near Venice Beach','Pasadena','Burbank'])))
+   for _ in range(30):
+    if all(r['lat'] is not None for r in self.state()['reports']): break
+    t.sleep(0.1)
+   self.assertEqual(sorted(r['lat'] for r in self.state()['reports']),sorted(v[0] for v in spots.values()))
+  finally:res.geocode=real
+ def wait_pinned(self):
+  import time as t
+  for _ in range(40):
+   if all(r['geo_tried']==1 for r in self.state()['reports']): return
+   t.sleep(0.05)
  def test_form_loop_prefills_and_needs_confirmation(self):
   start=self.fn('start_form',{'form_type':'maintenance_request','known_fields':{'location':'Birnkrant 214','issue':'heater'}})
   self.assertEqual([f['name'] for f in start['next_fields']],['callback_phone'])
