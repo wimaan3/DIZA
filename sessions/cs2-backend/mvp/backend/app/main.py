@@ -144,6 +144,7 @@ async def lifespan(app):
     init_fns()
     init_alerts()
     init_locate()
+    init_building()
     async def worker():
         while True:
             expire()
@@ -267,7 +268,7 @@ def surge():
 def reset():
     if not DEMO: raise HTTPException(403)
     with connect() as c:
-        for table in ('attempts','requests','reports','events','webhook_events','calls','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents'): c.execute(f'DELETE FROM {table}')
+        for table in ('attempts','requests','reports','events','webhook_events','calls','cases','fn_results','routings','kb_gaps','kb_items','alerts','alert_recipients','consents','tickets','ticket_events'): c.execute(f'DELETE FROM {table}')
         c.execute("UPDATE responders SET status='available'")
     return {'ok':True}
 
@@ -429,6 +430,8 @@ from .locate import router as locate_router, init_locate, gps_for_call
 app.include_router(locate_router)
 from .textline import router as text_router
 app.include_router(text_router)
+from .building import router as building_router, init_building
+app.include_router(building_router)
 
 DIST=ROOT/'dashboard'/'dist'
 if DIST.exists():
