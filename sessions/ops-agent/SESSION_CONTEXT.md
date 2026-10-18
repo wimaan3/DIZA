@@ -81,7 +81,8 @@
 2. **When a caller names several places,** pass them all in `location_text` ("Kansas City, Wichita, and Tulsa"). The backend splits them into one card per place.
 3. **Push the agents** (`python agents/push.py --env prod`): this adds `transfer_failed` and `location_text` to `route_to_human` in `agents/tools.json`, plus one rule in `_shared_rules.md` (retry once with `transfer_failed: true`, then `schedule_callback`). The backend already accepts both; until the push, a failed transfer still falls back to a callback.
 4. **Push the new `assignment_brief` agent** (`python agents/push.py --env prod --only assignment_brief --no-bind`). Then set `RETELL_ASSIGN_AGENT_ID` on Railway, or commit the updated `agents/retell.ids.json`.
-5. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
+5. **Ask for the city or neighborhood with cross streets** ("11th and Broadway, *in Santa Monica*"). The backend pins the exact corner only when a city is named, because LA County has many same-named corners. Without one, the card goes to "place on map" rather than getting a wrong pin.
+6. **Knowledge base:** add official pages as auto-refreshing URL sources (LA County emergency, Ready.gov, Caltrans road status, LADWP/SCE outage pages; equivalents per country later). This expands answers with no new API key. A paid search API is only needed for questions those pages don't cover.
 
 ## Open questions
 - Web search beyond the knowledge base: which provider (needs a key on Railway), or not at all?
