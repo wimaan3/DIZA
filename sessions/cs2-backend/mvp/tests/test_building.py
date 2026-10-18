@@ -160,6 +160,29 @@ class MaintenanceCall(unittest.TestCase):
   self.assertEqual((t['unit'],t['category']),('4A','water_leak'));self.assertTrue(any(start['case_code'] in e['message'] for e in t['timeline']))
   self.fn('submit_form',{'case_code':start['case_code'],'confirmed':True},'call_mf')  # a retry never files twice
   self.assertEqual(len(self.tickets()),len(before)+1)
+ def report(self,call_id,**a):
+  return self.fn('submit_report',{'hazard':'other','summary':'x','location_text':'','language':'en',**a},call_id)
+ def test_reports_at_our_building_reach_the_manager(self):
+  self.c.post('/api/demo/reset');self.c.post('/api/demo/seed?mode=building');before=set(self.tickets())
+  with patch('backend.app.main.kick_geocode',lambda rid:None):
+   # 1. Bathroom leak at Larchmont Court: a maintenance ticket, not a 911 card.
+   out=self.report('c_leak',hazard='water leak',summary='Leak in my bathroom',evidence="it's leaking",location_text='Larchmont Court Apartments, unit 4A')
+   self.assertTrue(out['ticket_code'].startswith('T-'));self.assertEqual(out['report_id'],'');self.assertIn('maintenance ticket',out['reason'])
+   # 2. "Leak and fire" at Larchmont Court: the 911 card stays P0, and the manager gets the fire AND the leak.
+   self.fn('flag_urgent',{'reason':'fire','keyword':'fire'},'c_fire')
+   out=self.report('c_fire',hazard='fire',summary='leak and fire',location_text='Larchmont Court apartments',immediate_danger=True)
+   self.assertEqual(out['severity'],'P0')
+   # 3. A street fire elsewhere never becomes a building ticket.
+   self.report('c_street',hazard='fire',summary='fire on 11th Street and Broadway',location_text='11th Street and Broadway, Santa Monica')
+   # 4. No building name, but "unit 4C" is one of our units: the ceiling leak is a ticket.
+   out=self.report('c_4c',hazard='water leak',summary='water leaking from ceiling',location_text='unit 4C');self.assertTrue(out.get('ticket_code'))
+  new=[t for k,t in self.tickets().items() if k not in before]
+  got=sorted((t['unit'],t['category'],t['urgency']) for t in new)
+  self.assertIn(('4A','water_leak','emergency'),got);self.assertIn(('4C','water_leak','emergency'),got)
+  fire=[t for t in new if t['category']=='other'];self.assertEqual(len(fire),1);self.assertEqual(fire[0]['urgency'],'emergency')
+  self.assertEqual(len([t for t in new if t['category']=='water_leak']),3)  # 4A, 4C, and the leak named with the fire
+  ops=self.c.get('/api/ops').json()['incidents']
+  self.assertEqual(sorted(i['location'] for i in ops),['11th Street and Broadway, Santa Monica','Larchmont Court apartments'])
  def test_unit_from_what_the_caller_said(self):
   self.c.post('/api/demo/seed?mode=building')
   with connect() as c:
