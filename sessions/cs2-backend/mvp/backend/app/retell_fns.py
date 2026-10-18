@@ -30,7 +30,7 @@ def init_fns():
         ''')
         # Real human-in-the-loop phones come from the environment only, never from git:
         # DIZA_RESPONDERS='[{"id":"imaan","name":"Imaan","phone":"+1...","skills":"evac_logistics,lang:en"}]'
-        team = load_team(os.getenv('DIZA_RESPONDERS', ''))
+        team = responders_from_env()
         if team:  # the env list is the source of truth: someone removed from it stops getting calls
             keep = [r['id'] for r in team]
             marks = ','.join('?' * len(keep))
@@ -43,27 +43,28 @@ def init_fns():
             c.execute('DELETE FROM responders WHERE id NOT IN (SELECT responder_id FROM responder_phones)')
 
 
-def load_team(raw):
-    # A typo in DIZA_RESPONDERS must not take the whole app down: accept a list, one object, or
-    # objects missing their [ ], and otherwise keep the responders already stored. Never log the value (phones).
-    raw = raw.strip()
+def responders_from_env():
+    """DIZA_RESPONDERS as a list. A hand-edited value with a stray bracket or comma must not take the whole
+    site down at startup, so fall back to reading each {...} entry on its own and warn in the logs."""
+    raw = (os.getenv('DIZA_RESPONDERS') or '').strip()
     if not raw:
         return []
-    err = None
-    for text in (raw, f'[{raw.rstrip(",")}]'):
+    try:
+        team = json.loads(raw)
+        return team if isinstance(team, list) else [team]
+    except ValueError:
+        pass
+    team, i, dec = [], 0, json.JSONDecoder()
+    while (i := raw.find('{', i)) != -1:
         try:
-            team = json.loads(text)
-            break
-        except ValueError as e:
-            err = err or e
-    else:
-        print(f'DIZA_RESPONDERS is not valid JSON ({err.msg} at char {err.pos}); keeping stored responders')
-        return []
-    team = [team] if isinstance(team, dict) else team if isinstance(team, list) else []
-    ok = [r for r in team if isinstance(r, dict) and r.get('id') and r.get('name') and r.get('phone')]
-    if len(ok) < len(team):
-        print(f'DIZA_RESPONDERS: skipped {len(team) - len(ok)} entries missing id, name or phone')
-    return ok
+            obj, i = dec.raw_decode(raw, i)
+        except ValueError:
+            i += 1
+            continue
+        if isinstance(obj, dict) and obj.get('id') and obj.get('phone'):
+            team.append(obj)
+    print(f'WARNING: DIZA_RESPONDERS is not valid JSON; read {len(team)} entries one by one. Fix the variable.', flush=True)
+    return team
 
 
 def e164(phone):

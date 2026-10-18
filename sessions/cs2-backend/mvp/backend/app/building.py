@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from .main import DEMO, app, connect, event
-from .retell_fns import e164, last4, once, parse
+from .retell_fns import e164, last4, once, parse, responders_from_env
 
 router = APIRouter()
 TZ = ZoneInfo('America/Los_Angeles')
@@ -385,7 +385,7 @@ def police_lines():
 
 def drill_teammate(kind):
     # Drill mode: a teammate from DIZA_RESPONDERS stands in for the real line (a 'security'/'police' skill wins).
-    team = json.loads(os.getenv('DIZA_RESPONDERS', '[]') or '[]')
+    team = responders_from_env()
     if not team:
         return None
     return next((r for r in team if kind.split('_')[0] in (r.get('skills') or '')), team[0])
