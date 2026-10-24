@@ -1,76 +1,91 @@
 # Session context: ds-analytics
 
-- **Session:** Codex implementation of the DIZA data science work package, requested by Deepanshu.
-- **Branch:** `ds/analysis-triage`, started from `da67553` and rebased onto `origin/main` at `5dff053`.
-- **Scope:** Installable deterministic triage and analysis package, synthetic data, evals, metric CLI, source loaders, and tests.
+- **Session:** Codex implementation requested by Deepanshu, followed by the explicit request to repurpose the app as RelayLA and make it live.
+- **Branches:** `ds/analysis-triage` for merged PR #9; `ds/live-analysis` for [PR #13](https://github.com/wimaan3/DIZA/pull/13).
+- **Scope:** RelayLA community pickup notices, versioned confirmations, separate assistance follow-up, English/Spanish text and browser voice integration, offline drafts, and deployment packaging.
+- **Earlier work retained:** Installable DIZA analysis CLI and optional consent-aware legacy analytics page.
 
 ## Files in this folder
 
 | Path | Contents |
 |---|---|
-| `pyproject.toml` | Dependency-free package metadata and CLI entry point |
-| `diza_analysis/triage.py` | Lexicon hits, context guards, classification, priority, pools, responder ranking |
-| `diza_analysis/zones.py` | Distinct-caller space/time DBSCAN and human-controlled zone evidence |
-| `diza_analysis/privacy.py` | Consent filtering, keyed pseudonyms, field allowlist, delayed public cells |
-| `diza_analysis/metrics.py` | Metric denominators, peak concurrency, failure mining, reach, judge calibration |
-| `diza_analysis/evaluation.py` | Golden classifier checks and observed-agent publish gates |
-| `diza_analysis/datasets.py` | Seeded synthetic residents, responders, calls, and drill cards |
-| `diza_analysis/sources.py` | Bounded MyLA311 loader and keyed Census ACS profiles |
-| `diza_analysis/storage.py` | Read-only adapter for the deployed SQLite calls/reports schema |
-| `diza_analysis/cli.py`, `__main__.py`, `__init__.py` | CLI and public import surface |
-| `diza_analysis/config.py`, `config/*.json` | Settings, EN/ES lexicon, illustrative zones and demographic profiles |
-| `diza_analysis/timeutil.py` | UTC timestamp normalization |
-| `diza_analysis/evals/golden.json` | Forty labeled role-card and safety cases |
-| `tests/` | Unit and end-to-end CLI tests |
-| `scripts/check_backend.py` | Existing backend tests in isolated processes without Retell backfill |
-| `README.md` | Setup, API contracts, privacy limits, eval workflow, source links, integration notes |
-| `.gitignore` | Local artifacts, build output, package metadata, and lint cache exclusions |
+| `diza_analysis/relay/schema.sql` | Additive persistent notice versions, resident records, confirmations, assistance, attempts, follow-ups, events, request receipts, and private-link secret |
+| `diza_analysis/relay/store.py` | Transactional domain logic, stale-version handling, confirmation checks, explicit task ownership, concurrency, and idempotency |
+| `diza_analysis/relay/models.py` | Strict API inputs with explicit confirmation booleans |
+| `diza_analysis/relay/api.py` | Protected coordinator/resident APIs, signed Retell functions/webhook, RelayLA pages, assets, and readiness |
+| `diza_analysis/relay/voice.py` | Server-owned Retell call bindings, per-call language selection, context refresh, and disconnect recovery |
+| `diza_analysis/relay/voice_config.py` | Dedicated RelayLA prompt, five custom tools, and provider retention settings |
+| `diza_analysis/relay_web/` | Responsive coordinator and resident UI, EN/ES copy, IndexedDB drafts, service worker |
+| `client/` | Pinned Retell SDK build, formatting, lockfile, and Playwright browser tests |
+| `scripts/serve_relay.py` | Isolated localhost preview with explicit synthetic demo option |
+| `scripts/configure_relay_voice.py` | Dry-run configuration and new-agent creation after deployed health verification |
+| `tests_relay/` | Domain/API, signature, concurrency, versioning, privacy, and mocked voice recovery tests |
+| `deploy/` | Dockerfile, restricted build context, Railway config, activation instructions, and rollback |
+| `diza_analysis/live.py`, `live_store.py`, `web/`, `tests_live/` | Composed entry point and retained legacy consent-aware analytics |
+| `diza_analysis/triage.py`, `zones.py`, `privacy.py`, `metrics.py`, `evaluation.py` | Original deterministic analysis functionality |
+| `diza_analysis/datasets.py`, `sources.py`, `storage.py`, `timeutil.py` | Synthetic fixtures, MyLA311/ACS sources, read-only legacy adapter, UTC normalization |
+| `diza_analysis/cli.py`, `__main__.py`, `__init__.py`, `config.py`, `config/`, `evals/`, `tests/` | Core CLI, settings, lexicon, illustrative profiles, golden evaluation, and tests |
+| `scripts/check_backend.py` | Original backend tests isolated in subprocesses, with external backfill/geocoding mocked |
+| `README.md`, `pyproject.toml`, `.gitignore` | Setup, demo, contracts, dependency metadata, and local output exclusions |
 
 ## Decisions made
 
-1. Keep all committed files inside this session to comply with AGENTS.md; do not alter CS#1 or CS#2 code.
-2. Preserve the handoff's function names while injecting record collections as keyword-only arguments for pure, deterministic tests.
-3. Use standard-library Python and JSON config so core analysis works without model downloads, API credentials, or a live service.
-4. Preserve every P0 lexical hit and existing severity floor, and return no helper pools or responder candidates for P0.
-5. Require verified, available, appropriately skilled responders before applying language/load/fatigue scores.
-6. Count distinct callers with location agreement; one caller cannot form a density cluster by repeatedly reporting.
-7. Automatically suggest only WATCH/ASK, retain existing escalated levels, and require a human for crisis declaration and stand-down.
-8. Separate synthetic fixtures, classifier performance, observed agent safety, and missing instrumentation explicitly.
-9. Require actual observations for all golden cases before the evaluation CLI can authorize a publish decision.
-10. Drop free text from exported analytical rows and require consent, keyed pseudonyms, verification, delay, and at least five people per public cell.
-11. Treat the old SQLite last-four-digit identity as insufficient for consent joins; unknown consent remains excluded.
-12. Do not apply MyLA311 service-request volumes as if they measured voice-call traffic.
+1. Implement the user's RelayLA brief as the current product direction, using one community center and pickup-location changes.
+2. Keep every committed change in this session; read other sessions as dependencies without editing their source.
+3. Serve RelayLA at `/`, `/ops`, and `/relay`, with private resident links at `/respond/<record-id>#<capability>`.
+4. Preserve approved EN/ES notice text and title by immutable version; do not copy old acknowledgments into a new version.
+5. Record a resident's specific response as caller confirmation, without claiming comprehension or safety.
+6. Preserve a stable resident/notice record across voice, text, disconnects, and updates.
+7. Keep assistance independent from instruction confirmation; create a task only after confirmed readback, then require explicit acceptance and completion.
+8. Use SQLite transactions, unique constraints, request receipts, expected notice versions, and assistance revisions to handle retries and competing coordinators.
+9. Store offline drafts and queued original-version payloads in IndexedDB; label them Not sent until acknowledged by the server.
+10. Cache only the resident form shell for offline navigation; protected APIs are never cached by the service worker.
+11. Bind voice functions to server-created calls, verify Retell's original raw signature, and never trust a browser-supplied record ID in provider callbacks.
+12. Bundle Retell SDK 3.0.2 with a server proxy; browser code receives short-lived session credentials only.
+13. Prepare a dedicated RelayLA agent without modifying existing DIZA phone agents or initiating calls.
+14. Disable legacy dispatch, geocoding, and provider-wide call-backfill workers by default for this new product; preserve their explicit legacy opt-in.
+15. Seed synthetic residents only on an explicit demo action; do not silently enroll existing real callers.
+16. Preserve the existing SQLite volume, including its generated resident-link signing secret, during deployment and rollback.
+17. Update the existing open PR #13 around the final RelayLA scope, then require the repository's teammate review before merging.
 
 ## Key facts verified
 
-- The DS handoff requests triage, synthetic data, responder matching, corroboration, golden evals, privacy processing, and metric snapshots.
-  Source: `sessions/planning-claude/handoff/03_DS_TRIAGE_DATA_EVALS.md` and `00_CONTRACTS.md`.
-- The conservative P0 policy, three/six-caller WATCH/ASK thresholds, and human declaration come from `sessions/planning-claude/TRIAGE.md`.
-- Consent and public k >= 5 rules come from `sessions/planning-claude/SYSTEM_SPEC.md` section 2.7.
-- The deployed app's SQLite `calls` table has caller last four digits and no direct consent/zone/outcome/quality linkage.
-  Source: `sessions/cs2-backend/mvp/backend/app/main.py` and `retell_fns.py`, read at `da67553`.
-- The [MyLA311 2025 resource](https://data.lacity.org/resource/h73f-gn57.json) has `srnumber`, `createddate`, `requesttype`, `latitude`, and `longitude`.
-  Verified through its live endpoint on October 17, 2026, including a successful one-day baseline fetch.
-- [ACS B16001](https://api.census.gov/data/2024/acs/acs5/groups/B16001.html) identifies the language categories and [B01001](https://api.census.gov/data/2024/acs/acs5/groups/B01001.html) supplies age groups.
-  The live Census data query returned a `Missing Key` HTML page without credentials; the loader now supports `CENSUS_API_KEY` and a clear missing-key error.
-- The demo deterministically generates 500 residents, 10 responders, and 200 calls with the specified 60/25/10/5 drill mix and 30% non-English cards.
-- The 40-case classifier evaluation passes, including nine expected P0 labels when counting the severity-floor compliance case.
-  This is synthetic classifier evidence and does not establish live agent safety.
-- All 54 analysis tests pass and Ruff lint/format checks pass.
-- All 31 existing backend tests pass when their conflicting module-level environments are isolated with `scripts/check_backend.py`.
-  The existing dashboard also builds successfully in a disposable copy.
+- The detailed RelayLA brief was supplied directly by the user in this conversation.
+- [Retell web-call documentation](https://docs.retellai.com/deploy/web-call) and the installed [SDK source](https://github.com/RetellAI/retell-client-js-sdk) support browser calls through `RetellClient`, a custom server fetch proxy, and per-session hooks.
+  The installed SDK invokes `/v3/create-web-call`; the backend forwards the returned transport fields.
+- [Retell custom functions](https://docs.retellai.com/build/single-multi-prompt/custom-function) call the backend during a conversation, enabling progress persistence before call end.
+  Server-side signature and call binding checks are exercised by tests.
+- [Retell language configuration](https://docs.retellai.com/agent/language) supports the explicit English/Spanish call configuration used here.
+- Twenty-six RelayLA API/domain tests pass, including stale responses, preserved notice titles/text, clarification, consent, duplicate retries, task ownership, concurrent updates, signatures, and mocked voice reconnects.
+- Four real Chromium browser tests pass: Spanish confirmation and assistance through a revision, offline draft reload and original-version synchronization, mobile coordinator follow-up, and retry after a lost successful server response.
+- Browser screenshots were visually inspected at desktop and mobile sizes.
+  The mobile coordinator now uses resident cards so names, instruction status, assistance, and actions remain visible together.
+- All 54 original analysis tests, 14 legacy integration tests, and 36 native backend tests pass.
+  The native test runner preserves the original dashboard assertion; the replacement RelayLA UI is tested separately.
+- Ruff lint/format checks, client formatting checks, and whitespace checks pass.
+- The production Docker image builds with the real bundled SDK and serves RelayLA pages, static assets, signed-function routes, protected APIs, and health over HTTP.
+  A disposable container successfully saved a Spanish confirmation and assistance request, then retried without duplicating the task.
+- The public `/health/relay` URL currently returns the old app's HTML fallback, not RelayLA health JSON.
+  This confirms that the new product is not yet deployed.
+- Railway discovery still reports the app as not installed.
+  The user selected connecting Railway for deployment; installation and account sign-in remain user-side steps.
+- The original DS handoff, conservative triage policy, consent restrictions, and small-cell public privacy rules remain documented in `sessions/planning-claude/handoff/`, `TRIAGE.md`, and `SYSTEM_SPEC.md`.
+- PR #9 was merged at `ff7c720`; PR #13 remains the release PR for this session.
 
 ## Open questions
 
-- Which reviewed tract-to-zone mappings and official polygons should replace the illustrative demo profiles?
-- Where will the host persist explicit per-call analytics consent, verified zone, human acceptance timestamps, and quality labels?
-- Which teammate owns wiring these package calls into the backend transaction flow after review?
+- Which teammate will provide the required code review for the repurposed app?
+- When will Railway installation and account connection be completed so the existing service settings can be applied?
+- Which available Retell voice should be used for the final live browser rehearsal?
+- What exact kickoff twist or mystery problem should replace the synthetic pickup scenario, if different from the supplied brief?
 
 ## Not done yet
 
-- No live backend behavior, dashboard, shared config, agent deployment, or other session folder was changed.
-- No live callers, Retell simulations, clinical validation, or forty-label human/judge calibration were run.
-- No automatic official-feed polling, Supabase migration, embeddings/topic model, semantic answer cache, acoustic inference, or photo processing is included.
-- Census live demographic data requires credentials; defaults remain explicitly illustrative rather than claimed as Census-derived.
-- Internal snapshots must remain private; public output uses cell suppression and does not provide differential privacy across repeated releases.
-- PR review by a teammate is required before merging this code change.
+- Production is not running this PR; the public URL still serves the preceding DIZA app.
+- No dedicated RelayLA Retell agent has been created remotely and no real human voice conversation has been run.
+  The setup script and signed voice persistence path are ready, with provider calls mocked in automated tests.
+- Telephone provisioning, two-way SMS, automated bulk outreach, unrestricted language detection, and transport optimization are outside this MVP.
+- No real residents, personal phone numbers, provider keys, `.env` files, browser test traces, or generated SDK bundle are committed.
+- The shared-token coordinator workflow does not yet provide individual accounts or multi-organization tenancy.
+- Original Census live queries still require credentials; illustrative demographic profiles remain labeled as such.
+- Production activation requires the teammate review and access to the existing Railway service, followed by a dedicated voice-agent configuration and a consenting browser rehearsal.

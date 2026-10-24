@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>RelayLA | Your next step</title>
+    <link rel="stylesheet" href="/relay/assets/relay.css" />
+    <script type="module" src="/relay/assets/resident.js"></script>
+  </head>
+  <body class="resident-page">
+    <header class="resident-header">
+      <a class="brand" href="/respond"
+        ><span class="brand-mark">r</span>Relay<span class="brand-la"
+          >LA</span
+        ></a
+      >
+      <div class="segmented" aria-label="Choose language">
+        <button id="lang-en" aria-pressed="true">English</button
+        ><button id="lang-es" aria-pressed="false">Español</button>
+      </div>
+    </header>
+    <main class="resident-main">
+      <p class="eyebrow" id="resident-eyebrow">
+        YOUR COMMUNITY. YOUR NEXT STEP.
+      </p>
+      <h1 id="greeting">Let’s make the next step clear.</h1>
+      <p id="resident-intro" class="lead">
+        Confirm the instruction and let your coordinator know if you need a
+        hand.
+      </p>
+      <div
+        id="resident-message"
+        class="message"
+        role="status"
+        aria-live="polite"
+      >
+        Loading your notice…
+      </div>
+      <div id="resident-content" hidden>
+        <section class="panel resident-notice">
+          <div class="notice-kicker">
+            <span class="live-mark"></span
+            ><span id="approved-label">APPROVED COMMUNITY NOTICE</span
+            ><span id="resident-version" class="version-pill"></span>
+          </div>
+          <h2 id="resident-notice-title"></h2>
+          <p id="resident-notice-text" class="notice-copy"></p>
+          <p id="resident-scenario" class="scenario-tag" hidden>
+            SCENARIO DATA · SYNTHETIC RESIDENT
+          </p>
+        </section>
+        <section class="panel voice-panel">
+          <div>
+            <h2 id="voice-heading">Prefer to talk it through?</h2>
+            <p id="voice-copy">
+              Speak with RelayLA in English or Spanish. Your saved progress
+              stays with this record.
+            </p>
+          </div>
+          <label class="checkbox-label"
+            ><input id="voice-consent" type="checkbox" /><span
+              id="voice-consent-label"
+              >I agree to start a voice conversation. It may be recorded by the
+              service.</span
+            ></label
+          >
+          <div class="button-row">
+            <button id="start-voice" class="button primary">
+              Start voice conversation</button
+            ><button id="end-voice" class="button secondary" hidden>
+              End conversation</button
+            ><span id="voice-status" role="status"></span>
+          </div>
+        </section>
+        <section class="panel response-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow" id="text-eyebrow">OR RESPOND HERE</p>
+              <h2 id="response-heading">
+                A short response makes a difference.
+              </h2>
+            </div>
+            <span id="draft-status" class="draft-status">Not sent</span>
+          </div>
+          <form id="response-form">
+            <label
+              ><span id="step-question">Which entrance will you use?</span
+              ><input
+                id="next-step"
+                name="next_step"
+                maxlength="500"
+                placeholder="I’ll use the north entrance" /></label
+            ><label class="checkbox-label"
+              ><input id="clarification" type="checkbox" /><span
+                id="clarification-label"
+                >I need someone to clarify this instruction.</span
+              ></label
+            >
+            <fieldset class="assistance-options">
+              <legend id="assistance-question">
+                Do you need help getting to the pickup point?
+              </legend>
+              <label
+                ><input type="radio" name="assistance" value="no" /><span
+                  id="assistance-no"
+                  >No assistance needed</span
+                ></label
+              ><label
+                ><input type="radio" name="assistance" value="yes" /><span
+                  id="assistance-yes"
+                  >Yes, I need a hand</span
+                ></label
+              >
+            </fieldset>
+            <div id="assistance-fields" hidden>
+              <label
+                ><span id="assistance-details-label">What would help?</span
+                ><textarea
+                  id="assistance-details"
+                  maxlength="1000"
+                  placeholder="I use a walker and need help reaching the entrance."
+                ></textarea>
+              </label>
+              <div class="readback">
+                <strong id="readback-label">Your assistance request</strong>
+                <p id="readback"></p>
+                <label class="checkbox-label"
+                  ><input id="confirm-assistance" type="checkbox" /><span
+                    id="confirm-assistance-label"
+                    >That matches the help I need.</span
+                  ></label
+                >
+              </div>
+            </div>
+            <p id="offline-explanation" class="form-note">
+              Your draft stays on this device until it reaches the server. A
+              local draft is not a sent response.
+            </p>
+            <div class="button-row">
+              <button type="submit" id="send-response" class="button primary">
+                Save my response</button
+              ><button type="button" id="save-draft" class="button secondary">
+                Save progress
+              </button>
+            </div>
+          </form>
+        </section>
+        <section
+          id="saved-summary"
+          class="panel saved-summary"
+          hidden
+        ></section>
+        <footer id="resident-footer">
+          Your instruction confirmation and assistance request are separate. A
+          coordinator must accept a request before anyone owns it.
+        </footer>
+      </div>
+    </main>
+  </body>
+</html>

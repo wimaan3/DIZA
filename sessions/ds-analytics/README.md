@@ -1,8 +1,99 @@
-# DIZA data analysis
+# RelayLA: versioned community notice follow-up
+
+RelayLA answers: **Who has confirmed the latest instructions, and who still needs a person to follow up?**
+The initial customer is Maple Community Center, with an opt-in roster and one workflow: shuttle pickup-location changes and help reaching the pickup point.
+The coordinator dashboard lives at `/ops`; private resident links open an English/Spanish form and optional Retell browser voice conversation.
+All committed implementation files stay inside this session folder.
+
+## Run RelayLA locally
+
+```sh
+python3 -m venv sessions/ds-analytics/.venv
+sessions/ds-analytics/.venv/bin/python -m pip install \
+  -r sessions/cs2-backend/mvp/backend/requirements.txt \
+  -e 'sessions/ds-analytics[web]'
+npm --prefix sessions/ds-analytics/client ci
+npm --prefix sessions/ds-analytics/client run build
+cp sessions/ds-analytics/client/dist/voice-sdk.js \
+  sessions/ds-analytics/diza_analysis/relay_web/voice-sdk.js
+sessions/ds-analytics/.venv/bin/python sessions/ds-analytics/scripts/serve_relay.py --demo
+```
+
+Open http://127.0.0.1:18772/ops and enter `relay-demo-local`, or your existing `OPS_API_TOKEN` environment value if set.
+The preview binds to localhost and uses `artifacts/relay-preview.sqlite3`, without reading the repository `.env`.
+`--demo` explicitly adds four synthetic residents only when the preview has no notices.
+Production never seeds this scenario automatically.
+Use `--ephemeral --demo` for a disposable rehearsal database.
+
+1. Open Marisol's record and choose **Open response form**.
+2. In Spanish, enter `Usaré la entrada norte`, describe help reaching the entrance, confirm the readback, and save.
+3. Watch the dashboard record the instruction confirmation and a separate assistance request awaiting an owner.
+4. Revise both approved language versions to the east entrance, updating the expected next steps to `east entrance` and `entrada este`.
+5. The earlier confirmation stays in the history, while the latest instruction becomes unconfirmed.
+6. Confirm the east entrance from the resident link, then accept and complete the assistance task as the named coordinator.
+
+## Persistence and recovery
+
+| Situation | Result |
+|---|---|
+| A notice is revised | A new immutable version and follow-up are created; earlier confirmations and open assistance remain |
+| A stale form or call submits | The answer is saved against the delivered version; the latest notice still needs confirmation |
+| A submission times out after the server saves it | The browser retries the same request key; no duplicate task or confirmation event is created |
+| A call disconnects | Confirmed details and assistance drafts remain in the same resident/notice record |
+| A resident requests assistance | The description is saved as a draft, then a task is created only after explicit readback confirmation |
+| A coordinator accepts help | The task records that owner; only the accepting name can record completion |
+| A resident reports uncertainty | Instruction clarification remains pending for a person |
+| A previously loaded form goes offline | IndexedDB retains the draft and original notice version; the service worker can reload the form shell |
+| An offline response is queued | It stays labeled Not sent until the server acknowledges it, then synchronizes when online |
+
+Instruction confirmation requires a specific expected next step, rather than a generic yes.
+The phrase check rejects common negation and uncertainty; it is not a comprehension or safety assessment.
+Voice and text use the same transactional store, with one record per resident/notice and one assistance task per record.
+SQLite write transactions, request receipts, expected notice versions, and assistance revision checks protect concurrent updates.
+Resident access uses private per-record capability links; the signing secret persists in the attached database volume.
+Operator APIs require the existing `OPS_API_TOKEN`; private responses have `Cache-Control: no-store`.
+Only the resident form shell, their own notice context, and their draft are retained for offline use.
+
+## Browser voice
+
+Set server-side `RETELL_API_KEY` and `RELAY_RETELL_AGENT_ID` to enable the voice button.
+The browser receives only a short-lived session token, through Retell's bundled Web SDK 3.0.2.
+A server-owned call binding determines which record a signed Retell function may access.
+Functions use the original raw request signature, persist individual answers during a call, and return current notice context after each mutation.
+An old call can save its old-version response but must fetch current context before confirming a newer version.
+
+The dedicated agent prompt and five custom tools are generated from `relay/voice_config.py`.
+The setup script previews its full configuration by default and creates a new agent only with `--apply`, after verifying the deployed `/health/relay` endpoint.
+It does not edit the existing DIZA phone agents, initiate calls, purchase numbers, or send messages.
+See [deployment instructions](deploy/DEPLOY.md) for the activation sequence.
+
+Provider calls are mocked in automated tests; no live human voice conversation has been claimed as tested.
+Browser microphone access needs HTTPS or localhost, and cloud voice requires connectivity.
+Telephone calls, two-way SMS, bulk calling, language detection, and transport optimization remain outside this prototype.
+The current workspace uses one shared operator token and typed coordinator names; account-level identity and multi-organization tenancy are future work.
+Repeating an unchanged completed assistance request does not reopen it; a newly confirmed description can reopen the same task with a new revision.
+
+## Validate RelayLA
+
+```sh
+sessions/ds-analytics/.venv/bin/python -m unittest discover \
+  -s sessions/ds-analytics/tests_relay -v
+sessions/ds-analytics/.venv/bin/python -m unittest discover \
+  -s sessions/ds-analytics/tests_live -v
+npm --prefix sessions/ds-analytics/client run check
+```
+
+Run `PLAYWRIGHT_BROWSERS_PATH=../artifacts/playwright npx playwright install chromium` and `PLAYWRIGHT_BROWSERS_PATH=../artifacts/playwright npm test` from `sessions/ds-analytics/client`.
+The browser tests launch their own disposable server, use no provider key, and cover the Spanish workflow, notice revisions, assistance ownership, offline reload/synchronization, lost-response retries, and mobile layouts.
+Screenshots are written to ignored `artifacts/relay-*.png`; Playwright traces and failure screenshots stay in ignored test output.
+Build the production image from the repository root with `docker build -f sessions/ds-analytics/deploy/Dockerfile -t relayla:local .`.
+
+## Existing DIZA analysis package
 
 An installable Python package for triage, responder ranking, corroboration, evaluation, and call metrics.
-Python 3.11 or newer is required; runtime dependencies are all from the standard library.
+Python 3.11 or newer is required; the core analysis CLI uses only the standard library.
 The package stays in this session's folder to honor the repository's session isolation rule.
+These analysis utilities remain available alongside the repurposed RelayLA application.
 
 Implemented:
 
@@ -13,6 +104,7 @@ Implemented:
 - Forty golden cases, deterministic evaluation, agent-observation safety gates, failure mining, reach metrics, and judge agreement.
 - Consent-aware pseudonymization, internal metric snapshots, and delayed public aggregates with at least five distinct contributors per cell.
 - Read-only access to the deployed SQLite schema, a MyLA311 baseline loader, and a Census ACS language/age profile loader.
+- An optional deployment wrapper, protected live analytics API/page, and additive consent linkage for accepted Retell events.
 
 ## Run from the repository root
 
@@ -67,7 +159,10 @@ Calling these functions does not change a database or declare a crisis.
 
 The functions add keyword-only record inputs to the handoff signatures so they remain pure and independently testable.
 Config is versioned JSON rather than YAML to keep installation dependency-free.
-The host application is not modified or automatically wired to these functions by this PR.
+The `diza_analysis.live:create_app` entry point serves RelayLA and retains the original backend API and optional analytics routes.
+Legacy dispatch, geocoding, and provider-wide call-backfill workers are disabled by default for RelayLA.
+An explicit `RELAY_LEGACY_WORKERS=true` restores the original background lifecycle when operating the legacy product.
+See [deploy/DEPLOY.md](deploy/DEPLOY.md) for the concrete container, Railway settings, validation, and rollback procedure.
 
 ## Analyze operational records
 
@@ -163,5 +258,9 @@ For backend compatibility, copy `sessions/cs2-backend/mvp` into this session's i
 Then run `python sessions/ds-analytics/scripts/check_backend.py sessions/ds-analytics/artifacts/backend-compat` using that virtual environment.
 The runner isolates test modules because their import-time environment changes otherwise mix live and simulation settings, and mocks Retell backfill and external geocoding by default to avoid provider calls.
 Individual tests can supply their own geocoding mock.
+The runner validates the original backend, including its original dashboard assertion.
+RelayLA's intentional replacement of `/ops` is covered by `tests_relay/` and the real browser tests.
+The additional `tests_live/` suite verifies additive startup, original signature checks, API authentication, consent revocation, privacy, and caller-only transcript evidence.
 
-Live backend wiring, official feed polling, reviewed production polygons, real caller collection, Supabase analytics migrations, embedding-based topic discovery/answer caching, acoustic models, and real agent/judge runs remain separate integration work.
+Production activation requires a reviewed integration PR and access to the existing Railway service.
+Official feed polling, reviewed production polygons, Supabase analytics migrations, embedding-based topic discovery/answer caching, acoustic models, automatic routing using the DS ranker, and real agent/judge runs remain separate integration work.
