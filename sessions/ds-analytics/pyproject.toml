@@ -9,11 +9,14 @@ description = "Deterministic triage and consent-aware analysis for DIZA"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+hotel = ["fastapi==0.143.3", "uvicorn==0.54.0", "httpx==0.28.1"]
+
 [project.scripts]
 diza-analysis = "diza_analysis.cli:main"
 
 [tool.setuptools.package-data]
-diza_analysis = ["config/*.json", "evals/*.json"]
+diza_analysis = ["config/*.json", "evals/*.json", "hotel/*.sql", "hotel_web/*.html", "hotel_web/*.css", "hotel_web/*.js"]
 
 [tool.setuptools.packages.find]
 include = ["diza_analysis*"]
