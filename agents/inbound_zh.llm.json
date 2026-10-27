@@ -37,7 +37,7 @@
     "is_registered": "false",
     "drill_mode": "false",
     "line_name": "${LINE_NAME}",
-    "recording_notice": "本通话将被录音，用于南加州大学学生项目。",
+    "recording_notice": "本通话将被录音，用于学生黑客马拉松项目。",
     "crisis_line_number": "${CRISIS_LINE_NUMBER}",
     "oncall_number": "",
     "responder_name": "",

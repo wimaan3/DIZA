@@ -25,7 +25,7 @@ import sys
 from retell_api import AGENTS_DIR, RetellError, call, items, load_dotenv, load_ids
 
 LOCALES = {"ko": "ko-KR", "zh": "zh-CN", "hy": "hy-AM", "tl": "fil-PH"}  # en/es use the agent's own languages
-DRILL_PREFIX = {"en": "This is a drill for a USC student project. ", "es": "Esto es un simulacro de un proyecto estudiantil de USC. "}
+DRILL_PREFIX = {"en": "This is a drill for a student hackathon project. ", "es": "Esto es un simulacro de un proyecto estudiantil de hackathon. "}
 INTRO = {"en": "Hi {name}, this is the DIZA Community Line with an urgent safety message for {zone}.",
          "es": "Hola {name}, le llama la Línea Comunitaria DIZA con un mensaje urgente de seguridad para {zone}."}
 

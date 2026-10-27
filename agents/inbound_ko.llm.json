@@ -37,7 +37,7 @@
     "is_registered": "false",
     "drill_mode": "false",
     "line_name": "${LINE_NAME}",
-    "recording_notice": "이 통화는 USC 학생 프로젝트를 위해 녹음됩니다.",
+    "recording_notice": "이 통화는 학생 해커톤 프로젝트를 위해 녹음됩니다.",
     "crisis_line_number": "${CRISIS_LINE_NUMBER}",
     "oncall_number": "",
     "responder_name": "",

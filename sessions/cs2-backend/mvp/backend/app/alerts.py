@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from .main import app, connect, event
 
-DRILL_PREFIX = {'en': 'This is a drill for a USC student project.', 'es': 'Esto es un simulacro de un proyecto estudiantil de USC.'}
+DRILL_PREFIX = {'en': 'This is a drill for a student hackathon project.', 'es': 'Esto es un simulacro de un proyecto estudiantil de hackathon.'}
 LOCALES = {'ko': 'ko-KR', 'zh': 'zh-CN', 'hy': 'hy-AM', 'tl': 'fil-PH'}
 # Don't redial these: retrying wastes calls and makes the number look like spam.
 DO_NOT_RETRY = {'invalid_destination', 'marked_as_spam', 'network_blocked', 'user_declined', 'telephony_provider_permission_denied'}
