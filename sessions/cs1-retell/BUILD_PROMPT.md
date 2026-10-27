@@ -8,7 +8,7 @@ You are the single build agent for team DIZA (USC InnovateLA hackathon, Resilien
 
 ## 0. Read first (in this order), then summarize back what you learned in 10 lines before coding
 1. `AGENTS.md` (repo rules: write in your own `sessions/<name>/` folder for notes, PRs to `main`, no secrets, never push directly to `main`).
-2. `sources/participant-hub-gdoc.txt` and `sources/README.md`: judging criteria, track brief, deliverables, deadlines.
+2. `sources/README.md` (the hub export was removed): judging criteria, track brief, deliverables, deadlines.
 3. The proposal doc's final section, mirrored in `sessions/cs1-retell/PITCH.md` and `sessions/cs1-retell/REFOCUS.md`. The **final direction is in section 1 below** and wins over older text.
 4. Research (sources for every number we pitch):
    - `sessions/cs1-retell/research/OPERATOR_WORKFLOW.md`: 911 workflow, bottlenecks, LA fire findings

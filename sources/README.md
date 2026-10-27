@@ -4,7 +4,7 @@ Use these as ground truth. Don't edit them; add new sources as new files.
 
 | File / link | What it is |
 |---|---|
-| `participant-hub-gdoc.txt` | Plain-text export of the Participant Hub Google Doc: all 3 tabs (All information, Past Announcements, Problem Statement), as of Fri Oct 16 evening |
+| ~~`participant-hub-gdoc.txt`~~ | Removed 2026-10-27 (it held organizers' internal contact details). Use the live Participant Hub link below |
 | [Participant Hub (Google Doc)](https://docs.google.com/document/d/1a6SQQuvQJoI5g6YQUjzOVkruyOI94UwS-c1Wbrz-dsY/edit) | Live version: twists and updates may land here |
 | [Kickoff deck (Google Slides)](https://docs.google.com/presentation/d/1OfEJ04CogX7IIZfFd0Ne7B1Un-zJ9Wm7ogd-Vr89yDk/edit) | Kickoff slides (summary below) |
 | [Roster PDF](https://drive.google.com/file/d/1HEKCtwUqAWDQ-jP3dlKNIiBkeB7EZxFo/view) | Judges + mentors (summary below) |
