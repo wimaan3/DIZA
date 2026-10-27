@@ -315,7 +315,7 @@ Goal: **no busy signals, short calls, and humans only see the top slice.**
    - triage accuracy vs. the scenario cards
 
 **Non-negotiable safeguards (real students means real duty of care):**
-- **Recording consent.** California is an all-party-consent state for recording (Penal Code 632). On *this test line*, the greeting must include one short line: "This call is recorded for a USC student project." That's a legal requirement here, separate from our no-AI-disclaimer choice for the production crisis greeting.
+- **Recording consent.** California is an all-party-consent state for recording (Penal Code 632). On *this test line*, the greeting must include one short line: "This call is recorded for a student hackathon project." That's a legal requirement here, separate from our no-AI-disclaimer choice for the production crisis greeting.
 - **Real emergencies never go to a student volunteer.**
   - Self-harm, assault, medical emergency or danger right now → the agent immediately gives **911**, **988** (Suicide & Crisis Lifeline) and **USC Counseling (24/7 line, verify the number before the drill)**, and offers a warm transfer to 988.
   - The prompt enforces this, and so does a backend keyword rule.

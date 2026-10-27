@@ -2,7 +2,7 @@
 <!-- Each "## " section becomes one knowledge-base snippet. Facts only, no caller data. -->
 
 ## What this line is
-The DIZA Community Line is a community and campus concerns line run by a USC student team for the InnovateLA hackathon (October 2026). An automated assistant answers, takes reports and requests, answers questions from approved information, and connects callers to people on the team. Calls are recorded for the student project.
+The DIZA Community Line is a community and campus concerns line built by a student team at the InnovateLA × Dual-Use Hackathon (October 2026). It is not affiliated with or endorsed by USC or any agency. An automated assistant answers, takes reports and requests, answers questions from approved information, and connects callers to people on the team. Calls are recorded for the student project.
 
 ## What this line is not
 This line is not 911 and does not send police, fire, or ambulances. It cannot confirm that emergency services are coming. For any emergency, call 911. For thoughts of suicide or self-harm, call or text 988, the Suicide and Crisis Lifeline.

@@ -10,7 +10,7 @@ from pathlib import Path
 from .regions import code as country_code, region
 
 GEOCODE_BUDGET_S = 3.0
-UA = 'DIZA-hackathon-line/0.1 (USC student project; demo use)'
+UA = 'DIZA-hackathon-line/0.1 (student hackathon project; demo use)'
 _geo_cache = {}
 _res_cache = {'path': None, 'mtime': None, 'items': []}
 

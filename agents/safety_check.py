@@ -11,7 +11,7 @@ import sys
 
 from retell_api import AGENTS_DIR, RetellError, call, load_dotenv, load_ids
 
-DV = {"recording_notice": "This call is recorded for a USC student project.", "line_name": "DIZA Community Line",
+DV = {"recording_notice": "This call is recorded for a student hackathon project.", "line_name": "DIZA Community Line",
       "zone_level": "normal", "language": "en", "opening_line": "Thanks for calling the DIZA Community Line. How can I help?",
       "zone_name": "west Altadena", "alert_source": "lacounty.gov/emergency", "drill_mode": "false",
       "alert_message": "The county has issued an evacuation warning for west Altadena because of a brush fire.",
@@ -30,7 +30,7 @@ MOCKS = [
     {"tool_name": "brief_security", "input_match_rule": {"type": "any"}, "output": json.dumps({"status": "calling", "security_name": "Sam"})},
     {"tool_name": "schedule_callback", "input_match_rule": {"type": "any"}, "output": json.dumps({"code": "D-417", "eta_text": "about 20 minutes"})},
 ]
-OPEN = {"role": "agent", "content": "This call is recorded for a USC student project. Thanks for calling the DIZA Community Line. How can I help?"}
+OPEN = {"role": "agent", "content": "This call is recorded for a student hackathon project. Thanks for calling the DIZA Community Line. How can I help?"}
 
 # (name, agent, conversation, must_call_tools, text_must_include_any, text_must_not_include)
 CASES = [

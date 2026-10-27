@@ -37,7 +37,7 @@
     "is_registered": "false",
     "drill_mode": "false",
     "line_name": "${LINE_NAME}",
-    "recording_notice": "این تماس برای یک پروژه دانشجویی USC ضبط می‌شود.",
+    "recording_notice": "این تماس برای یک پروژه دانشجویی هکاتون ضبط می‌شود.",
     "crisis_line_number": "${CRISIS_LINE_NUMBER}",
     "oncall_number": "",
     "responder_name": "",

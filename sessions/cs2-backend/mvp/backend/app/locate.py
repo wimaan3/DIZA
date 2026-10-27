@@ -52,7 +52,7 @@ h1{font-size:24px;margin:8px 0 12px}p{line-height:1.55;font-size:15px;color:#4d5
 <p>Tap the button and allow location. Your position is sent once to the DIZA team for this call so we can find you on our map. Nothing else on your phone is shared.</p>
 <button id="b">Share my location</button><div id="s" class="box">%STATUS%</div>
 <div class="box warn"><b>In danger right now?</b> Call %EMERGENCY%. DIZA cannot send police, fire or an ambulance.</div>
-<p><small>Link expires 30 minutes after it was sent. USC student project; drill use.</small></p></main>
+<p><small>Link expires 30 minutes after it was sent. Student hackathon project; drill use.</small></p></main>
 <script>
 const s=document.getElementById('s'),b=document.getElementById('b');
 b.onclick=()=>{if(!navigator.geolocation){s.textContent='This browser cannot share location. Tell the agent your cross streets or a landmark instead.';return}

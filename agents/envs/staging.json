@@ -5,7 +5,7 @@
   "values": {
     "BASE_URL": "${PUBLIC_BASE_URL}",
     "LINE_NAME": "DIZA Community Line",
-    "RECORDING_NOTICE": "This call is recorded for a USC student project.",
+    "RECORDING_NOTICE": "This call is recorded for a student hackathon project.",
     "CRISIS_LINE_NUMBER": "${STAGING_CRISIS_LINE_NUMBER}"
   }
 }

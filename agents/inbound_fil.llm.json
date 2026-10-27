@@ -37,7 +37,7 @@
     "is_registered": "false",
     "drill_mode": "false",
     "line_name": "${LINE_NAME}",
-    "recording_notice": "Ang tawag na ito ay nire-record para sa isang USC student project.",
+    "recording_notice": "Ang tawag na ito ay nire-record para sa isang student hackathon project.",
     "crisis_line_number": "${CRISIS_LINE_NUMBER}",
     "oncall_number": "",
     "responder_name": "",

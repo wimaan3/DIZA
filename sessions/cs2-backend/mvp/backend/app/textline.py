@@ -68,7 +68,7 @@ header{background:#153f32;color:#fff;padding:14px 16px}header b{font-size:17px}h
 .m{max-width:82%;padding:10px 13px;border-radius:14px;font-size:15px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}.a{background:#fff;border:1px solid #e0e5dc;align-self:flex-start}.u{background:#22553e;color:#fff;align-self:flex-end}
 .a a{color:#22553e}form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #e0e5dc;background:#fff}input{flex:1;font-size:16px;padding:12px;border:1px solid #dce4d4;border-radius:10px}
 button{font-size:16px;padding:0 18px;border:0;border-radius:10px;background:#22553e;color:#fff}button:disabled{opacity:.5}.t{font-size:12px;color:#8b957f;align-self:flex-start}
-</style></head><body><header><b>Text the DIZA Community Line</b><p>Automated assistant · English, Español, 한국어, 中文 · USC student project</p></header>
+</style></head><body><header><b>Text the DIZA Community Line</b><p>Automated assistant · English, Español, 한국어, 中文 · student hackathon project</p></header>
 <div class="warn"><b>In danger right now?</b> Call %EMERGENCY%%TEXT911%. DIZA cannot send police, fire or an ambulance.</div>
 <div id="log" aria-live="polite"><div class="m a">Hi, this is the DIZA Community Line (automated). What's going on? You can write in any language.</div></div>
 <form id="f"><input id="i" placeholder="Type a message" autocomplete="off" aria-label="Message"><button id="b">Send</button></form>

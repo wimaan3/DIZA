@@ -82,7 +82,7 @@ Retell config lives in two places, so keep them in sync:
 - [ ] **Inbound webhook variables:** use `{{zone_level}}`, `{{known_incidents}}`, `{{caller_name}}`, `{{language}}`, `{{drill_mode}}`. The greeting branches:
   - normal: everyday greeting
   - watch/ask/crisis: "If you're calling about {{known_incidents}}: we know…"
-  - **No upfront AI disclaimer in the crisis greeting.** The drill/test line says: "This call is recorded for a USC student project."
+  - **No upfront AI disclaimer in the crisis greeting.** The drill/test line says: "This call is recorded for a student hackathon project."
 - [ ] **Crisis agent + Agent Transfer (`agent_swap`)** both ways; post-call analysis runs on the crisis agent.
 - [ ] **P0 safety path:** on any P0 phrase, call `flag_urgent`, give 911/988, offer a transfer. **Never to volunteers.** Self-harm → offer the 988 transfer.
 - [ ] **`route_to_human`** → warm transfer to `{{oncall_number}}` ("Store Fields as Variables"):
