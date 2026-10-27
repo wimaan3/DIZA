@@ -1,8 +1,8 @@
 # DIZA
 
-InnovateLA × Dual-Use Hackathon (USC, Oct 16–18 2026). **Resilience Comms track (Retell AI).**
+> **Notice:** DIZA was a student hackathon prototype (InnovateLA × Dual-Use Hackathon, October 2026). It is retired and is not an emergency, crisis or 911 service. If you are in an emergency, call 911. For suicide or crisis support in the US, call or text 988. Not affiliated with or endorsed by USC or any agency.
 
-**Live app:** https://diza-production.up.railway.app (911 operations: `/ops` · Building management: `/building`) · **Call the line:** +1 978-915-3497
+InnovateLA × Dual-Use Hackathon (Oct 16–18 2026). **Resilience Comms track (Retell AI).**
 
 A multilingual Retell voice line with two lives:
 - **Ordinary day:** a campus and community concerns line, plus wellness check-ins.
