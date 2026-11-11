@@ -29,7 +29,14 @@ def main():
     failed = []
     for test in sorted((args.mvp_copy / "tests").glob("test_*.py")):
         result = subprocess.run(
-            [sys.executable, "-c", RUNNER, test.name], cwd=args.mvp_copy, timeout=60
+            [
+                sys.executable,
+                "-c",
+                RUNNER,
+                test.name,
+            ],
+            cwd=args.mvp_copy,
+            timeout=60,
         )
         if result.returncode:
             failed.append(test.name)

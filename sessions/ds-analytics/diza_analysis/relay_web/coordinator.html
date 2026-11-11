@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>RelayLA | Community follow-up</title>
+    <link rel="stylesheet" href="/relay/assets/relay.css" />
+    <script type="module" src="/relay/assets/coordinator.js"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/ops"
+        ><span class="brand-mark">r</span>Relay<span class="brand-la"
+          >LA</span
+        ></a
+      >
+      <div class="org">
+        <span class="org-avatar">M</span>
+        <div>
+          <strong>Maple Community Center</strong
+          ><small>Community coordination</small>
+        </div>
+      </div>
+      <nav aria-label="Workspace">
+        <a class="nav-active" href="/ops"><span>◈</span> Notice follow-up</a
+        ><a href="#notice-timeline"><span>▤</span> Notice history</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="side-line"></div>
+        <p class="small-caps">ONE MESSAGE. EVERY PERSON.</p>
+        <p>
+          Knowing the next step and being able to take it are separate things.
+        </p>
+        <span class="powered">Built by DIZA</span>
+      </div>
+    </aside>
+    <main class="workspace">
+      <header class="topbar">
+        <span class="breadcrumb"
+          >Community workspace <span>/</span> Notice follow-up</span
+        >
+        <div class="topbar-right">
+          <span id="connection" class="connection">Connecting</span
+          ><label class="owner-field"
+            >Coordinator
+            <input
+              id="owner"
+              value="Coordinator"
+              maxlength="80"
+              aria-label="Your coordinator name"
+          /></label>
+        </div>
+      </header>
+      <div class="page">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">KEEP THE CONVERSATION GOING</p>
+            <h1>Every update. Every person.</h1>
+            <p class="lead">
+              Who has confirmed the latest instructions, and who still needs a
+              person?
+            </p>
+          </div>
+          <button id="add-resident" class="button secondary" hidden>
+            ＋ Add resident
+          </button>
+        </div>
+        <form id="login" class="panel login" hidden>
+          <div>
+            <h2>Welcome back.</h2>
+            <p>Use your operator token to open the coordination workspace.</p>
+          </div>
+          <label class="sr-only" for="operator-token">Operator token</label
+          ><input
+            id="operator-token"
+            type="password"
+            required
+            autocomplete="current-password"
+            placeholder="Operator token"
+          /><button class="button primary">Open workspace</button>
+        </form>
+        <div
+          id="notice-message"
+          class="message"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
+        <section id="empty" class="panel empty-workspace" hidden>
+          <span class="empty-icon">↗</span>
+          <p class="eyebrow">A SMALL START, A CLEAR NEXT STEP</p>
+          <h2>Bring one important notice to your community.</h2>
+          <p>
+            Publish a pickup notice, collect specific confirmations, and keep
+            assistance requests with the people who need them.
+          </p>
+          <div class="button-row">
+            <button id="load-demo" class="button primary">
+              Try the pickup scenario</button
+            ><button id="create-notice" class="button secondary">
+              Create an approved notice
+            </button>
+          </div>
+          <small
+            >The scenario uses four clearly labeled synthetic residents.</small
+          >
+        </section>
+        <div id="dashboard" hidden>
+          <section id="scenario-banner" class="scenario-banner" hidden>
+            <span>SCENARIO DATA</span>
+            <p>
+              Synthetic residents · Community shuttle pickup · English + Spanish
+            </p>
+            <small>No outbound calls are sent automatically.</small>
+          </section>
+          <section class="panel notice-panel">
+            <div class="notice-main">
+              <div class="notice-kicker">
+                <span class="live-mark"></span> CURRENT APPROVED NOTICE
+                <span id="notice-version" class="version-pill">V1</span>
+              </div>
+              <h2 id="notice-title"></h2>
+              <p id="notice-text" class="notice-copy"></p>
+              <div class="notice-meta">
+                <span id="published-at"></span><span id="published-by"></span>
+              </div>
+            </div>
+            <div class="notice-actions">
+              <div class="segmented" aria-label="Notice language">
+                <button id="notice-en" aria-pressed="true">EN</button
+                ><button id="notice-es" aria-pressed="false">ES</button>
+              </div>
+              <button id="revise-notice" class="button primary">
+                Revise notice <span>↗</span></button
+              ><small>A new version requests a fresh confirmation.</small>
+            </div>
+          </section>
+          <section class="metric-grid" aria-label="Current notice progress">
+            <article class="metric">
+              <div class="metric-label">
+                Latest instruction confirmed
+                <span class="metric-dot teal"></span>
+              </div>
+              <div class="metric-number">
+                <strong id="confirmed-count">0</strong
+                ><span id="resident-total">of 0 residents</span>
+              </div>
+              <div class="meter"><span id="confirmation-meter"></span></div>
+              <small>Caller confirmed the instruction</small>
+            </article>
+            <article class="metric">
+              <div class="metric-label">
+                Updated notice awaiting confirmation
+                <span class="metric-dot amber"></span>
+              </div>
+              <div class="metric-number">
+                <strong id="updated-count">0</strong>
+              </div>
+              <small>Earlier confirmations stay in the history</small>
+            </article>
+            <article class="metric">
+              <div class="metric-label">
+                Assistance awaiting completion
+                <span class="metric-dot coral"></span>
+              </div>
+              <div class="metric-number">
+                <strong id="assistance-count">0</strong>
+              </div>
+              <small>A separate request, with a separate owner</small>
+            </article>
+            <article class="metric">
+              <div class="metric-label">
+                No response yet <span class="metric-dot gray"></span>
+              </div>
+              <div class="metric-number">
+                <strong id="no-response-count">0</strong>
+              </div>
+              <small>Remains open for follow-up</small>
+            </article>
+          </section>
+          <section class="panel people-panel">
+            <div class="section-heading">
+              <div>
+                <h2>
+                  People behind the update
+                  <span id="people-count" class="count-pill">0</span>
+                </h2>
+                <p>Confirmation and assistance are tracked independently.</p>
+              </div>
+              <button id="refresh" class="text-button">↻ Refresh</button>
+            </div>
+            <div class="table-controls">
+              <div
+                class="filter-tabs"
+                role="group"
+                aria-label="Filter residents"
+              >
+                <button data-filter="all" class="selected">Everyone</button
+                ><button data-filter="followup">Needs follow-up</button
+                ><button data-filter="assistance">Assistance</button>
+              </div>
+              <label class="search"
+                ><span>⌕</span
+                ><input
+                  id="search"
+                  placeholder="Find a resident"
+                  type="search"
+                  aria-label="Find a resident"
+              /></label>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Resident</th>
+                    <th>Latest instruction</th>
+                    <th>Assistance</th>
+                    <th>Last contact</th>
+                    <th><span class="sr-only">Details</span></th>
+                  </tr>
+                </thead>
+                <tbody id="people"></tbody>
+              </table>
+            </div>
+            <p id="table-empty" class="empty-text" hidden>
+              No residents match this view.
+            </p>
+          </section>
+          <section id="notice-timeline" class="panel history-panel">
+            <div class="section-heading">
+              <div>
+                <h2>The notice timeline</h2>
+                <p>
+                  Every published version and confirmation remains part of the
+                  record.
+                </p>
+              </div>
+            </div>
+            <div id="versions" class="version-timeline"></div>
+          </section>
+          <footer>
+            RelayLA follows up on your organization’s approved notices.
+            Confirmations are recorded responses, not proof of comprehension or
+            safety.
+          </footer>
+        </div>
+      </div>
+    </main>
+    <dialog id="publish-dialog">
+      <form id="publish-form">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">APPROVED BY YOUR ORGANIZATION</p>
+            <h2 id="publish-title">Publish an updated notice</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button"
+            data-close="publish-dialog"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <p class="dialog-copy">
+          Earlier responses stay with their original version. Everyone will need
+          to confirm the updated instruction.
+        </p>
+        <label
+          >Notice title<input name="title" required maxlength="160"
+        /></label>
+        <div class="language-columns">
+          <fieldset>
+            <legend>English</legend>
+            <label
+              >Approved notice<textarea
+                name="en_text"
+                required
+                maxlength="2000"
+              ></textarea></label
+            ><label
+              >Confirmation question<input name="en_question" required /></label
+            ><label
+              >Expected next step<input
+                name="en_step"
+                required
+                placeholder="east entrance"
+            /></label>
+          </fieldset>
+          <fieldset>
+            <legend>Español</legend>
+            <label
+              >Aviso aprobado<textarea
+                name="es_text"
+                required
+                maxlength="2000"
+              ></textarea></label
+            ><label
+              >Pregunta de confirmación<input
+                name="es_question"
+                required /></label
+            ><label
+              >Próximo paso esperado<input
+                name="es_step"
+                required
+                placeholder="entrada este"
+            /></label>
+          </fieldset>
+        </div>
+        <label
+          >Why did the instruction change?<input
+            name="reason"
+            required
+            placeholder="The north entrance is unavailable" /></label
+        ><label class="checkbox-label"
+          ><input id="publish-approval" type="checkbox" required /> I have
+          reviewed and approved both language versions.</label
+        >
+        <div class="dialog-footer">
+          <button
+            type="button"
+            class="button secondary"
+            data-close="publish-dialog"
+          >
+            Cancel</button
+          ><button class="button primary" id="publish-submit">
+            Publish update
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="resident-dialog">
+      <form id="resident-form">
+        <div class="dialog-heading">
+          <h2>Add an opted-in resident</h2>
+          <button
+            type="button"
+            class="icon-button"
+            data-close="resident-dialog"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <label
+          >Name<input
+            name="name"
+            required
+            minlength="2"
+            maxlength="100" /></label
+        ><label
+          >Preferred language<select name="language">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+          </select></label
+        ><label class="checkbox-label"
+          ><input name="opt_in" type="checkbox" required /> This person has
+          opted in to notice follow-up.</label
+        >
+        <div class="dialog-footer">
+          <button
+            type="button"
+            class="button secondary"
+            data-close="resident-dialog"
+          >
+            Cancel</button
+          ><button class="button primary">Add resident</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="record-dialog" class="record-dialog">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">ONE CONTINUOUS RECORD</p>
+          <h2 id="record-name"></h2>
+        </div>
+        <button
+          class="icon-button"
+          data-close="record-dialog"
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div id="record-body"></div>
+    </dialog>
+  </body>
+</html>

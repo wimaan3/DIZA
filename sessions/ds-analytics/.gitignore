@@ -2,3 +2,6 @@ artifacts/
 *.egg-info/
 build/
 .ruff_cache/
+client/test-results/
+client/playwright-report/
+diza_analysis/relay_web/voice-sdk.js

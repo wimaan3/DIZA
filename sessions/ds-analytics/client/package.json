@@ -1,0 +1,20 @@
+{
+  "name": "relayla-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "playwright test",
+    "format": "prettier --write src tests *.js *.mjs ../diza_analysis/relay_web/*.html ../diza_analysis/relay_web/relay.css ../diza_analysis/relay_web/coordinator.js ../diza_analysis/relay_web/resident.js ../diza_analysis/relay_web/local.js ../diza_analysis/relay_web/sw.js",
+    "check": "prettier --check src tests *.js *.mjs ../diza_analysis/relay_web/*.html ../diza_analysis/relay_web/relay.css ../diza_analysis/relay_web/coordinator.js ../diza_analysis/relay_web/resident.js ../diza_analysis/relay_web/local.js ../diza_analysis/relay_web/sw.js"
+  },
+  "dependencies": {
+    "retell-client-js-sdk": "3.0.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "esbuild": "0.28.2",
+    "prettier": "3.9.10"
+  }
+}
